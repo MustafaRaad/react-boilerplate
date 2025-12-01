@@ -51,7 +51,7 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['"Inter"', '"Cairo"', ...fontFamily.sans],
+        sans: ['"Tajawal"', ...fontFamily.sans],
       },
       keyframes: {
         'accordion-down': {

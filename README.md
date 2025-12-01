@@ -26,12 +26,13 @@ VITE_BACKEND_KIND=aspnet   # or laravel
 ```
 src/
   main.tsx                 Entry; renders <App />
-  index.css                Base styles + Tailwind layer imports
   app/                     App shell
     App.tsx                Root component
     providers/AppProviders.tsx  Router, QueryClient, i18n, toasts, dir observer
     router/routeTree.tsx   TanStack Router tree and guards
-  assets/                  Static assets (e.g., react.svg)
+  assets/                  Static assets and styling
+    fonts/                 Tajawal font files
+    styles/                fonts.css + globals.css (imports Tailwind layers)
   components/ui/           UI primitives (button, card, input, label, table)
   core/                    Cross-cutting concerns
     api/                   API client + helpers
@@ -58,7 +59,6 @@ src/
   store/                   Zustand stores
     auth.store.ts          Auth state with persistence
     ui.store.ts            UI prefs (sidebar open)
-  styles/                  Tailwind global styles
 ```
 
 ## Routing
