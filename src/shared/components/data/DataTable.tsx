@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from "react";
 import {
   type ColumnDef,
   type PaginationState,
@@ -6,9 +6,9 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
-} from '@tanstack/react-table'
-import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
+} from "@tanstack/react-table";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -16,20 +16,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 type DataTableProps<TData> = {
-  columns: ColumnDef<TData, any>[]
-  data: TData[]
-  total?: number
-  page?: number
-  pageSize?: number
-  onPageChange?: (page: number) => void
-  onPageSizeChange?: (pageSize: number) => void
-  mode: 'server' | 'client'
-  className?: string
-}
+  columns: ColumnDef<TData, any>[];
+  data: TData[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  mode: "server" | "client";
+  className?: string;
+};
 
 export function DataTable<TData>({
   columns,
@@ -42,16 +42,16 @@ export function DataTable<TData>({
   mode,
   className,
 }: DataTableProps<TData>) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: page - 1,
     pageSize,
-  })
+  });
 
   useEffect(() => {
-    setPagination({ pageIndex: page - 1, pageSize })
-  }, [page, pageSize])
+    setPagination({ pageIndex: page - 1, pageSize });
+  }, [page, pageSize]);
 
   const table = useReactTable({
     data,
@@ -60,32 +60,36 @@ export function DataTable<TData>({
       pagination,
     },
     pageCount:
-      mode === 'server' && total && pagination.pageSize
+      mode === "server" && total && pagination.pageSize
         ? Math.ceil(total / pagination.pageSize)
         : undefined,
-    manualPagination: mode === 'server',
+    manualPagination: mode === "server",
     onPaginationChange:
-      mode === 'client'
+      mode === "client"
         ? setPagination
         : (updater) => {
             const next =
-              typeof updater === 'function' ? updater(pagination) : (updater as PaginationState)
-            setPagination(next)
-            onPageChange?.(next.pageIndex + 1)
-            onPageSizeChange?.(next.pageSize)
+              typeof updater === "function"
+                ? updater(pagination)
+                : (updater as PaginationState);
+            setPagination(next);
+            onPageChange?.(next.pageIndex + 1);
+            onPageSizeChange?.(next.pageSize);
           },
     getCoreRowModel: getCoreRowModel(),
-    ...(mode === 'client' ? { getPaginationRowModel: getPaginationRowModel() } : {}),
-  })
+    ...(mode === "client"
+      ? { getPaginationRowModel: getPaginationRowModel() }
+      : {}),
+  });
 
-  const pageCount = table.getPageCount() || 1
-  const canPrevious = table.getCanPreviousPage()
-  const canNext = table.getCanNextPage()
+  const pageCount = table.getPageCount() || 1;
+  const canPrevious = table.getCanPreviousPage();
+  const canNext = table.getCanNextPage();
 
-  const pageSizeOptions = useMemo(() => [5, 10, 20, 50], [])
+  const pageSizeOptions = useMemo(() => [5, 10, 20, 50], []);
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
@@ -95,7 +99,10 @@ export function DataTable<TData>({
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -107,15 +114,21 @@ export function DataTable<TData>({
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {t('common.table.empty')}
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  {t("table.empty")}
                 </TableCell>
               </TableRow>
             )}
@@ -125,7 +138,7 @@ export function DataTable<TData>({
 
       <div className="flex flex-col items-center justify-between gap-4 text-sm sm:flex-row">
         <div className="flex items-center gap-2">
-          <span>{t('common.table.page')}</span>
+          <span>{t("table.page")}</span>
           <strong>
             {pagination.pageIndex + 1} / {pageCount}
           </strong>
@@ -138,22 +151,27 @@ export function DataTable<TData>({
             onClick={() => table.previousPage()}
             disabled={!canPrevious}
           >
-            {'<'}
+            {"<"}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!canNext}>
-            {'>'}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!canNext}
+          >
+            {">"}
           </Button>
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-muted-foreground">{t('common.table.perPage')}</label>
+          <label className="text-muted-foreground">{t("table.perPage")}</label>
           <select
             className="h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={pagination.pageSize}
             onChange={(event) => {
-              const newSize = Number(event.target.value)
-              table.setPageSize(newSize)
-              onPageSizeChange?.(newSize)
+              const newSize = Number(event.target.value);
+              table.setPageSize(newSize);
+              onPageSizeChange?.(newSize);
             }}
           >
             {pageSizeOptions.map((size) => (
@@ -165,5 +183,5 @@ export function DataTable<TData>({
         </div>
       </div>
     </div>
-  )
+  );
 }
