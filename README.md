@@ -1,100 +1,119 @@
 # React Boilerplate
 
-Modern admin starter built with React 19, Vite, and TypeScript. It ships with TanStack Router + Query + Form, Tailwind-based UI components, i18n (English/Arabic with RTL support), Zustand stores, and a simple auth/dashboard/users/roles flow wired to a switchable ASP.NET or Laravel backend.
+Modern admin starter built with React 19, Vite, and TypeScript. Ships with TanStack Router + Query + Form, Tailwind/shadcn UI primitives, i18n (English/Arabic with RTL), Zustand stores, and an auth/dashboard/users/roles flow that can talk to either an ASP.NET or Laravel backend.
 
-## Quick start
-- Prereqs: Node 18+ and pnpm (`corepack enable` or `npm i -g pnpm`).
-- Install: `pnpm install`
-- Configure environment (see below).
-- Develop: `pnpm dev` then open http://localhost:5173
-- Production build: `pnpm build` -> output in `dist/` (serve with `pnpm preview`).
-- Lint: `pnpm lint`
+## Requirements
+- Node 18+ and pnpm (`corepack enable` or `npm i -g pnpm`)
+- API reachable at `VITE_API_BASE_URL` with the endpoints below
 
-## Features
-- React 19 + TypeScript + Vite
-- TanStack Router (type-safe routing)
-- TanStack Query (data fetching/caching)
-- TanStack Table (headless data grids)
-- TanStack Form + Zod (forms + validation)
-- Zustand (lightweight state with persistence)
-- Tailwind CSS + shadcn/ui (UI primitives)
-- i18n with RTL (English + Arabic)
-- Backend-agnostic (ASP.NET or Laravel)
-
-## Project Structure
-```
-src/
-  app/                     # App entry and providers
-    providers/             # QueryClient, Router, i18n, toasts, direction observer
-    router/                # TanStack route tree
-  assets/                  # Static assets
-  components/ui/           # Reusable UI primitives (button, card, input, table)
-  core/                    # Cross-cutting concerns
-    api/                   # API client, endpoints, React Query helpers
-    config/                # Environment configuration
-    i18n/                  # Internationalization setup
-    types/                 # Core TypeScript types (api/auth)
-  features/                # Feature modules
-    auth/                  # Authentication
-    dashboard/             # Dashboard overview
-    users/                 # User management
-    roles/                 # Role management
-  lib/                     # Generic utilities
-  locales/                 # Translation resources (en, ar)
-  shared/                  # Layout, data/form helpers, shared hooks/components
-  store/                   # Zustand stores (auth/ui)
-  styles/                  # Tailwind globals
-  main.tsx                 # Entry point
-  index.css                # Base styles
-```
+## Setup & scripts
+1) Install deps: `pnpm install`
+2) Configure env (see next section)
+3) Develop: `pnpm dev` (opens http://localhost:5173)
+4) Build: `pnpm build` (type-check + Vite build to `dist/`)
+5) Preview production build: `pnpm preview`
+6) Lint: `pnpm lint`
 
 ## Environment
-- Copy `.env` (or create your own) with:
-  - `VITE_API_BASE_URL`: REST API root.
-  - `VITE_BACKEND_KIND`: `aspnet` (default) or `laravel`. This controls response normalization, paging, and auth token handling in the API client.
+Create `.env` (or copy from `.env.example`) with:
+```
+VITE_API_BASE_URL=https://your-api/
+VITE_BACKEND_KIND=aspnet   # or laravel
+```
+`VITE_BACKEND_KIND` controls how responses are normalized (paging, token shapes) and which endpoints are used for login/refresh.
 
-## Project layout
-- `src/main.tsx`: entry point; renders `App`.
-- `src/app/App.tsx`: top-level shell.
-- `src/app/providers/AppProviders.tsx`: wraps Router, React Query, i18n, toast, and locale direction observer.
-- `src/app/router/routeTree.tsx`: TanStack Router tree for `/`, `/login`, `/dashboard`, `/dashboard/users`, `/dashboard/roles`, and `*` fallback.
-- `src/core/api`: endpoint definitions, fetcher with backend normalization + token refresh, React Query helpers, and toast notifications.
-- `src/core/config/env.ts`: loads Vite env vars and exposes `backendKind` + `apiBaseUrl`.
-- `src/store`: Zustand stores (`auth.store` persists tokens/user; `ui.store` persists sidebar state).
-- `src/features/*`: feature slices (auth, dashboard, users, roles) with APIs, hooks, and UI.
-- `src/shared/components`: layout (sidebar/header/error pages), data table, form field helpers.
-- `src/styles/globals.css`, `src/index.css`: Tailwind setup and global styles.
+## Project structure (what lives where)
+```
+src/
+  main.tsx                 Entry; renders <App />
+  index.css                Base styles + Tailwind layer imports
+  app/                     App shell
+    App.tsx                Root component
+    providers/AppProviders.tsx  Router, QueryClient, i18n, toasts, dir observer
+    router/routeTree.tsx   TanStack Router tree and guards
+  assets/                  Static assets (e.g., react.svg)
+  components/ui/           UI primitives (button, card, input, label, table)
+  core/                    Cross-cutting concerns
+    api/                   API client + helpers
+      client.ts            Fetch wrapper with backend normalization & token refresh
+      endpoints.ts         Typed endpoint definitions
+      hooks.ts             useApiQuery/useApiMutation with toast handling
+      notifications.ts     Toast helpers
+      queryClient.ts       React Query client factory
+    config/env.ts          Reads Vite env and exposes backendKind/apiBaseUrl
+    i18n/                  i18next setup + resource registration
+    types/                 Shared types for API/auth
+  features/                Vertical slices
+    auth/                  Login form, hooks, API calls, types
+    dashboard/             Overview cards
+    users/                 Users table + data hooks
+    roles/                 Roles table + data hooks
+  lib/                     Generic utilities (e.g., class helpers)
+  locales/                 Translation resources (en, ar)
+  shared/                  Reusable building blocks
+    components/data/       DataTable (server/client pagination)
+    components/form/       FormField helper for TanStack Form
+    components/layout/     Header, Sidebar, layouts, error/not-found pages
+    hooks/                 Generic hooks (locale direction, pagination)
+  store/                   Zustand stores
+    auth.store.ts          Auth state with persistence
+    ui.store.ts            UI prefs (sidebar open)
+  styles/                  Tailwind global styles
+```
 
-## Core workflows
-- Authentication
-  - Login form uses `@tanstack/react-form` + zod validation; mutation handled by `useLogin`.
-  - Successful login stores tokens/user in `auth.store` (localStorage) and redirects to `/dashboard`.
-  - `useAuthGuard` protects dashboard routes and redirects unauthenticated users to `/login`.
-  - Token refresh is automatic on 401 via `apiFetch`; failure clears auth and raises a toast.
-- Routing
-  - Routes live in `src/app/router/routeTree.tsx` using TanStack Router. Add new pages by creating a route with `createRoute` and adding it to the tree; wrap protected sections with `useAuthGuard` and render inside `DashboardLayout`.
-- API layer
-  - Endpoints are declared in `src/core/api/endpoints.ts` for typing and reuse.
-  - `apiFetch` normalizes ASP.NET envelopes/paging and Laravel responses into a unified shape, adds auth headers, and performs token refresh when needed.
-  - `useApiQuery`/`useApiMutation` wrap React Query with consistent toast handling.
-- Data + tables
-  - `DataTable` in `src/shared/components/data/DataTable.tsx` supports server or client pagination. Users/Roles switch to client mode when `backendKind` is `laravel` (to allow local search/paging).
-  - Users and roles hooks (`useUsers`, `useRoles`) accept paging/search params and return a unified `PagedResult`.
-- Forms and validation
-  - Forms use `@tanstack/react-form` with zod validators. `FormField` helper renders labels/error text and wires inputs to TanStack form fields.
-- State and UI
-  - Sidebar/header live under `src/shared/components/layout`. Sidebar state persists via `ui.store` for consistent open/close behavior.
-- Internationalization
-  - `src/core/i18n/i18n.ts` registers English/Arabic resources; `useLocaleDirection` flips `dir` based on current locale. Text is namespaced under `locales/{en,ar}/common.ts`.
+## Routing
+- `/` root redirects to `/dashboard` if authenticated, otherwise `/login`.
+- `/login` shows the login form.
+- `/dashboard` (protected) renders `DashboardLayout` with nested routes:
+  - `/dashboard/` overview cards
+  - `/dashboard/users` users table
+  - `/dashboard/roles` roles table
+- `*` renders a not-found page.
+Protection is handled by `useAuthGuard`, which redirects unauthenticated users to `/login`.
+
+## Authentication flow
+- Login (`useLogin`) posts credentials to backend-specific login endpoint.
+- On success, tokens + user are stored in `auth.store` (persisted to localStorage).
+- Protected routes rely on `useAuthGuard`; `AppProviders` adds Query + Router devtools in dev.
+- `apiFetch` automatically attaches `Authorization` when required and attempts a refresh on 401 using the configured backend flow; failure clears auth and surfaces a toast.
+
+## API layer contract
+Expected endpoints relative to `VITE_API_BASE_URL`:
+- ASP.NET mode:
+  - `POST /auth/login` -> `{ result: { accessToken, refreshToken, ... } }`
+  - `POST /auth/refresh` -> `{ result: { accessToken, refreshToken, ... } }`
+  - `GET /me` (auth) -> `{ result: user }`
+  - `GET /users` (auth, paged envelope)
+  - `GET /roles` (auth, paged envelope)
+- Laravel mode:
+  - `POST /login` -> `{ access_token, refresh_token? }`
+  - `POST /auth/refresh` -> `{ access_token, refresh_token? }`
+  - `GET /me` (auth) -> user
+  - `GET /users` (auth, DataTables-style payload)
+  - `GET /roles` (auth, DataTables-style payload)
+`apiFetch` normalizes both backends into a unified `PagedResult<T>` where applicable.
+
+## Data tables
+- `DataTable` supports `mode="server"` (uses total/page/pageSize props) or `mode="client"` (local pagination).
+- Users/Roles switch to client mode automatically when `backendKind` is `laravel` so search happens locally.
+
+## Forms
+- Built with `@tanstack/react-form` and `zod` for validation.
+- `FormField` helper wires TanStack fields to inputs and shows errors/labels.
+
+## Internationalization
+- i18next with resources in `locales/en/common.ts` and `locales/ar/common.ts`.
+- `useLocaleDirection` flips `dir` on the document for RTL when Arabic is active.
 
 ## Adding a new feature (example)
-1) Define the endpoint in `src/core/api/endpoints.ts`.
-2) Create a hook in the relevant feature (e.g., `src/features/foo/api/useFoo.ts`) that calls `apiFetch` via `useApiQuery` or `useApiMutation`.
-3) Add UI under `src/features/foo/components`, using `DataTable`/`FormField` as needed.
-4) Register a route in `routeTree.tsx` (wrap in `DashboardLayout` and `useAuthGuard` if protected).
-5) Add translations to `locales/en/common.ts` and `locales/ar/common.ts` for any new copy.
+1) Declare the endpoint in `src/core/api/endpoints.ts`.
+2) Add a data hook (e.g., `useFoos`) that calls `apiFetch` via `useApiQuery`/`useApiMutation`.
+3) Build UI under `src/features/foo/components`; reuse `DataTable`/`FormField`/UI primitives.
+4) Register a route in `routeTree.tsx` (wrap with `DashboardLayout` and `useAuthGuard` if protected).
+5) Add strings to `locales/en/common.ts` and `locales/ar/common.ts`.
 
 ## Troubleshooting
-- Blank page after login redirect: ensure `VITE_API_BASE_URL` is reachable and returns the `me` endpoint, and that `VITE_BACKEND_KIND` matches the backend.
-- Stale auth: clear `localStorage` keys `auth-storage` and `ui-preferences` to reset tokens/ui state.
-- CORS/local dev: start the API locally or enable CORS for `http://localhost:5173`.
+- Blank page or redirect loop: check `VITE_API_BASE_URL` and that `/me` returns 200 with user when authorized.
+- Auth stuck: clear `localStorage` keys `auth-storage` and `ui-preferences`.
+- 401s despite valid tokens: ensure backend kind matches (`VITE_BACKEND_KIND`), and refresh endpoint exists.
+- CORS in dev: allow `http://localhost:5173` on the API.
