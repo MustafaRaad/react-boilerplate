@@ -6,11 +6,11 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { router } from "@/app/router/routeTree";
 import { queryClient } from "@/core/api/queryClient";
 import { i18n } from "@/core/i18n/i18n";
-import { useLocaleDirection } from "@/shared/hooks/useLocaleDirection";
+import { useDirection } from "@/shared/hooks/useDirection";
 import { Toaster } from "sonner";
 
 const DirectionObserver = () => {
-  useLocaleDirection();
+  useDirection();
   return null;
 };
 
