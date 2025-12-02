@@ -40,10 +40,14 @@ export const useLogin = () => {
         overrideBackendKind: "laravel",
       })) as AuthTokens;
 
+      // Store tokens FIRST so they're available for the /me request
+      store.setAuth({ user: null, tokens });
+
       const user = await apiFetch<AuthUser>(endpoints.auth.me, {
         overrideBackendKind: "laravel",
       });
 
+      // Update with user data
       store.setAuth({ user, tokens });
       return user;
     },

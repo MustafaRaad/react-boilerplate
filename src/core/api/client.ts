@@ -245,8 +245,11 @@ const performFetch = async (
   if (endpoint.requiresAuth && accessToken) {
     const backend = options.overrideBackendKind ?? defaultBackendKind;
     if (backend === "laravel") {
+      // Capitalize the token type (Laravel returns "bearer" lowercase)
       const tokenType = authState.tokens?.accessTokenType ?? "Bearer";
-      headers.Authorization = `${tokenType} ${accessToken}`;
+      const capitalizedTokenType =
+        tokenType.charAt(0).toUpperCase() + tokenType.slice(1).toLowerCase();
+      headers.Authorization = `${capitalizedTokenType} ${accessToken}`;
     } else {
       headers.Authorization = `Bearer ${accessToken}`;
     }

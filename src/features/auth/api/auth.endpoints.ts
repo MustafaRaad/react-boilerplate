@@ -31,8 +31,8 @@ export const authEndpoints = {
     requiresAuth: true,
   } as EndpointDef<RefreshRequestLaravel, RefreshResultLaravel>,
   me: {
-    path: "/me",
-    method: "GET",
+    path: "/auth/me",
+    method: "POST",
     requiresAuth: true,
   } as EndpointDef<void, AspNetEnvelope<AuthUser>>,
 } as const;
