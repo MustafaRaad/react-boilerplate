@@ -3,7 +3,6 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { ErrorPage } from "@/shared/components/layout/ErrorPage";
 import { NotFoundPage } from "@/shared/components/layout/NotFoundPage";
 import { Overview } from "@/features/dashboard/components/Overview";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
@@ -16,13 +15,9 @@ import {
 } from "./routeComponents";
 
 // Error boundary wrapper
-const ErrorBoundary = ({ error }: { error: unknown }) => (
-  <ErrorPage error={error} />
-);
 
 const rootRoute = createRootRoute({
   component: RootComponent,
-  errorComponent: ErrorBoundary,
 });
 
 const rootIndexRoute = createRoute({

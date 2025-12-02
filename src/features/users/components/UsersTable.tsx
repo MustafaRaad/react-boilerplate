@@ -1,11 +1,11 @@
-import { type ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/shared/components/ui/input";
 import { backendKind } from "@/core/config/env";
 import { DataTable } from "@/shared/components/data/DataTable";
 import { useUsers } from "@/features/users/api/useUsers";
 import { useUsersFilters } from "@/features/users/hooks/useUsersFilters";
-import { type User } from "@/features/users/types";
+import { useMemo } from "react";
+import { createUsersColumns } from "./UsersTable.columns";
 
 export const UsersTable = () => {
   const { t } = useTranslation("users");
@@ -13,20 +13,7 @@ export const UsersTable = () => {
     useUsersFilters();
   const usersQuery = useUsers(query);
 
-  const columns: ColumnDef<User>[] = [
-    {
-      header: t("list.columns.name"),
-      accessorKey: "name",
-    },
-    {
-      header: t("list.columns.email"),
-      accessorKey: "email",
-    },
-    {
-      header: t("list.columns.roles"),
-      cell: ({ row }) => row.original.roles.map((role) => role.name).join(", "),
-    },
-  ];
+  const columns = useMemo(() => createUsersColumns(t), [t]);
 
   const mode = backendKind === "laravel" ? "client" : "server";
 

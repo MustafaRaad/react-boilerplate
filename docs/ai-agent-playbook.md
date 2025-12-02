@@ -103,3 +103,19 @@ const routeTree = rootRoute.addChildren([
 - No ad-hoc Zod schemas inside components or API hooks.
 - No new fetch/axios wrappers; always use `apiFetch` + `useApiQuery`/`useApiMutation`.
 - Keep error message strings as translation keys (e.g., `validation.email.required`).
+
+## 8) i18n translations when adding data/columns
+- Add English strings to `src/locales/en/<namespace>.ts` and Arabic to `src/locales/ar/<namespace>.ts`. Keep keys stable and reuse existing namespaces where possible (e.g., `users`, `roles`, `common`).
+- Use translation keys in UI/components, not hard-coded text: `t("users.table.name")`, `t("common.actions.edit")`, etc.
+- If given example data/fields, create a `columns` translation group:  
+  - `src/locales/en/users.ts`: `table: { name: "Name", email: "Email", role: "Role" }`  
+  - `src/locales/ar/users.ts`: mirror keys with Arabic labels.
+- For new statuses/enums, add keys under a clear namespace: `status: { active: "Active", inactive: "Inactive" }`.
+
+## 9) Columns/types when provided sample data
+- Define row types in `src/features/<feature>/types.ts` (e.g., `export type Widget = { id: string; name: string; status: "active" | "inactive"; };`).
+- Keep Zod schemas in `src/core/schemas/endpoints.schema.ts` (backend shape) and `src/core/schemas/<feature>.schema.ts` (form/client validation).
+- Define table columns in a dedicated file next to the table or page (e.g., `src/features/<feature>/components/<Feature>Table.columns.ts`) if shared; otherwise keep them local but non-exported if only used once.
+- Columns should use translation keys for headers and derived display (e.g., `accessorKey: "name", header: t("users.table.name")`).
+- When mapping sample data, normalize within hooks or selectors, not inside the component render. Keep columns purely presentational.
+- For lint compliance (`react-refresh/only-export-components`), keep column factories in `.ts` files exporting pure functions (e.g., `createUsersColumns(t)`) and call them inside components via `useMemo`.
