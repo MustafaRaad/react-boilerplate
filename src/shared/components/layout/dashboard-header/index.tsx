@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
 import { useUiStore } from "@/store/ui.store";
 
-export const Header = () => {
+export const DashboardHeader = () => {
   const { t, i18n } = useTranslation();
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const clearAuth = useAuthStore((state) => state.clearAuth);

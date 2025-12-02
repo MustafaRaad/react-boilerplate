@@ -1,6 +1,6 @@
 import { Outlet } from "@tanstack/react-router";
 import { AppSidebar } from "@/shared/components/layout/AppSidebar";
-import { SiteHeader } from "@/shared/components/layout/SiteHeader";
+import { DashboardHeader } from "@/shared/components/layout/dashboard-header";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 
 export const DashboardLayout = () => {
@@ -8,7 +8,7 @@ export const DashboardLayout = () => {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <SiteHeader />
+        <DashboardHeader />
         <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           <Outlet />
         </div>
