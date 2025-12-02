@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { usePaginationState } from '@/hooks/usePaginationState'
+import { useState } from "react";
+import { usePaginationState } from "@/shared/hooks/usePaginationState";
 
 export const useUsersFilters = () => {
-  const [search, setSearch] = useState('')
-  const { page, setPage, pageSize, setPageSize } = usePaginationState()
+  const [search, setSearch] = useState("");
+  const { page, setPage, pageSize, setPageSize } = usePaginationState();
 
   return {
     search,
@@ -17,5 +17,5 @@ export const useUsersFilters = () => {
       pageSize,
       search,
     },
-  }
-}
+  };
+};

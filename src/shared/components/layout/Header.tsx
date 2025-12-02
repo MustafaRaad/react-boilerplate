@@ -1,7 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import { Languages, LogOut, Menu } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
 import { useUiStore } from "@/store/ui.store";
 

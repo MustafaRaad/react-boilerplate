@@ -1,6 +1,6 @@
 import { type AnyFieldApi } from '@tanstack/form-core'
 import { type ReactNode } from 'react'
-import { Label } from '@/components/ui/label'
+import { Label } from '@/shared/components/ui/label'
 import { cn } from '@/lib/utils'
 
 type FormFieldProps = {

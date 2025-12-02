@@ -1,7 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import { AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 
 type ErrorPageProps = {
   error?: unknown;

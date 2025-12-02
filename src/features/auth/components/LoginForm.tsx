@@ -6,15 +6,15 @@ import { Loader2 } from "lucide-react";
 import { loginSchema, type LoginFormValues } from "@/core/schemas/auth.schema";
 import { useLogin } from "@/features/auth/api/useLogin";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+} from "@/shared/components/ui/field";
+import { Input } from "@/shared/components/ui/input";
 import { useAuthStore } from "@/store/auth.store";
 
 export function LoginForm({

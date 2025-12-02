@@ -1,18 +1,18 @@
-import { RouterProvider } from '@tanstack/react-router'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { I18nextProvider } from 'react-i18next'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import { router } from '@/app/router/routeTree'
-import { queryClient } from '@/core/api/queryClient'
-import { i18n } from '@/core/i18n/i18n'
-import { useLocaleDirection } from '@/hooks/useLocaleDirection'
-import { Toaster } from 'sonner'
+import { RouterProvider } from "@tanstack/react-router";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { I18nextProvider } from "react-i18next";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { router } from "@/app/router/routeTree";
+import { queryClient } from "@/core/api/queryClient";
+import { i18n } from "@/core/i18n/i18n";
+import { useLocaleDirection } from "@/shared/hooks/useLocaleDirection";
+import { Toaster } from "sonner";
 
 const DirectionObserver = () => {
-  useLocaleDirection()
-  return null
-}
+  useLocaleDirection();
+  return null;
+};
 
 export const AppProviders = () => {
   return (
@@ -21,11 +21,13 @@ export const AppProviders = () => {
         <DirectionObserver />
         <RouterProvider router={router} />
         <Toaster richColors />
-        {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
+        {import.meta.env.DEV ? (
+          <ReactQueryDevtools initialIsOpen={false} />
+        ) : null}
         {import.meta.env.DEV ? (
           <TanStackRouterDevtools router={router} position="bottom-right" />
         ) : null}
       </QueryClientProvider>
     </I18nextProvider>
-  )
-}
+  );
+};
