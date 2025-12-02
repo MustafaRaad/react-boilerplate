@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
 import { useUiStore } from "@/store/ui.store";
+import Notifications from "./Notifications";
 
 export const DashboardHeader = () => {
   const { t, i18n } = useTranslation();
@@ -34,12 +35,6 @@ export const DashboardHeader = () => {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <div>
-          <p className="text-sm text-muted-foreground">{t("welcome")}</p>
-          <p className="text-base font-semibold">
-            {user?.name ?? t("appName")}
-          </p>
-        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -56,6 +51,7 @@ export const DashboardHeader = () => {
           <LogOut className="h-4 w-4" />
           {t("auth.logout")}
         </Button>
+        <Notifications />
       </div>
     </header>
   );

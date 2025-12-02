@@ -59,5 +59,37 @@
     "unauthorized": "You need to login again",
     "notFound": "This page could not be found",
     "notFoundDescription": "The page you are looking for does not exist or has moved."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "button": {
+      "label": "Notifications",
+      "open": "Open notifications"
+    },
+    "actions": {
+      "markAllRead": "Mark all as read"
+    },
+    "samples": {
+      "newLogin": {
+        "title": "New login detected",
+        "description": "Someone logged into your account from a new device.",
+        "timestamp": "2 minutes ago"
+      },
+      "portfolioSync": {
+        "title": "Portfolio synced",
+        "description": "Your portfolio has been successfully synced with the latest data.",
+        "timestamp": "1 hour ago"
+      },
+      "kycSoon": {
+        "title": "KYC verification expiring soon",
+        "description": "Your KYC verification will expire in 7 days. Please renew.",
+        "timestamp": "3 hours ago"
+      },
+      "maintenance": {
+        "title": "Scheduled maintenance",
+        "description": "System will be under maintenance on Sunday from 2 AM to 4 AM.",
+        "timestamp": "1 day ago"
+      }
+    }
   }
 }
