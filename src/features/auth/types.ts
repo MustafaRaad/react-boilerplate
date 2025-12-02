@@ -1,4 +1,1 @@
-export type LoginFormValues = {
-  email: string
-  password: string
-}
+export type { LoginFormValues } from "@/core/schemas/auth.schema";

@@ -4,7 +4,13 @@ import {
   backendKind as defaultBackendKind,
 } from "@/core/config/env";
 import {
-  type AspNetEnvelope,
+  aspNetEnvelopeSchema,
+  aspNetLoginEnvelopeSchema,
+  aspNetPagedResultSchema,
+  laravelDataTableSchema,
+  laravelLoginSchema,
+} from "@/core/schemas/endpoints.schema";
+import {
   type AspNetPagedResult,
   type BackendKind,
   type LaravelDataTableResponse,
@@ -48,31 +54,20 @@ const parseJson = async (response: Response) => {
   }
 };
 
-const isAspNetPaged = <T>(value: unknown): value is AspNetPagedResult<T> => {
-  return (
-    !!value &&
-    typeof value === "object" &&
-    "items" in value &&
-    "totalPages" in value &&
-    "totalCount" in value
-  );
-};
+const parseAspNetEnvelope = (value: unknown) =>
+  aspNetEnvelopeSchema.safeParse(value);
 
-const isLaravelDataTable = <T>(
-  value: unknown
-): value is LaravelDataTableResponse<T> => {
-  return (
-    !!value &&
-    typeof value === "object" &&
-    "data" in value &&
-    "recordsTotal" in value &&
-    "recordsFiltered" in value
-  );
-};
+const parseAspNetLoginEnvelope = (value: unknown) =>
+  aspNetLoginEnvelopeSchema.safeParse(value);
 
-const isLaravelLogin = (value: unknown): value is LoginResultLaravel => {
-  return !!value && typeof value === "object" && "access_token" in value;
-};
+const parseAspNetPagedResult = (value: unknown) =>
+  aspNetPagedResultSchema.safeParse(value);
+
+const parseLaravelDataTable = (value: unknown) =>
+  laravelDataTableSchema.safeParse(value);
+
+const parseLaravelLogin = (value: unknown) =>
+  laravelLoginSchema.safeParse(value);
 
 const mapAspNetPaged = <T>(
   payload: AspNetPagedResult<T>,
@@ -112,17 +107,28 @@ const normalizeAspNetResponse = <T>(
 ): T | PagedResult<T> => {
   if (!raw) return raw as T;
 
-  const payload = (raw as AspNetEnvelope<T>).result ?? raw;
-
-  if (isAspNetPaged<T>(payload)) {
-    return mapAspNetPaged<T>(payload, query);
+  const loginEnvelope = parseAspNetLoginEnvelope(raw);
+  if (loginEnvelope.success) {
+    return loginEnvelope.data.result as T;
   }
 
-  if (isAspNetPaged<T>(raw)) {
-    return mapAspNetPaged<T>(raw, query);
+  const envelope = parseAspNetEnvelope(raw);
+  const payload = (envelope.success ? envelope.data.result : null) ?? raw;
+
+  const pagedPayload = parseAspNetPagedResult(payload);
+  if (pagedPayload.success) {
+    return mapAspNetPaged<T>(
+      pagedPayload.data as AspNetPagedResult<T>,
+      query
+    );
   }
 
-  return payload as T;
+  const pagedRaw = parseAspNetPagedResult(raw);
+  if (pagedRaw.success) {
+    return mapAspNetPaged<T>(pagedRaw.data as AspNetPagedResult<T>, query);
+  }
+
+  return (envelope.success ? envelope.data.result : payload) as T;
 };
 
 const normalizeLaravelResponse = <T>(
@@ -130,29 +136,31 @@ const normalizeLaravelResponse = <T>(
 ): T | PagedResult<T> | AuthTokens | LoginResultLaravel => {
   if (!raw) return raw as T;
 
+  const loginResult = parseLaravelLogin(raw);
+  if (loginResult.success) {
+    const tokens: AuthTokens = {
+      accessToken: loginResult.data.access_token,
+      refreshToken: loginResult.data.refresh_token ?? "",
+    };
+    return tokens;
+  }
+
   if (typeof raw === "object" && raw !== null && "result" in raw) {
     return (raw as { result: T }).result;
   }
 
+  const dataTable = parseLaravelDataTable(raw);
   if (
     typeof raw === "object" &&
     raw !== null &&
     "data" in raw &&
-    !isLaravelDataTable<T>(raw)
+    !dataTable.success
   ) {
     return (raw as { data: T }).data;
   }
 
-  if (isLaravelDataTable<T>(raw)) {
-    return mapLaravelPaged<T>(raw);
-  }
-
-  if (isLaravelLogin(raw)) {
-    const tokens: AuthTokens = {
-      accessToken: raw.access_token,
-      refreshToken: raw.refresh_token ?? "",
-    };
-    return tokens;
+  if (dataTable.success) {
+    return mapLaravelPaged<T>(dataTable.data as LaravelDataTableResponse<T>);
   }
 
   return raw as T;
