@@ -4,8 +4,8 @@ Use this checklist to add endpoints, schemas/types, pages, and routes with the p
 
 ## 1) Add schemas and types
 - **Entity type**: define/extend in `src/features/<feature>/types.ts`.
-- **Backend Zod schema**: add to `src/core/schemas/endpoints.schema.ts`. Keep envelopes/paged/login/data-table shapes centralized.
-- **Form Zod schema**: add to `src/core/schemas/<feature>.schema.ts` (follow `auth.schema.ts`); use translation keys for messages.
+- **Backend Zod schema**: add to `src/core/schemas/endpoints.schema.ts` (non-auth) or feature-scoped schema files (e.g., `src/features/auth/schemas/auth.schema.ts` for auth). Keep envelopes/paged/data-table shapes centralized in core; feature-specific auth schemas now live under `src/features/auth/schemas/`.
+- **Form Zod schema**: add to `src/features/<feature>/schemas/<feature>.schema.ts` (follow `src/features/auth/schemas/auth.schema.ts`); use translation keys for messages.
 
 Example (`widgets`):
 ```ts
@@ -95,9 +95,9 @@ const routeTree = rootRoute.addChildren([
 ```
 
 ## 6) Backend validation notes (ASP.NET + Laravel)
-- Parse ASP.NET envelopes/paged/login via `aspNetEnvelopeSchema`, `aspNetPagedResultSchema`, `aspNetLoginEnvelopeSchema` in `src/core/schemas/endpoints.schema.ts`.
+- Parse ASP.NET envelopes/paged via `aspNetEnvelopeSchema`, `aspNetPagedResultSchema` in `src/core/schemas/endpoints.schema.ts`; auth-specific ASP.NET/Laravel login/refresh schemas are in `src/features/auth/schemas/auth.schema.ts`.
 - Parse Laravel data tables via `laravelDataTableSchema`; normalization to `PagedResult` already lives in `apiFetch`.
-- Add any backend-specific shapes to `src/core/schemas/endpoints.schema.ts` and reuse them in the client.
+- Add any non-auth backend-specific shapes to `src/core/schemas/endpoints.schema.ts`; keep auth-specific schemas/types/endpoints under `src/features/auth/` (see Section 10).
 
 ## 7) Things to avoid
 - No ad-hoc Zod schemas inside components or API hooks.
@@ -114,8 +114,14 @@ const routeTree = rootRoute.addChildren([
 
 ## 9) Columns/types when provided sample data
 - Define row types in `src/features/<feature>/types.ts` (e.g., `export type Widget = { id: string; name: string; status: "active" | "inactive"; };`).
-- Keep Zod schemas in `src/core/schemas/endpoints.schema.ts` (backend shape) and `src/core/schemas/<feature>.schema.ts` (form/client validation).
+- Keep Zod schemas in `src/core/schemas/endpoints.schema.ts` (backend shape, non-auth) and `src/features/<feature>/schemas/<feature>.schema.ts` (form/client validation).
 - Define table columns in a dedicated file next to the table or page (e.g., `src/features/<feature>/components/<Feature>Table.columns.ts`) if shared; otherwise keep them local but non-exported if only used once.
 - Columns should use translation keys for headers and derived display (e.g., `accessorKey: "name", header: t("users.table.name")`).
 - When mapping sample data, normalize within hooks or selectors, not inside the component render. Keep columns purely presentational.
 - For lint compliance (`react-refresh/only-export-components`), keep column factories in `.ts` files exporting pure functions (e.g., `createUsersColumns(t)`) and call them inside components via `useMemo`.
+
+## 10) Auth-specific locations
+- Auth schemas: `src/features/auth/schemas/auth.schema.ts` (forms, ASP.NET/Laravel login/refresh envelopes).
+- Auth types: `src/features/auth/types/auth.types.ts` (re-exported from `src/features/auth/types.ts`).
+- Auth endpoints: `src/features/auth/api/auth.endpoints.ts` (consumed by `src/core/api/endpoints.ts`).
+- Auth components/hooks should import schemas/types/endpoints from these feature-scoped files; non-auth schemas stay in `src/core/schemas/endpoints.schema.ts`.

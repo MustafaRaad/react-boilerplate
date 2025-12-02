@@ -36,7 +36,12 @@ type ApiFetchOptions = {
 
 const buildUrl = (path: string, query?: Record<string, unknown>) => {
   const base = apiBaseUrl || window.location.origin;
-  const url = new URL(path, base);
+
+  // Ensure base ends with / and path doesn't start with / for proper concatenation
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+
+  const url = new URL(normalizedPath, normalizedBase);
 
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
