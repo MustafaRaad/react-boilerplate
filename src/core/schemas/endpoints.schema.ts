@@ -6,10 +6,16 @@ export const roleSchema = z.object({
 });
 
 export const userSchema = z.object({
-  id: z.string().uuid().or(z.string()),
+  id: z.number(),
   name: z.string(),
   email: z.string().email(),
-  roles: z.array(roleSchema).optional().default([]),
+  email_verified_at: z.string().nullable(),
+  phone_no: z.string(),
+  approved: z.number(),
+  created_at: z.string().nullable(),
+  updated_at: z.string().nullable(),
+  role: z.string(), // Single role name from Laravel
+  roles: z.array(roleSchema).optional().default([]), // Optional for compatibility
 });
 
 export const aspNetEnvelopeSchema = z.object({

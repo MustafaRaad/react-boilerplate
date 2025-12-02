@@ -24,28 +24,33 @@ export const endpoints = {
   auth: authEndpoints,
   users: {
     list: {
-      path: "/users",
+      path: "/Users/ListUsers",
       method: "GET",
       requiresAuth: true,
     } as EndpointDef<
       UsersQuery | undefined,
       AspNetEnvelope<AspNetPagedResult<User>> | LaravelDataTableResponse<User>
     >,
+    get: {
+      path: "/Users/getUser",
+      method: "GET",
+      requiresAuth: true,
+    } as EndpointDef<{ id: number }, User>,
     create: {
-      path: "/users",
+      path: "/Users/addUser",
       method: "POST",
       requiresAuth: true,
-    } as EndpointDef<Partial<User>, AspNetEnvelope<User>>,
+    } as EndpointDef<Partial<User>, AspNetEnvelope<User> | User>,
     update: {
-      path: "/users",
+      path: "/Users/updateUser",
       method: "PUT",
       requiresAuth: true,
-    } as EndpointDef<Partial<User>, AspNetEnvelope<User>>,
+    } as EndpointDef<Partial<User>, AspNetEnvelope<User> | User>,
     delete: {
-      path: "/users",
+      path: "/Users/deleteUser",
       method: "DELETE",
       requiresAuth: true,
-    } as EndpointDef<{ id: string }, AspNetEnvelope<null>>,
+    } as EndpointDef<{ id: number }, AspNetEnvelope<null> | null>,
   },
   roles: {
     list: {
