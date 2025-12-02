@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { backendKind } from "@/core/config/env";
 import { DataTable } from "@/components/data/DataTable";
-import { usePaginationState } from "@/shared/hooks/usePaginationState";
+import { usePaginationState } from "@/hooks/usePaginationState";
 import { useRoles } from "@/features/roles/api/useRoles";
 import { type Role } from "@/features/roles/types";
 
