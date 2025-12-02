@@ -1,1 +1,1 @@
-export type { LoginFormValues } from "@/core/schemas/auth.schema";
+export * from "@/features/auth/types/auth.types";

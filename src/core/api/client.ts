@@ -5,11 +5,14 @@ import {
 } from "@/core/config/env";
 import {
   aspNetEnvelopeSchema,
-  aspNetLoginEnvelopeSchema,
   aspNetPagedResultSchema,
   laravelDataTableSchema,
-  laravelLoginSchema,
 } from "@/core/schemas/endpoints.schema";
+import {
+  aspNetLoginEnvelopeSchema,
+  laravelLoginSchema,
+  laravelRefreshSchema,
+} from "@/features/auth/schemas/auth.schema";
 import {
   type AspNetPagedResult,
   type BackendKind,
@@ -21,7 +24,6 @@ import {
   type AuthTokens,
   type LoginResultLaravel,
   type RefreshResultAspNet,
-  type RefreshResultLaravel,
 } from "@/core/types/auth";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -68,6 +70,9 @@ const parseLaravelDataTable = (value: unknown) =>
 
 const parseLaravelLogin = (value: unknown) =>
   laravelLoginSchema.safeParse(value);
+
+const parseLaravelRefresh = (value: unknown) =>
+  laravelRefreshSchema.safeParse(value);
 
 const mapAspNetPaged = <T>(
   payload: AspNetPagedResult<T>,
@@ -117,10 +122,7 @@ const normalizeAspNetResponse = <T>(
 
   const pagedPayload = parseAspNetPagedResult(payload);
   if (pagedPayload.success) {
-    return mapAspNetPaged<T>(
-      pagedPayload.data as AspNetPagedResult<T>,
-      query
-    );
+    return mapAspNetPaged<T>(pagedPayload.data as AspNetPagedResult<T>, query);
   }
 
   const pagedRaw = parseAspNetPagedResult(raw);
@@ -138,9 +140,28 @@ const normalizeLaravelResponse = <T>(
 
   const loginResult = parseLaravelLogin(raw);
   if (loginResult.success) {
+    const now = Date.now();
+    const accessExpiresAt = now + loginResult.data.expires_in * 1000;
     const tokens: AuthTokens = {
       accessToken: loginResult.data.access_token,
-      refreshToken: loginResult.data.refresh_token ?? "",
+      refreshToken: "", // Laravel doesn't provide refresh token
+      accessTokenType: loginResult.data.token_type,
+      accessExpiresAt,
+      backend: "laravel",
+    };
+    return tokens;
+  }
+
+  const refreshResult = parseLaravelRefresh(raw);
+  if (refreshResult.success) {
+    const now = Date.now();
+    const accessExpiresAt = now + refreshResult.data.expires_in * 1000;
+    const tokens: AuthTokens = {
+      accessToken: refreshResult.data.access_token,
+      refreshToken: "", // Laravel doesn't provide refresh token
+      accessTokenType: refreshResult.data.token_type,
+      accessExpiresAt,
+      backend: "laravel",
     };
     return tokens;
   }
@@ -214,10 +235,16 @@ const performFetch = async (
     Accept: "application/json",
   };
 
-  const accessToken =
-    tokenOverride ?? useAuthStore.getState().tokens?.accessToken;
+  const authState = useAuthStore.getState();
+  const accessToken = tokenOverride ?? authState.tokens?.accessToken;
   if (endpoint.requiresAuth && accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
+    const backend = options.overrideBackendKind ?? defaultBackendKind;
+    if (backend === "laravel") {
+      const tokenType = authState.tokens?.accessTokenType ?? "Bearer";
+      headers.Authorization = `${tokenType} ${accessToken}`;
+    } else {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
   }
 
   const response = await fetch(url, {
@@ -234,11 +261,12 @@ const tryRefreshTokens = async (
   backend: BackendKind
 ): Promise<AuthTokens | null> => {
   const authState = useAuthStore.getState();
-  const refreshToken = authState.tokens?.refreshToken;
-  if (!refreshToken) return null;
 
-  try {
-    if (backend === "aspnet") {
+  if (backend === "aspnet") {
+    const refreshToken = authState.tokens?.refreshToken;
+    if (!refreshToken) return null;
+
+    try {
       const response = await performFetch(endpoints.auth.refreshAspNet, {
         body: { refreshToken },
       });
@@ -253,22 +281,27 @@ const tryRefreshTokens = async (
       };
       authState.setAuth({ user: authState.user, tokens });
       return tokens;
+    } catch {
+      authState.clearAuth();
+      return null;
     }
+  }
 
+  // Laravel: refresh using existing access token
+  if (!authState.tokens?.accessToken) return null;
+
+  try {
     const response = await performFetch(endpoints.auth.refreshLaravel, {
-      body: { refreshToken },
+      body: {}, // Laravel refresh doesn't need body, uses auth token from header
     });
     const body = await parseJson(response);
     if (!response.ok) throw normalizeError(backend, response.status, body);
-    const normalized = normalizeLaravelResponse<RefreshResultLaravel>(
+    const normalizedTokens = normalizeLaravelResponse<AuthTokens>(
       body
-    ) as RefreshResultLaravel;
-    const tokens: AuthTokens = {
-      accessToken: normalized.access_token,
-      refreshToken: normalized.refresh_token ?? refreshToken,
-    };
-    authState.setAuth({ user: authState.user, tokens });
-    return tokens;
+    ) as AuthTokens;
+    // Preserve the full token data including expiration
+    authState.setAuth({ user: authState.user, tokens: normalizedTokens });
+    return normalizedTokens;
   } catch {
     authState.clearAuth();
     return null;

@@ -3,7 +3,7 @@ export type BackendKind = 'aspnet' | 'laravel'
 export type AspNetEnvelope<T> = {
   code: number
   message: string | null
-  error: any
+  error: unknown
   result: T
 }
 
@@ -34,5 +34,5 @@ export type PagedResult<T> = {
 export type UnifiedApiError = {
   code?: number | string
   message: string
-  raw?: any
+  raw?: unknown
 }

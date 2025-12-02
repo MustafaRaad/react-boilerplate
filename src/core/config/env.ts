@@ -6,10 +6,10 @@ const normalizeBackendKind = (value?: string): BackendKind => {
 }
 
 export const backendKind: BackendKind = normalizeBackendKind(
-  import.meta.env.VITE_BACKEND_KIND as string | undefined,
+  import.meta.env.VITE_BACKEND_KIND as string,
 )
 
-export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
+export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? ''
 
 export const envConfig = {
   backendKind,

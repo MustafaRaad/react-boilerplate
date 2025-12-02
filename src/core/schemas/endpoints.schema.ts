@@ -32,18 +32,6 @@ export const aspNetPagedUsersSchema = aspNetPagedResultSchema.extend({
   items: z.array(userSchema),
 });
 
-export const aspNetLoginResultSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
-  accessExpiresAtUtc: z.string(),
-  refreshExpiresAtUtc: z.string(),
-  sessionId: z.string(),
-});
-
-export const aspNetLoginEnvelopeSchema = aspNetEnvelopeSchema.extend({
-  result: aspNetLoginResultSchema,
-});
-
 export const laravelDataTableSchema = z.object({
   draw: z.number(),
   recordsTotal: z.number(),
@@ -51,16 +39,7 @@ export const laravelDataTableSchema = z.object({
   data: z.array(z.unknown()),
 });
 
-export const laravelLoginSchema = z.object({
-  message: z.string(),
-  access_token: z.string(),
-  token_type: z.string(),
-  expires_in: z.number(),
-  refresh_token: z.string().optional(),
-});
-
 export type AspNetEnvelope = z.infer<typeof aspNetEnvelopeSchema>;
-export type AspNetLoginResult = z.infer<typeof aspNetLoginResultSchema>;
 export type AspNetPagedResult<T = unknown> = Omit<
   z.infer<typeof aspNetPagedResultSchema>,
   "items"
@@ -72,4 +51,3 @@ export type LaravelDataTable<T = unknown> = {
   recordsFiltered: number;
   data: T[];
 };
-export type LaravelLogin = z.infer<typeof laravelLoginSchema>;
