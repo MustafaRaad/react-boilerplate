@@ -1,6 +1,10 @@
 {
-  "appName": "Crosswind Dashboard",
   "welcome": "Welcome back",
+  "app": {
+    "title": "Mustafa Dashboard",
+    "description": "Modern React Dashboard",
+    "logoAlt": "Mustafa Logo"
+  },
   "language": {
     "en": "English",
     "ar": "Arabic"

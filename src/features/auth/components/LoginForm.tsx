@@ -170,7 +170,7 @@ export function LoginForm({
             <div className="relative flex h-full items-center justify-center">
               <div>
                 <img
-                  src="/vite.svg"
+                  src="/logo.svg"
                   alt={t("auth.brandTitle", "App logo")}
                   className="m-auto h-30 w-30"
                 />

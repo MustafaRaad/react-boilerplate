@@ -1,6 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowUpCircle } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -26,18 +25,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       side={isRtl ? "right" : "left"}
       {...props}
     >
-      <SidebarHeader>
+      <SidebarHeader className="pt-4">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-            >
-              <Link to="/dashboard">
-                <ArrowUpCircle className="h-5 w-5" />
-                <span className="text-base font-semibold">{t("appName")}</span>
-              </Link>
-            </SidebarMenuButton>
+          <SidebarMenuItem className="flex flex-col gap-4 m-auto justify-center items-center">
+            <span className="font-extrabold group-data-[collapsible=icon]:hidden mx-auto text-center">
+              {t("app.title")}
+            </span>
+            <img
+              src="/vite.svg"
+              width={600}
+              height={600}
+              alt={t("app.logoAlt")}
+              className="max-h-20 m-auto group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:m-0"
+            />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

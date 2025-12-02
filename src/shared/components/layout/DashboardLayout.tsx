@@ -9,7 +9,7 @@ export const DashboardLayout = () => {
       <AppSidebar />
       <SidebarInset>
         <DashboardHeader />
-        <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+        <div className="@container/main flex flex-1 flex-col gap-2 p-2 md:p-6">
           <Outlet />
         </div>
       </SidebarInset>
