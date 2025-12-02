@@ -5,12 +5,12 @@ import { Button } from "@/shared/components/ui/button";
 import { useAuthStore } from "@/store/auth.store";
 import { useUiStore } from "@/store/ui.store";
 import Notifications from "./Notifications";
+import SettingsMenu from "./SettingsMenu";
 
 export const DashboardHeader = () => {
   const { t, i18n } = useTranslation();
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const clearAuth = useAuthStore((state) => state.clearAuth);
-  const user = useAuthStore((state) => state.user);
   const router = useRouter();
 
   const switchLanguage = () => {
@@ -52,6 +52,7 @@ export const DashboardHeader = () => {
           {t("auth.logout")}
         </Button>
         <Notifications />
+        <SettingsMenu />
       </div>
     </header>
   );

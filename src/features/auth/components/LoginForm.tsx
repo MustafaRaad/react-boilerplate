@@ -168,7 +168,7 @@ export function LoginForm({
               <div className="bg-secondary/25 dark:bg-secondary/15 absolute bottom-0 right-4 h-48 w-48 rounded-full blur-3xl" />
             </div>
             <div className="relative flex h-full items-center justify-center">
-              <div className="bg-background/30 dark:bg-background/40">
+              <div>
                 <img
                   src="/vite.svg"
                   alt={t("auth.brandTitle", "App logo")}

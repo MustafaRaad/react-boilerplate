@@ -10,6 +10,13 @@
     "users": "Users",
     "roles": "Roles"
   },
+  "header": {
+    "settings": "Settings",
+    "user": "User",
+    "SettingsMenu": {
+      "account": "Account Settings"
+    }
+  },
   "auth": {
     "title": "Sign in",
     "email": "Email",
@@ -59,6 +66,10 @@
     "unauthorized": "You need to login again",
     "notFound": "This page could not be found",
     "notFoundDescription": "The page you are looking for does not exist or has moved."
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode"
   },
   "notifications": {
     "title": "Notifications",
