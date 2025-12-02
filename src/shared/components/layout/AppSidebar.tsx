@@ -24,12 +24,14 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useRouter } from "@tanstack/react-router";
+import { useDirection } from "@/shared/hooks/useDirection";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation();
   const { location } = useRouterState();
   const { user, clearAuth } = useAuthStore();
   const router = useRouter();
+  const { isRtl } = useDirection();
 
   const handleLogout = () => {
     clearAuth();
@@ -47,13 +49,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      variant="sidebar"
+      collapsible="icon"
+      side={isRtl ? "right" : "left"}
+      {...props}
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link to="/dashboard">
                 <ArrowUpCircle className="h-5 w-5" />

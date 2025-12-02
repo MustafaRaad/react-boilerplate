@@ -102,6 +102,14 @@ Protection is handled by `useAuthGuard`, which redirects unauthenticated users t
 - `DataTable` supports `mode="server"` (uses total/page/pageSize props) or `mode="client"` (local pagination).
 - Users/Roles switch to client mode automatically when `backendKind` is `laravel` so search happens locally.
 
+## Localization & Intlayer
+- Locale sources: `src/locales/en/*.json`, `src/locales/ar/*.json` (synced via Intlayer).
+- Intlayer config: `intlayer.config.ts` with sync-json plugin targeting `src/locales/{locale}/{namespace}.json`.
+- Commands:
+  - `pnpm intlayer:fill` (uses `OPENAI_API_KEY` in `.env` to auto-fill missing translations)
+  - `pnpm intlayer:build`, `pnpm intlayer:push` as needed
+- Runtime i18n remains i18next (see `src/core/i18n/i18n.ts`).
+
 ## Adding a new feature (pattern)
 1) Declare endpoints in `src/core/api/endpoints.ts` (or feature-specific if applicable).
 2) Add a data hook (e.g., `useFoos`) calling `apiFetch` via `useApiQuery`/`useApiMutation`.
