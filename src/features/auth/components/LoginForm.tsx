@@ -161,12 +161,31 @@ export function LoginForm({
             </FieldGroup>
           </form>
 
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
+          <div className="relative hidden md:block bg-gradient-to-br from-primary/15 via-secondary/15 to-background px-6 py-8 dark:from-primary/20 dark:via-secondary/20 dark:to-background">
+            <div className="absolute inset-0 opacity-70">
+              <div className="bg-primary/20 dark:bg-primary/15 absolute -left-10 -top-10 h-40 w-40 rounded-full blur-3xl" />
+              <div className="bg-secondary/25 dark:bg-secondary/15 absolute bottom-0 right-4 h-48 w-48 rounded-full blur-3xl" />
+            </div>
+            <div className="relative flex h-full items-center justify-center">
+              <div className="bg-background/30 dark:bg-background/40">
+                <img
+                  src="/vite.svg"
+                  alt={t("auth.brandTitle", "App logo")}
+                  className="m-auto h-30 w-30"
+                />
+                <div className="mt-4 text-center">
+                  <p className="text-lg font-semibold text-foreground">
+                    {t("auth.brandTitle", "Mustafa Raad Dashboard")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "auth.brandSubtitle",
+                      "Secure access to your workspace with confidence."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
