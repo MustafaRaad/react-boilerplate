@@ -2,6 +2,15 @@
 
 Use this checklist to add endpoints, schemas/types, pages, and routes with the patterns used here (React 19 + Vite, TanStack Router/Query/Form, Zod, Tailwind/shadcn, ASP.NET + Laravel backends).
 
+## 0) Backend & auth source of truth
+- Canonical doc: `docs/change-server-instructions.md`. Read it before touching auth/backend.
+- Default backend: Laravel POS.
+  - Login `POST /auth/login` body `{ email, password, type: "web" }` → `{ access_token, token_type, expires_in }`.
+  - Tokens in store: `accessToken`, `accessTokenType`, `accessTokenExpiresIn`, `accessTokenExpiresAt`.
+  - `/auth/me` → `{ fees, pos: { pos_name,pos_lat,pos_lng,id }, user: { id,name,email,phone_no }, perm: string[] }`.
+  - Store normalization: user `{ id, name|null, email|null, phoneNo|null, image:null, role:null }`, pos `{ id,name,lat,lng }`, permissions `perm`, fees `fees`.
+- Header identity: read ONLY from auth store (no `/me` fetch in header). Display name fallback `name -> email -> t("header.user")`; role optional/null; avatar uses image or initials/icon.
+
 ## 1) Add schemas and types
 
 - **Entity type**: define/extend in `src/features/<feature>/types.ts`.
@@ -143,6 +152,7 @@ const routeTree = rootRoute.addChildren([
 - Auth schemas: `src/features/auth/schemas/auth.schema.ts` (forms, ASP.NET/Laravel login/refresh envelopes).
 - Auth types: `src/features/auth/types/auth.types.ts` (re-exported from `src/features/auth/types.ts`).
 - Auth endpoints: `src/features/auth/api/auth.endpoints.ts` (consumed by `src/core/api/endpoints.ts`).
+- Canonical behavior: follow `docs/change-server-instructions.md` for token fields, `/me` normalization, and header identity rules; auth store is the only source for user/pos/permissions/fees. No next-auth/ensureMe/getStoredMe, and no `/me` fetch inside header components.
 - Auth components/hooks should import schemas/types/endpoints from these feature-scoped files; non-auth schemas stay in `src/core/schemas/endpoints.schema.ts`.
 
 ## 11) Dashboard layout & navigation (shadcn dashboard-01)

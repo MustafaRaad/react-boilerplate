@@ -53,7 +53,7 @@ function NotificationCard({
   );
 }
 
-export default function HeaderNotifications() {
+export default function Notifications() {
   const { t } = useTranslation("common");
   const { dir } = useDirection();
 

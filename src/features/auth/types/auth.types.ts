@@ -1,11 +1,8 @@
 import type { z } from "zod";
-import type { AspNetEnvelope } from "@/core/types/api";
 import {
-  aspNetLoginResultSchema,
   authLoginFormSchema,
   changePasswordSchema,
   laravelLoginSchema,
-  laravelRefreshSchema,
   resetPasswordSchema,
 } from "@/features/auth/schemas/auth.schema";
 
@@ -15,23 +12,43 @@ export type Role = {
 };
 
 export type AuthUser = {
-  id: string;
+  id: number;
+  name: string | null;
+  email: string | null;
+  phoneNo: string | null;
+  image?: string | null;
+  role?: string | null;
+};
+
+export type AuthPos = {
+  id: number;
   name: string;
-  email: string;
-  roles: Role[];
+  lat: number;
+  lng: number;
+};
+
+export type MeResponse = {
+  fees: number;
+  pos: {
+    pos_name: string;
+    pos_lat: number;
+    pos_lng: number;
+    id: number;
+  };
+  user: {
+    id: number;
+    name: string | null;
+    email: string | null;
+    phone_no: string | null;
+  };
+  perm: string[];
 };
 
 export type AuthTokens = {
   accessToken: string;
-  refreshToken?: string;
-  accessTokenType?: string; // Laravel: "bearer"
-  accessExpiresAt?: number; // Laravel: timestamp in ms
-  backend?: "aspnet" | "laravel";
-};
-
-export type LoginRequestAspNet = {
-  email: string;
-  password: string;
+  accessTokenType: string; // typically "bearer"
+  accessTokenExpiresIn: number; // seconds
+  accessTokenExpiresAt: number; // timestamp in ms
 };
 
 export type LoginRequestLaravel = {
@@ -40,20 +57,7 @@ export type LoginRequestLaravel = {
   type: "web";
 };
 
-export type LoginResultAspNet = z.infer<typeof aspNetLoginResultSchema>;
 export type LoginResultLaravel = z.infer<typeof laravelLoginSchema>;
-
-export type RefreshRequestAspNet = {
-  refreshToken: string;
-};
-
-export type RefreshResultAspNet = LoginResultAspNet;
-
-export type RefreshRequestLaravel = Record<string, never>; // Empty body, uses Authorization header
-
-export type RefreshResultLaravel = z.infer<typeof laravelRefreshSchema>;
-
-export type MeResponse = AspNetEnvelope<AuthUser>;
 
 // Form-related types
 export type LoginFormValues = z.infer<typeof authLoginFormSchema>;

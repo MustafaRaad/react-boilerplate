@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { AuthUser } from "@/features/auth/types/auth.types";
 
 export interface HeaderNotification {
   id: string;
@@ -8,12 +9,10 @@ export interface HeaderNotification {
   unread?: boolean;
 }
 
-export interface HeaderUserData {
-  name: string | null;
-  email: string | null;
-  image: string | null;
-  role: string | null;
-}
+export type HeaderUserData = Pick<
+  AuthUser,
+  "name" | "email" | "image" | "role" | "phoneNo"
+>;
 
 export interface MenuLink {
   label: string;
@@ -21,26 +20,17 @@ export interface MenuLink {
   icon?: ReactNode;
 }
 
-export interface MenuRowProps {
-  icon: ReactNode;
-  children: ReactNode;
-  onClick?: () => void;
-}
-
 export interface UserAvatarProps {
   src?: string;
   alt: string;
+  fallbackText?: string;
   size?: "sm" | "md";
 }
 
-export interface SettingsMenuTriggerProps {
-  userImage?: string;
-  displayName: string;
-  settingsLabel: string;
-}
 
 export interface UserProfileSectionProps {
   userImage?: string;
   displayName: string;
-  displayRole: string;
+  displayEmail?: string;
+  fallbackText?: string;
 }

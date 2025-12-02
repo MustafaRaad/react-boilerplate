@@ -11,7 +11,7 @@ export const UserAvatar = memo(function UserAvatar({
   src,
   alt,
   size = "sm",
-}: UserAvatarProps) {
+}: Omit<UserAvatarProps, "fallbackText">) {
   const sizeClass = size === "md" ? "h-8 w-8" : "h-6 w-6";
 
   return (

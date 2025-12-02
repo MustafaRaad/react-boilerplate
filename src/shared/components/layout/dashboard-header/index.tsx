@@ -1,29 +1,23 @@
-import { Menu } from "lucide-react";
-import { useUiStore } from "@/store/ui.store";
+import { Separator } from "@/shared/components/ui/separator";
+import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import Notifications from "./Notifications";
-import SettingsMenu from "./SettingsMenu";
-import { Button } from "../../ui/button";
+import SettingsMenu from "./HeaderActionsMenu";
 
-export const DashboardHeader = () => {
-  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
-
+export function DashboardHeader() {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-background/80 px-4 py-3 backdrop-blur">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          aria-label="Toggle navigation"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+    <header className="flex justify-between bg-sidebar sticky top-0 z-50 group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear px-4 lg:px-6">
+      <div className="flex gap-1 lg:gap-2">
+        <SidebarTrigger className="-ml-1" />
+        <Separator
+          orientation="vertical"
+          className="mx-2 data-[orientation=vertical]:h-4"
+        />
+        <h1 className="text-base font-medium">Documents</h1>
       </div>
-
-      <div className="flex items-center gap-2">
+      <div className="flex gap-1 lg:gap-2">
         <Notifications />
         <SettingsMenu />
       </div>
     </header>
   );
-};
+}

@@ -1,4 +1,4 @@
-import { endpoints, type EndpointDef } from "@/core/api/endpoints";
+import { type EndpointDef } from "@/core/api/endpoints";
 import {
   apiBaseUrl,
   backendKind as defaultBackendKind,
@@ -8,11 +8,7 @@ import {
   aspNetPagedResultSchema,
   laravelDataTableSchema,
 } from "@/core/schemas/endpoints.schema";
-import {
-  aspNetLoginEnvelopeSchema,
-  laravelLoginSchema,
-  laravelRefreshSchema,
-} from "@/features/auth/schemas/auth.schema";
+import { aspNetLoginEnvelopeSchema, laravelLoginSchema } from "@/features/auth/schemas/auth.schema";
 import {
   type AspNetPagedResult,
   type BackendKind,
@@ -20,11 +16,7 @@ import {
   type PagedResult,
   type UnifiedApiError,
 } from "@/core/types/api";
-import {
-  type AuthTokens,
-  type LoginResultLaravel,
-  type RefreshResultAspNet,
-} from "@/core/types/auth";
+import { type AuthTokens, type LoginResultLaravel } from "@/core/types/auth";
 import { useAuthStore } from "@/store/auth.store";
 
 type ApiFetchOptions = {
@@ -75,9 +67,6 @@ const parseLaravelDataTable = (value: unknown) =>
 
 const parseLaravelLogin = (value: unknown) =>
   laravelLoginSchema.safeParse(value);
-
-const parseLaravelRefresh = (value: unknown) =>
-  laravelRefreshSchema.safeParse(value);
 
 const mapAspNetPaged = <T>(
   payload: AspNetPagedResult<T>,
@@ -146,27 +135,12 @@ const normalizeLaravelResponse = <T>(
   const loginResult = parseLaravelLogin(raw);
   if (loginResult.success) {
     const now = Date.now();
-    const accessExpiresAt = now + loginResult.data.expires_in * 1000;
+    const accessTokenExpiresAt = now + loginResult.data.expires_in * 1000;
     const tokens: AuthTokens = {
       accessToken: loginResult.data.access_token,
-      refreshToken: "", // Laravel doesn't provide refresh token
       accessTokenType: loginResult.data.token_type,
-      accessExpiresAt,
-      backend: "laravel",
-    };
-    return tokens;
-  }
-
-  const refreshResult = parseLaravelRefresh(raw);
-  if (refreshResult.success) {
-    const now = Date.now();
-    const accessExpiresAt = now + refreshResult.data.expires_in * 1000;
-    const tokens: AuthTokens = {
-      accessToken: refreshResult.data.access_token,
-      refreshToken: "", // Laravel doesn't provide refresh token
-      accessTokenType: refreshResult.data.token_type,
-      accessExpiresAt,
-      backend: "laravel",
+      accessTokenExpiresIn: loginResult.data.expires_in,
+      accessTokenExpiresAt,
     };
     return tokens;
   }
@@ -265,81 +239,19 @@ const performFetch = async (
   return response;
 };
 
-const tryRefreshTokens = async (
-  backend: BackendKind
-): Promise<AuthTokens | null> => {
-  const authState = useAuthStore.getState();
-
-  if (backend === "aspnet") {
-    const refreshToken = authState.tokens?.refreshToken;
-    if (!refreshToken) return null;
-
-    try {
-      const response = await performFetch(endpoints.auth.refreshAspNet, {
-        body: { refreshToken },
-      });
-      const body = await parseJson(response);
-      if (!response.ok) throw normalizeError(backend, response.status, body);
-      const normalized = normalizeAspNetResponse<RefreshResultAspNet>(
-        body
-      ) as RefreshResultAspNet;
-      const tokens: AuthTokens = {
-        accessToken: normalized.accessToken,
-        refreshToken: normalized.refreshToken ?? refreshToken,
-      };
-      authState.setAuth({ user: authState.user, tokens });
-      return tokens;
-    } catch {
-      authState.clearAuth();
-      return null;
-    }
-  }
-
-  // Laravel: refresh using existing access token
-  if (!authState.tokens?.accessToken) return null;
-
-  try {
-    const response = await performFetch(endpoints.auth.refreshLaravel, {
-      body: {}, // Laravel refresh doesn't need body, uses auth token from header
-    });
-    const body = await parseJson(response);
-    if (!response.ok) throw normalizeError(backend, response.status, body);
-    const normalizedTokens = normalizeLaravelResponse<AuthTokens>(
-      body
-    ) as AuthTokens;
-    // Preserve the full token data including expiration
-    authState.setAuth({ user: authState.user, tokens: normalizedTokens });
-    return normalizedTokens;
-  } catch {
-    authState.clearAuth();
-    return null;
-  }
-};
-
 export async function apiFetch<TNormalized, TRaw = unknown>(
   endpoint: EndpointDef<unknown, TRaw>,
   options: ApiFetchOptions = {}
 ): Promise<TNormalized> {
   const backend = options.overrideBackendKind ?? defaultBackendKind;
-  let attemptedRefresh = false;
   const execute = () => performFetch(endpoint, options);
 
   const handleResponse = async (response: Response): Promise<TNormalized> => {
     const body = await parseJson(response);
 
-    if (response.status === 401 && !attemptedRefresh) {
-      attemptedRefresh = true;
-      const refreshed = await tryRefreshTokens(backend);
-      if (refreshed?.accessToken) {
-        const retryResponse = await performFetch(
-          endpoint,
-          options,
-          refreshed.accessToken
-        );
-        return handleResponse(retryResponse);
-      }
-      const error = normalizeError(backend, response.status, body);
-      throw error;
+    if (response.status === 401) {
+      useAuthStore.getState().clearAuth();
+      throw normalizeError(backend, response.status, body);
     }
 
     if (!response.ok) {
