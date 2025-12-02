@@ -3,11 +3,13 @@
 Use this checklist to add endpoints, schemas/types, pages, and routes with the patterns used here (React 19 + Vite, TanStack Router/Query/Form, Zod, Tailwind/shadcn, ASP.NET + Laravel backends).
 
 ## 1) Add schemas and types
+
 - **Entity type**: define/extend in `src/features/<feature>/types.ts`.
 - **Backend Zod schema**: add to `src/core/schemas/endpoints.schema.ts` (non-auth) or feature-scoped schema files (e.g., `src/features/auth/schemas/auth.schema.ts` for auth). Keep envelopes/paged/data-table shapes centralized in core; feature-specific auth schemas now live under `src/features/auth/schemas/`.
 - **Form Zod schema**: add to `src/features/<feature>/schemas/<feature>.schema.ts` (follow `src/features/auth/schemas/auth.schema.ts`); use translation keys for messages.
 
 Example (`widgets`):
+
 ```ts
 // src/core/schemas/endpoints.schema.ts
 export const widgetSchema = z.object({
@@ -24,7 +26,9 @@ export type AspNetPagedWidgets = z.infer<typeof aspNetPagedWidgetsSchema>;
 ```
 
 ## 2) Declare the endpoint
+
 Add to `src/core/api/endpoints.ts` with method/path/requiresAuth:
+
 ```ts
 widgets: {
   list: { path: "/widgets", method: "GET", requiresAuth: true },
@@ -32,7 +36,9 @@ widgets: {
 ```
 
 ## 3) Data hooks (TanStack Query)
+
 Use the shared client/hooks—do not create new fetch wrappers.
+
 ```ts
 // src/features/widgets/api/useWidgets.ts
 import { apiFetch } from "@/core/api/client";
@@ -47,7 +53,9 @@ export const useWidgets = (query?: { search?: string }) =>
 ```
 
 ## 4) Page component (dashboard-protected example)
+
 Place under `src/features/<feature>/components/`.
+
 ```tsx
 // src/features/widgets/components/WidgetsPage.tsx
 import { useWidgets } from "@/features/widgets/api/useWidgets";
@@ -71,7 +79,9 @@ export const WidgetsPage = () => {
 ```
 
 ## 5) Wire the route (TanStack Router)
+
 Edit `src/app/router/routeTree.tsx`; add under `/dashboard` to inherit `DashboardLayout` + auth guard.
+
 ```ts
 import { WidgetsPage } from "@/features/widgets/components/WidgetsPage";
 
@@ -95,24 +105,32 @@ const routeTree = rootRoute.addChildren([
 ```
 
 ## 6) Backend validation notes (ASP.NET + Laravel)
+
 - Parse ASP.NET envelopes/paged via `aspNetEnvelopeSchema`, `aspNetPagedResultSchema` in `src/core/schemas/endpoints.schema.ts`; auth-specific ASP.NET/Laravel login/refresh schemas are in `src/features/auth/schemas/auth.schema.ts`.
 - Parse Laravel data tables via `laravelDataTableSchema`; normalization to `PagedResult` already lives in `apiFetch`.
 - Add any non-auth backend-specific shapes to `src/core/schemas/endpoints.schema.ts`; keep auth-specific schemas/types/endpoints under `src/features/auth/` (see Section 10).
 
 ## 7) Things to avoid
+
 - No ad-hoc Zod schemas inside components or API hooks.
 - No new fetch/axios wrappers; always use `apiFetch` + `useApiQuery`/`useApiMutation`.
 - Keep error message strings as translation keys (e.g., `validation.email.required`).
 
 ## 8) i18n translations when adding data/columns
-- Add English strings to `src/locales/en/<namespace>.ts` and Arabic to `src/locales/ar/<namespace>.ts`. Keep keys stable and reuse existing namespaces where possible (e.g., `users`, `roles`, `common`).
-- Use translation keys in UI/components, not hard-coded text: `t("users.table.name")`, `t("common.actions.edit")`, etc.
-- If given example data/fields, create a `columns` translation group:  
-  - `src/locales/en/users.ts`: `table: { name: "Name", email: "Email", role: "Role" }`  
-  - `src/locales/ar/users.ts`: mirror keys with Arabic labels.
-- For new statuses/enums, add keys under a clear namespace: `status: { active: "Active", inactive: "Inactive" }`.
+
+- Translations now use **JSON format** with Intlayer integration. Add to `src/locales/en/<namespace>.json` and `src/locales/ar/<namespace>.json`.
+- **Option 1: Direct JSON editing** - Edit JSON files directly for quick updates.
+- **Option 2: Intlayer content declarations** - Create `*.content.ts` files for type-safe translations, then run `pnpm intlayer:build` to sync to JSON.
+- Keep keys stable and reuse existing namespaces where possible (e.g., `users`, `roles`, `common`).
+- Use translation keys in UI/components, not hard-coded text: `t("users.list.columns.name")`, `t("common.actions.edit")`, etc.
+- If given example data/fields, create a `columns` translation group:
+  - `src/locales/en/users.json`: `"list": { "columns": { "name": "Name", "email": "Email", "role": "Role" } }`
+  - `src/locales/ar/users.json`: mirror keys with Arabic labels.
+- For new statuses/enums, add keys under a clear namespace: `"status": { "active": "Active", "inactive": "Inactive" }`.
+- After adding new namespaces, register them in `src/core/i18n/i18n.ts` resources object.
 
 ## 9) Columns/types when provided sample data
+
 - Define row types in `src/features/<feature>/types.ts` (e.g., `export type Widget = { id: string; name: string; status: "active" | "inactive"; };`).
 - Keep Zod schemas in `src/core/schemas/endpoints.schema.ts` (backend shape, non-auth) and `src/features/<feature>/schemas/<feature>.schema.ts` (form/client validation).
 - Define table columns in a dedicated file next to the table or page (e.g., `src/features/<feature>/components/<Feature>Table.columns.ts`) if shared; otherwise keep them local but non-exported if only used once.
@@ -121,14 +139,40 @@ const routeTree = rootRoute.addChildren([
 - For lint compliance (`react-refresh/only-export-components`), keep column factories in `.ts` files exporting pure functions (e.g., `createUsersColumns(t)`) and call them inside components via `useMemo`.
 
 ## 10) Auth-specific locations
+
 - Auth schemas: `src/features/auth/schemas/auth.schema.ts` (forms, ASP.NET/Laravel login/refresh envelopes).
 - Auth types: `src/features/auth/types/auth.types.ts` (re-exported from `src/features/auth/types.ts`).
 - Auth endpoints: `src/features/auth/api/auth.endpoints.ts` (consumed by `src/core/api/endpoints.ts`).
 - Auth components/hooks should import schemas/types/endpoints from these feature-scoped files; non-auth schemas stay in `src/core/schemas/endpoints.schema.ts`.
 
 ## 11) Dashboard layout & navigation (shadcn dashboard-01)
+
 - shadcn config: `components.json` aliases `components` to `@/shared/components`, `ui` to `@/shared/components/ui`, tailwind css at `src/assets/styles/globals.css`. Run blocks with `npx shadcn@latest add ...` and ensure imports use `@/shared/components/ui/...`.
-- Layout: use the dashboard-01 block as the base. Keep the layout wrapper in `src/shared/components/layout/DashboardLayout.tsx`, with extracted `AppSidebar`/`Topbar` if needed. Sidebar components live under `@/shared/components/ui/sidebar`.
+- Layout: use the dashboard-01 block as the base. Keep the layout wrapper in `src/shared/components/layout/DashboardLayout.tsx`, with extracted `AppSidebar`/`SiteHeader` if needed. Sidebar components live under `@/shared/components/ui/sidebar`.
 - Navigation config: centralize links/icons in `src/shared/config/navigation.ts` (e.g., `mainNavItems` with `label`, `href`, `icon`). Sidebar reads from this config so new pages auto-appear.
 - Routing: TanStack Router routes under `/dashboard` should import page components (`src/features/<feature>/pages/*Page.tsx`) and render within `DashboardLayout` (via route tree). Paths in `mainNavItems` must match route paths.
 - shadcn UI location: all primitives in `src/shared/components/ui`. There should be no `src/components/ui` or imports from `@/components/ui`.
+- **Adding new pages**:
+  1. Create page component in `src/features/<feature>/pages/`
+  2. Add route in `src/app/router/routeTree.ts` under `dashboardRoute`
+  3. Add navigation item to `mainNavItems` in `src/shared/config/navigation.ts`
+  4. Sidebar will automatically display the new page
+
+## 12) Intlayer integration (i18n management)
+
+- Project uses **Intlayer** with **i18next runtime** for enhanced translation management.
+- Translation files are in **JSON format**: `src/locales/{locale}/{namespace}.json`
+- Three workflows available:
+  - **Direct JSON editing**: Edit `.json` files directly for quick updates
+  - **Intlayer content declarations**: Create type-safe `*.content.ts` files, run `pnpm intlayer:build` to sync
+  - **AI auto-fill**: Add translations to one locale, run `pnpm intlayer:fill` to auto-translate others (requires `OPENAI_API_KEY` in `.env`)
+- **Adding new namespace**:
+  1. Create content file: `src/features/<feature>/content/<feature>.content.ts`
+  2. Build: `pnpm intlayer:build` (generates JSON files)
+  3. Register in `src/core/i18n/i18n.ts` resources object
+  4. Use with `useTranslation('<namespace>')`
+- **Intlayer scripts**:
+  - `pnpm intlayer:build` - Build and sync dictionaries to JSON
+  - `pnpm intlayer:fill` - AI auto-fill missing translations (OpenAI)
+  - `pnpm intlayer:push` - Push to Intlayer CMS for team collaboration
+- See `docs/intlayer-integration.md` for complete guide

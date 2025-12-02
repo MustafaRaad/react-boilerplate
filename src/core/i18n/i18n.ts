@@ -1,10 +1,10 @@
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
-import arCommon from "@/locales/ar/common";
-import enCommon from "@/locales/en/common";
-import arUsers from "@/locales/ar/users";
-import enUsers from "@/locales/en/users";
+import arCommon from "@/locales/ar/common.json";
+import enCommon from "@/locales/en/common.json";
+import arUsers from "@/locales/ar/users.json";
+import enUsers from "@/locales/en/users.json";
 
 export const resources = {
   en: {
