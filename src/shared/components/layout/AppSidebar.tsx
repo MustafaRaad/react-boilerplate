@@ -43,7 +43,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="flex flex-col gap-2 group-data-[collapsible=icon]:mt-4">
             <SidebarMenu>
               {mainNavItems.map((item) => {
                 const isActive =
@@ -55,6 +55,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
+                      size="md"
                       tooltip={item.label}
                       isActive={isActive}
                     >

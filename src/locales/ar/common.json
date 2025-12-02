@@ -17,6 +17,7 @@
   "header": {
     "settings": "الإعدادات",
     "user": "المستخدم",
+    "toggleSidebar": "إظهار/إخفاء القائمة الجانبية",
     "SettingsMenu": {
       "account": "إعدادات الحساب"
     }

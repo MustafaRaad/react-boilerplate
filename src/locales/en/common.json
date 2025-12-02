@@ -17,6 +17,7 @@
   "header": {
     "settings": "Settings",
     "user": "User",
+    "toggleSidebar": "Toggle sidebar",
     "SettingsMenu": {
       "account": "Account Settings"
     }

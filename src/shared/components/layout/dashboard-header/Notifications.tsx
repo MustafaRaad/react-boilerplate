@@ -100,12 +100,14 @@ export default function Notifications() {
           aria-label={t("notifications.button.open")}
         >
           <Bell className="size-4" aria-hidden />
-          {t("notifications.button.label")}
-          {unreadCount > 0 ? (
-            <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-1 text-[0.7rem] font-semibold text-primary-foreground">
-              {unreadCount}
-            </span>
-          ) : null}
+          <span className="hidden md:block">
+            {t("notifications.button.label")}
+            {unreadCount > 0 ? (
+              <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-1 text-[0.7rem] font-semibold text-primary-foreground">
+                {unreadCount}
+              </span>
+            ) : null}
+          </span>
         </Button>
       </SheetTrigger>
 
