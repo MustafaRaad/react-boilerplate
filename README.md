@@ -117,3 +117,7 @@ Expected endpoints relative to `VITE_API_BASE_URL`:
 - Auth stuck: clear `localStorage` keys `auth-storage` and `ui-preferences`.
 - 401s despite valid tokens: ensure backend kind matches (`VITE_BACKEND_KIND`), and refresh endpoint exists.
 - CORS in dev: allow `http://localhost:5173` on the API.
+
+## Docs
+- API client: `docs/api-client.md`
+- AI agent playbook: `docs/ai-agent-playbook.md`
