@@ -27,6 +27,20 @@ export interface MenuRowProps {
   onClick?: () => void;
 }
 
-export interface HeaderSettingsMenuProps {
-  user: HeaderUserData;
+export interface UserAvatarProps {
+  src?: string;
+  alt: string;
+  size?: "sm" | "md";
+}
+
+export interface SettingsMenuTriggerProps {
+  userImage?: string;
+  displayName: string;
+  settingsLabel: string;
+}
+
+export interface UserProfileSectionProps {
+  userImage?: string;
+  displayName: string;
+  displayRole: string;
 }
