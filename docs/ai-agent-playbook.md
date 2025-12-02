@@ -125,3 +125,10 @@ const routeTree = rootRoute.addChildren([
 - Auth types: `src/features/auth/types/auth.types.ts` (re-exported from `src/features/auth/types.ts`).
 - Auth endpoints: `src/features/auth/api/auth.endpoints.ts` (consumed by `src/core/api/endpoints.ts`).
 - Auth components/hooks should import schemas/types/endpoints from these feature-scoped files; non-auth schemas stay in `src/core/schemas/endpoints.schema.ts`.
+
+## 11) Dashboard layout & navigation (shadcn dashboard-01)
+- shadcn config: `components.json` aliases `components` to `@/shared/components`, `ui` to `@/shared/components/ui`, tailwind css at `src/assets/styles/globals.css`. Run blocks with `npx shadcn@latest add ...` and ensure imports use `@/shared/components/ui/...`.
+- Layout: use the dashboard-01 block as the base. Keep the layout wrapper in `src/shared/components/layout/DashboardLayout.tsx`, with extracted `AppSidebar`/`Topbar` if needed. Sidebar components live under `@/shared/components/ui/sidebar`.
+- Navigation config: centralize links/icons in `src/shared/config/navigation.ts` (e.g., `mainNavItems` with `label`, `href`, `icon`). Sidebar reads from this config so new pages auto-appear.
+- Routing: TanStack Router routes under `/dashboard` should import page components (`src/features/<feature>/pages/*Page.tsx`) and render within `DashboardLayout` (via route tree). Paths in `mainNavItems` must match route paths.
+- shadcn UI location: all primitives in `src/shared/components/ui`. There should be no `src/components/ui` or imports from `@/components/ui`.

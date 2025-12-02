@@ -1,29 +1,18 @@
 import { Outlet } from "@tanstack/react-router";
-import { Sidebar } from "@/shared/components/layout/Sidebar";
-import { Header } from "@/shared/components/layout/Header";
-import { useUiStore } from "@/store/ui.store";
+import { AppSidebar } from "@/shared/components/layout/AppSidebar";
+import { SiteHeader } from "@/shared/components/layout/SiteHeader";
+import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 
 export const DashboardLayout = () => {
-  const { isSidebarOpen, closeSidebar } = useUiStore();
-
   return (
-    <div className="flex min-h-screen bg-muted/30 text-foreground">
-      <Sidebar />
-      {isSidebarOpen ? (
-        <div
-          className="fixed inset-0 z-20 bg-black/30 lg:hidden"
-          role="presentation"
-          onClick={closeSidebar}
-        />
-      ) : null}
-      <div className="flex min-h-screen flex-1 flex-col">
-        <Header />
-        <main className="flex-1 p-4 sm:p-6">
-          <div className="mx-auto w-full max-w-6xl">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          <Outlet />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
