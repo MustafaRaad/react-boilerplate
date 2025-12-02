@@ -4,13 +4,13 @@ import {
   createRoute,
   createRouter,
 } from '@tanstack/react-router'
-import { LoginForm } from '@/features/auth/components/LoginForm'
+import { LoginPage } from '@/features/auth/pages/LoginPage'
+import { UsersListPage } from '@/features/users/pages/UsersListPage'
+import { RolesListPage } from '@/features/roles/pages/RolesListPage'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ErrorPage } from '@/components/layout/ErrorPage'
 import { NotFoundPage } from '@/components/layout/NotFoundPage'
 import { Overview } from '@/features/dashboard/components/Overview'
-import { UsersTable } from '@/features/users/components/UsersTable'
-import { RolesTable } from '@/features/roles/components/RolesTable'
 import { useAuthGuard } from '@/features/auth/hooks/useAuthGuard'
 import { useAuthStore } from '@/store/auth.store'
 import { useEffect } from 'react'
@@ -49,7 +49,7 @@ const rootIndexRoute = createRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  component: LoginForm,
+  component: LoginPage,
 })
 
 const dashboardRoute = createRoute({
@@ -67,13 +67,13 @@ const dashboardIndexRoute = createRoute({
 const usersRoute = createRoute({
   getParentRoute: () => dashboardRoute,
   path: 'users',
-  component: UsersTable,
+  component: UsersListPage,
 })
 
 const rolesRoute = createRoute({
   getParentRoute: () => dashboardRoute,
   path: 'roles',
-  component: RolesTable,
+  component: RolesListPage,
 })
 
 const notFoundRoute = createRoute({
