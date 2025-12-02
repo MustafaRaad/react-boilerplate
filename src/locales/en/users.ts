@@ -1,0 +1,34 @@
+const users = {
+  list: {
+    title: "Users",
+    description: "Manage system users and their access.",
+    columns: {
+      name: "Name",
+      email: "Email",
+      phone: "Phone",
+      status: "Status",
+      roles: "Roles",
+      createdAt: "Created at",
+    },
+    filters: {
+      searchPlaceholder: "Search by name or email",
+      status: {
+        label: "Status",
+        all: "All",
+        active: "Active",
+        inactive: "Inactive",
+      },
+    },
+    actions: {
+      create: "Add user",
+      edit: "Edit",
+      delete: "Delete",
+    },
+    empty: {
+      title: "No users found",
+      description: "Try adjusting your filters or add a new user.",
+    },
+  },
+};
+
+export default users;

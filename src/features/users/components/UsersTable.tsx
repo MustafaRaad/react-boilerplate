@@ -8,22 +8,22 @@ import { useUsersFilters } from "@/features/users/hooks/useUsersFilters";
 import { type User } from "@/features/users/types";
 
 export const UsersTable = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("users");
   const { query, search, setSearch, page, setPage, pageSize, setPageSize } =
     useUsersFilters();
   const usersQuery = useUsers(query);
 
   const columns: ColumnDef<User>[] = [
     {
-      header: t("users.name"),
+      header: t("list.columns.name"),
       accessorKey: "name",
     },
     {
-      header: t("users.email"),
+      header: t("list.columns.email"),
       accessorKey: "email",
     },
     {
-      header: t("users.roles"),
+      header: t("list.columns.roles"),
       cell: ({ row }) => row.original.roles.map((role) => role.name).join(", "),
     },
   ];
@@ -34,12 +34,14 @@ export const UsersTable = () => {
     <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">{t("users.title")}</h2>
-          <p className="text-sm text-muted-foreground">{t("users.subtitle")}</p>
+          <h2 className="text-xl font-semibold">{t("list.title")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("list.description")}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Input
-            placeholder={t("table.search")}
+            placeholder={t("list.filters.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-64"
