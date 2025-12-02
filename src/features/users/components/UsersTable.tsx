@@ -2,7 +2,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { backendKind } from "@/core/config/env";
-import { DataTable } from "@/shared/components/data/DataTable";
+import { DataTable } from "@/components/data/DataTable";
 import { useUsers } from "@/features/users/api/useUsers";
 import { useUsersFilters } from "@/features/users/hooks/useUsersFilters";
 import { type User } from "@/features/users/types";

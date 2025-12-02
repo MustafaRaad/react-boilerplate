@@ -1,10 +1,10 @@
-import { Outlet } from '@tanstack/react-router'
-import { Sidebar } from '@/shared/components/layout/Sidebar'
-import { Header } from '@/shared/components/layout/Header'
-import { useUiStore } from '@/store/ui.store'
+import { Outlet } from "@tanstack/react-router";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
+import { useUiStore } from "@/store/ui.store";
 
 export const DashboardLayout = () => {
-  const { isSidebarOpen, closeSidebar } = useUiStore()
+  const { isSidebarOpen, closeSidebar } = useUiStore();
 
   return (
     <div className="flex min-h-screen bg-muted/30 text-foreground">
@@ -25,5 +25,5 @@ export const DashboardLayout = () => {
         </main>
       </div>
     </div>
-  )
-}
+  );
+};
