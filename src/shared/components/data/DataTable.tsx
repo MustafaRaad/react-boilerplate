@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type DataTableProps<TData> = {
-  columns: ColumnDef<TData, any>[];
+  columns: ColumnDef<TData, unknown>[];
   data: TData[];
   total?: number;
   page?: number;

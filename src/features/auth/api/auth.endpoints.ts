@@ -1,9 +1,9 @@
 import { type EndpointDef } from "@/core/api/endpoints";
 import {
   type LoginRequestLaravel,
+  type LoginResultLaravel,
   type MeResponse,
 } from "@/features/auth/types/auth.types";
-import { type AspNetEnvelope } from "@/core/types/api";
 
 export const authEndpoints = {
   login: {
