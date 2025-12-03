@@ -60,6 +60,8 @@
     "previous": "السابق",
     "next": "التالي",
     "export": "تصدير CSV",
+    "exportCsv": "تصدير CSV",
+    "clearFilters": "مسح جميع الفلاتر",
     "filter": "تصفية",
     "all": "الكل",
     "selectDate": "اختر نطاق التاريخ"

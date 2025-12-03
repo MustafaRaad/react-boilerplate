@@ -60,6 +60,8 @@
     "previous": "Previous",
     "next": "Next",
     "export": "Export CSV",
+    "exportCsv": "Export CSV",
+    "clearFilters": "Clear all filters",
     "filter": "Filter",
     "all": "All",
     "selectDate": "Select date range"

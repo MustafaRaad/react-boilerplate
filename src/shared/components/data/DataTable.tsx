@@ -3,7 +3,6 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
-  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -11,14 +10,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, Download } from "lucide-react";
+import { Download, FilterX } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
 import { Input } from "@/shared/components/ui/input";
 import {
   Select,
@@ -70,7 +69,6 @@ type DataTableProps<TData> = {
   onRowClick?: (row: TData) => void;
   mode: "server" | "client";
   enableColumnFilters?: boolean;
-  enableColumnVisibility?: boolean;
   showExport?: boolean;
   exportFileName?: string;
   emptyMessage?: string;
@@ -88,7 +86,6 @@ export function DataTable<TData>({
   onRowClick,
   mode,
   enableColumnFilters = false,
-  enableColumnVisibility = true,
   showExport = false,
   exportFileName,
   emptyMessage,
@@ -102,7 +99,6 @@ export function DataTable<TData>({
   });
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   useEffect(() => {
     setPagination({ pageIndex: page - 1, pageSize });
@@ -114,7 +110,6 @@ export function DataTable<TData>({
     state: {
       pagination,
       columnFilters,
-      columnVisibility,
     },
     pageCount:
       mode === "server" && total && pagination.pageSize
@@ -134,7 +129,6 @@ export function DataTable<TData>({
             onPageSizeChange?.(next.pageSize);
           },
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: enableColumnFilters
       ? getFilteredRowModel()
@@ -214,45 +208,57 @@ export function DataTable<TData>({
     });
   };
 
+  // Clear all filters handler
+  const handleClearFilters = () => {
+    table.resetColumnFilters();
+  };
+
+  const hasActiveFilters = columnFilters.length > 0;
+
   return (
     <div className={cn("w-full space-y-4", className)}>
-      {/* Top toolbar with export and column visibility */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          {showExport && (
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="me-2 h-4 w-4" />
-              {t("table.export")}
-            </Button>
-          )}
-        </div>
-        {enableColumnVisibility && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="ms-auto h-8">
-                {t("table.columns")} <ChevronDown className="ms-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
+      {/* Top toolbar with actions */}
+      {(showExport || enableColumnFilters) && (
+        <div className="flex items-center gap-2 px-1">
+          <TooltipProvider>
+            {showExport && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleExport}
+                    className="h-8 w-8 bg-card"
                   >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("table.exportCsv")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {enableColumnFilters && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleClearFilters}
+                    className="h-8 w-8 bg-card"
+                    disabled={!hasActiveFilters}
+                  >
+                    <FilterX className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("table.clearFilters")}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-hidden rounded-lg outline bg-card shadow-md shadow-primary/10">
