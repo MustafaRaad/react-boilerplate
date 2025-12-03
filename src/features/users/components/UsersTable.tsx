@@ -1,54 +1,31 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/shared/components/ui/input";
 import { backendKind } from "@/core/config/env";
 import { DataTable } from "@/shared/components/data/DataTable";
 import { useUsers } from "@/features/users/api/useUsers";
 import { useUsersFilters } from "@/features/users/hooks/useUsersFilters";
-import { useMemo } from "react";
 import { createUsersColumns } from "./UsersTable.columns";
 
 export const UsersTable = () => {
   const { t } = useTranslation("users");
-  const { query, search, setSearch, page, setPage, pageSize, setPageSize } =
-    useUsersFilters();
+  const { query, page, setPage, pageSize, setPageSize } = useUsersFilters();
   const usersQuery = useUsers(query);
-
   const columns = useMemo(() => createUsersColumns(t), [t]);
-
   const mode = backendKind === "laravel" ? "client" : "server";
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">{t("list.title")}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t("list.description")}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder={t("list.filters.searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64"
-          />
-        </div>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={usersQuery.data?.items ?? []}
-        total={usersQuery.data?.rowCount}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-        mode={mode}
-        enableColumnFilters={true}
-        showExport={true}
-        exportFileName="users"
-      />
-    </div>
+    <DataTable
+      columns={columns}
+      data={usersQuery.data?.items ?? []}
+      total={usersQuery.data?.rowCount}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={setPage}
+      onPageSizeChange={setPageSize}
+      mode={mode}
+      enableColumnFilters
+      showExport
+      exportFileName="users"
+    />
   );
 };

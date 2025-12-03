@@ -65,6 +65,7 @@ export const useWidgets = (query?: { search?: string }) =>
 
 Place under `src/features/<feature>/components/`.
 
+### Simple list example:
 ```tsx
 // src/features/widgets/components/WidgetsPage.tsx
 import { useWidgets } from "@/features/widgets/api/useWidgets";
@@ -86,6 +87,115 @@ export const WidgetsPage = () => {
   );
 };
 ```
+
+### DataTable list page (recommended pattern):
+
+**Step 1**: Define columns in a separate file with filter configuration:
+```tsx
+// src/features/widgets/components/WidgetsTable.columns.ts
+import type { ColumnDef, CellContext } from "@tanstack/react-table";
+import type { Widget } from "@/features/widgets/types";
+import { dateFilterFn, stringFilterFn } from "@/shared/components/data/filters";
+
+type TFn = (key: string) => string;
+
+export const createWidgetsColumns = (t: TFn): ColumnDef<Widget, unknown>[] => [
+  {
+    accessorKey: "name",
+    enableColumnFilter: true, // Enable text input filter
+    header: t("widgets.list.columns.name"),
+  },
+  {
+    accessorKey: "status",
+    enableColumnFilter: true,
+    header: t("widgets.list.columns.status"),
+    meta: {
+      filterVariant: "select", // Dropdown filter
+      filterOptions: [
+        { id: "active", name: t("widgets.status.active") },
+        { id: "inactive", name: t("widgets.status.inactive") },
+      ],
+    },
+  },
+  {
+    accessorKey: "created_at",
+    enableColumnFilter: true,
+    header: t("widgets.list.columns.createdAt"),
+    cell: ({ row }: CellContext<Widget, unknown>) => {
+      const date = row.getValue("created_at");
+      return date ? new Date(date as string).toLocaleDateString() : "-";
+    },
+    filterFn: dateFilterFn, // Date range filter
+    meta: {
+      filterVariant: "date",
+    },
+  },
+];
+```
+
+**Step 2**: Create table component using DataTable:
+```tsx
+// src/features/widgets/components/WidgetsTable.tsx
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { backendKind } from "@/core/config/env";
+import { DataTable } from "@/shared/components/data/DataTable";
+import { useWidgets } from "@/features/widgets/api/useWidgets";
+import { usePaginationState } from "@/shared/hooks/usePaginationState";
+import { createWidgetsColumns } from "./WidgetsTable.columns";
+
+export const WidgetsTable = () => {
+  const { t } = useTranslation("widgets");
+  const { page, setPage, pageSize, setPageSize } = usePaginationState();
+  
+  const widgetsQuery = useWidgets({ page, pageSize });
+  const columns = useMemo(() => createWidgetsColumns(t), [t]);
+  
+  // Use "client" mode for Laravel (client-side filtering/pagination)
+  // Use "server" mode for ASP.NET (server-side filtering/pagination)
+  const mode = backendKind === "laravel" ? "client" : "server";
+
+  return (
+    <DataTable
+      columns={columns}
+      data={widgetsQuery.data?.items ?? []}
+      total={widgetsQuery.data?.rowCount}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={setPage}
+      onPageSizeChange={setPageSize}
+      mode={mode}
+      enableColumnFilters // Enable column-level filtering
+      showExport // Enable CSV export
+      exportFileName="widgets"
+    />
+  );
+};
+```
+
+**DataTable features**:
+- Automatic column filtering (text input, select dropdown, date range)
+- CSV export with timestamp
+- Column visibility toggle
+- Server/client pagination modes
+- RTL support
+- Modern card-based styling with comfortable spacing
+
+**Filter variants**:
+- `"input"` (default) - Text search filter
+- `"select"` - Dropdown filter with options (requires `meta.filterOptions`)
+- `"date"` - Date range picker (requires `filterFn: dateFilterFn`)
+
+**Available filter functions** (`src/shared/components/data/filters.ts`):
+- `stringFilterFn` - Case-insensitive text search
+- `exactFilterFn` - Exact value matching
+- `dateFilterFn` - Date range filtering with date-fns
+
+**Column configuration**:
+- `enableColumnFilter: true/false` - Enable/disable filter for column
+- `meta.filterVariant` - Type of filter widget
+- `meta.filterOptions` - Options for select dropdown
+- `filterFn` - Custom filter function for complex filtering
 
 ## 5) Wire the route (TanStack Router)
 

@@ -48,6 +48,15 @@ declare module "@tanstack/react-table" {
   }
 }
 
+// Helper types for cleaner column definitions
+interface ColumnDefWithFilter {
+  enableColumnFilter?: boolean;
+  meta?: {
+    filterVariant?: "select" | "input" | "date";
+    filterOptions?: Array<{ id: string | number; name: string }>;
+  };
+}
+
 type DataTableProps<TData> = {
   columns: ColumnDef<TData, unknown>[];
   data: TData[];
@@ -139,6 +148,62 @@ export function DataTable<TData>({
 
   const pageSizeOptions = useMemo(() => [5, 10, 20, 30, 50, 100], []);
 
+  // Render filter component based on column configuration
+  const renderColumnFilter = (
+    column: ReturnType<typeof table.getAllColumns>[0]
+  ) => {
+    const columnDef = column.columnDef as ColumnDefWithFilter;
+    const shouldShowFilter = columnDef.enableColumnFilter !== false;
+    const filterVariant = columnDef.meta?.filterVariant;
+    const filterOptions = columnDef.meta?.filterOptions;
+
+    if (!shouldShowFilter || !column.getCanFilter()) return null;
+
+    const filterValue = column.getFilterValue();
+
+    if (filterVariant === "select" && Array.isArray(filterOptions)) {
+      return (
+        <Select
+          value={(filterValue as string) ?? "all"}
+          onValueChange={(value) =>
+            column.setFilterValue(value === "all" ? undefined : value)
+          }
+        >
+          <SelectTrigger className="h-8 w-full">
+            <SelectValue placeholder={t("table.filter")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("table.all")}</SelectItem>
+            {filterOptions.map((option) => (
+              <SelectItem key={option.id} value={String(option.id)}>
+                {option.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    if (filterVariant === "date") {
+      return (
+        <DateRangePicker
+          dateRange={filterValue as DateRange | undefined}
+          onDateRangeChange={(range) => column.setFilterValue(range)}
+          placeholder={t("table.selectDate")}
+        />
+      );
+    }
+
+    return (
+      <Input
+        placeholder={t("table.filter")}
+        value={(filterValue as string) ?? ""}
+        onChange={(e) => column.setFilterValue(e.target.value)}
+        className="h-8 w-full"
+      />
+    );
+  };
+
   // CSV Export handler
   const handleExport = () => {
     const timestamp = new Date()
@@ -216,12 +281,12 @@ export function DataTable<TData>({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border bg-card shadow-md shadow-primary/10">
+      <div className="overflow-hidden rounded-lg border outline-1 bg-card shadow-md shadow-primary/10">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <>
-                <TableRow key={headerGroup.id} className="bg-muted/50">
+                <TableRow key={headerGroup.id} className="bg-primary/15">
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
@@ -238,92 +303,16 @@ export function DataTable<TData>({
                 </TableRow>
                 {/* Column filters row */}
                 {enableColumnFilters && (
-                  <TableRow className="bg-muted/30">
-                    {headerGroup.headers.map((header) => {
-                      const columnDef = header.column.columnDef as {
-                        enableColumnFilter?: boolean;
-                        meta?: {
-                          filterVariant?: "select" | "input" | "date";
-                          filterOptions?: Array<{
-                            id: string | number;
-                            name: string;
-                          }>;
-                        };
-                      };
-                      const shouldShowFilter =
-                        columnDef.enableColumnFilter !== false;
-                      const filterVariant = columnDef.meta?.filterVariant;
-                      const filterOptions = columnDef.meta?.filterOptions;
-
-                      return (
-                        <TableHead
-                          key={`${header.id}-filter`}
-                          className="px-4 py-3"
-                        >
-                          {shouldShowFilter &&
-                          header.column.getCanFilter() &&
-                          !header.isPlaceholder ? (
-                            filterVariant === "select" &&
-                            Array.isArray(filterOptions) ? (
-                              <Select
-                                value={
-                                  (header.column.getFilterValue() as string) ??
-                                  "all"
-                                }
-                                onValueChange={(value) =>
-                                  header.column.setFilterValue(
-                                    value === "all" ? undefined : value
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="h-8 w-full">
-                                  <SelectValue
-                                    placeholder={t("table.filter")}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">
-                                    {t("table.all")}
-                                  </SelectItem>
-                                  {filterOptions.map((option) => (
-                                    <SelectItem
-                                      key={option.id}
-                                      value={String(option.id)}
-                                    >
-                                      {option.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : filterVariant === "date" ? (
-                              <DateRangePicker
-                                dateRange={
-                                  header.column.getFilterValue() as
-                                    | DateRange
-                                    | undefined
-                                }
-                                onDateRangeChange={(range) =>
-                                  header.column.setFilterValue(range)
-                                }
-                                placeholder={t("table.selectDate")}
-                              />
-                            ) : (
-                              <Input
-                                placeholder={t("table.filter")}
-                                value={
-                                  (header.column.getFilterValue() as string) ??
-                                  ""
-                                }
-                                onChange={(e) =>
-                                  header.column.setFilterValue(e.target.value)
-                                }
-                                className="h-8 w-full"
-                              />
-                            )
-                          ) : null}
-                        </TableHead>
-                      );
-                    })}
+                  <TableRow className="bg-muted/25">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={`${header.id}-filter`}
+                        className="px-4 py-3"
+                      >
+                        {!header.isPlaceholder &&
+                          renderColumnFilter(header.column)}
+                      </TableHead>
+                    ))}
                   </TableRow>
                 )}
               </>
