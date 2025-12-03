@@ -3,6 +3,7 @@
 Use this checklist to add endpoints, schemas/types, pages, and routes with the patterns used here (React 19 + Vite, TanStack Router/Query/Form, Zod, Tailwind/shadcn, ASP.NET + Laravel backends).
 
 ## 0) Backend & auth source of truth
+
 - Canonical doc: `docs/change-server-instructions.md`. Read it before touching auth/backend.
 - Default backend: Laravel POS.
   - Login `POST /auth/login` body `{ email, password, type: "web" }` → `{ access_token, token_type, expires_in }`.
@@ -66,6 +67,7 @@ export const useWidgets = (query?: { search?: string }) =>
 Place under `src/features/<feature>/components/`.
 
 ### Simple list example:
+
 ```tsx
 // src/features/widgets/components/WidgetsPage.tsx
 import { useWidgets } from "@/features/widgets/api/useWidgets";
@@ -91,6 +93,7 @@ export const WidgetsPage = () => {
 ### DataTable list page (recommended pattern):
 
 **Step 1**: Define columns in a separate file with filter configuration:
+
 ```tsx
 // src/features/widgets/components/WidgetsTable.columns.ts
 import type { ColumnDef, CellContext } from "@tanstack/react-table";
@@ -134,6 +137,7 @@ export const createWidgetsColumns = (t: TFn): ColumnDef<Widget, unknown>[] => [
 ```
 
 **Step 2**: Create table component using DataTable:
+
 ```tsx
 // src/features/widgets/components/WidgetsTable.tsx
 import { useMemo } from "react";
@@ -147,10 +151,10 @@ import { createWidgetsColumns } from "./WidgetsTable.columns";
 export const WidgetsTable = () => {
   const { t } = useTranslation("widgets");
   const { page, setPage, pageSize, setPageSize } = usePaginationState();
-  
+
   const widgetsQuery = useWidgets({ page, pageSize });
   const columns = useMemo(() => createWidgetsColumns(t), [t]);
-  
+
   // Use "client" mode for Laravel (client-side filtering/pagination)
   // Use "server" mode for ASP.NET (server-side filtering/pagination)
   const mode = backendKind === "laravel" ? "client" : "server";
@@ -166,32 +170,35 @@ export const WidgetsTable = () => {
       onPageSizeChange={setPageSize}
       mode={mode}
       enableColumnFilters // Enable column-level filtering
-      showExport // Enable CSV export
-      exportFileName="widgets"
+      showExport // Enable CSV export with auto-generated filename
     />
   );
 };
 ```
 
 **DataTable features**:
+
 - Automatic column filtering (text input, select dropdown, date range)
-- CSV export with timestamp
+- CSV export with auto-generated filename from URL path and timestamp
 - Column visibility toggle
 - Server/client pagination modes
 - RTL support
 - Modern card-based styling with comfortable spacing
 
 **Filter variants**:
+
 - `"input"` (default) - Text search filter
 - `"select"` - Dropdown filter with options (requires `meta.filterOptions`)
 - `"date"` - Date range picker (requires `filterFn: dateFilterFn`)
 
 **Available filter functions** (`src/shared/components/data/filters.ts`):
+
 - `stringFilterFn` - Case-insensitive text search
 - `exactFilterFn` - Exact value matching
 - `dateFilterFn` - Date range filtering with date-fns
 
 **Column configuration**:
+
 - `enableColumnFilter: true/false` - Enable/disable filter for column
 - `meta.filterVariant` - Type of filter widget
 - `meta.filterOptions` - Options for select dropdown

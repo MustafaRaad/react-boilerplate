@@ -3,13 +3,13 @@ import { useTranslation } from "react-i18next";
 import { backendKind } from "@/core/config/env";
 import { DataTable } from "@/shared/components/data/DataTable";
 import { useUsers } from "@/features/users/api/useUsers";
-import { useUsersFilters } from "@/features/users/hooks/useUsersFilters";
+import { usePaginationState } from "@/shared/hooks/usePaginationState";
 import { createUsersColumns } from "./UsersTable.columns";
 
 export const UsersTable = () => {
   const { t } = useTranslation("users");
-  const { query, page, setPage, pageSize, setPageSize } = useUsersFilters();
-  const usersQuery = useUsers(query);
+  const { page, setPage, pageSize, setPageSize } = usePaginationState();
+  const usersQuery = useUsers({ page, pageSize });
   const columns = useMemo(() => createUsersColumns(t), [t]);
   const mode = backendKind === "laravel" ? "client" : "server";
 
@@ -25,7 +25,6 @@ export const UsersTable = () => {
       mode={mode}
       enableColumnFilters
       showExport
-      exportFileName="users"
     />
   );
 };

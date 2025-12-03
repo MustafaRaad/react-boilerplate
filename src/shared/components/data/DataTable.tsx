@@ -37,6 +37,7 @@ import {
 } from "@/shared/components/ui/table";
 import { DateRangePicker } from "@/shared/components/ui/date-picker";
 import { DataTablePagination } from "@/shared/components/data/DataTablePagination";
+import { exportToCsv } from "@/shared/components/data/export-csv";
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +90,7 @@ export function DataTable<TData>({
   enableColumnFilters = false,
   enableColumnVisibility = true,
   showExport = false,
-  exportFileName = "export",
+  exportFileName,
   emptyMessage,
   className,
 }: DataTableProps<TData>) {
@@ -205,38 +206,12 @@ export function DataTable<TData>({
 
   // CSV Export handler
   const handleExport = () => {
-    const timestamp = new Date()
-      .toISOString()
-      .slice(0, 16)
-      .replace(/[-:]/g, "")
-      .replace("T", "-");
-    const fileName = `${exportFileName}-${timestamp}.csv`;
-
-    const headers = columns
-      .filter((col) => "accessorKey" in col)
-      .map((col) => {
-        const accessorCol = col as { accessorKey?: string; id?: string };
-        return accessorCol.accessorKey || accessorCol.id || "";
-      });
-
-    const rows = table.getFilteredRowModel().rows.map((row) =>
-      headers.map((header) => {
-        const value = (row.original as Record<string, unknown>)[header];
-        return value != null ? String(value).replace(/"/g, '""') : "";
-      })
-    );
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    const rows = table.getFilteredRowModel().rows.map((row) => row.original);
+    exportToCsv({
+      fileName: exportFileName,
+      columns,
+      rows,
+    });
   };
 
   return (
