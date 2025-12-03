@@ -217,137 +217,134 @@ export function DataTable<TData>({
 
   return (
     <div className={cn("w-full space-y-4", className)}>
-      {/* Top toolbar with actions */}
-      {(showExport || enableColumnFilters) && (
-        <div className="flex items-center gap-2 px-1">
-          <TooltipProvider>
-            {showExport && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleExport}
-                    className="h-8 w-8 bg-card"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("table.exportCsv")}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {enableColumnFilters && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleClearFilters}
-                    className="h-8 w-8 bg-card"
-                    disabled={!hasActiveFilters}
-                  >
-                    <FilterX className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t("table.clearFilters")}</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </TooltipProvider>
-        </div>
-      )}
-
       {/* Table */}
-      <div className="overflow-hidden rounded-lg outline bg-card shadow-md shadow-primary/10">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <>
-                <TableRow key={headerGroup.id} className="bg-primary/5">
-                  {headerGroup.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      className="h-12 px-4 font-semibold"
+      <div className="bg-card rounded-lg py-4 px-4 border">
+        {/* Top toolbar with actions */}
+        {(showExport || enableColumnFilters) && (
+          <div className="flex items-center gap-2 px-1">
+            <TooltipProvider>
+              {showExport && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleExport}
+                      className="bg-card"
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-                {/* Column filters row */}
-                {enableColumnFilters && (
-                  <TableRow className="bg-primary/5">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t("table.exportCsv")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {enableColumnFilters && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleClearFilters}
+                      className="bg-card"
+                      disabled={!hasActiveFilters}
+                    >
+                      <FilterX className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t("table.clearFilters")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </TooltipProvider>
+          </div>
+        )}
+        <div className="border shadow rounded-lg my-4 overflow-hidden">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <>
+                  <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={`${header.id}-filter`}
-                        className="px-4 py-3"
-                      >
-                        {!header.isPlaceholder &&
-                          renderColumnFilter(header.column)}
+                      <TableHead key={header.id} className="h-12 px-4">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </TableHead>
                     ))}
                   </TableRow>
-                )}
-              </>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={() => onRowClick?.(row.original)}
-                  className={cn(
-                    "transition-colors",
-                    onRowClick && "cursor-pointer hover:bg-muted/60"
+                  {/* Column filters row */}
+                  {enableColumnFilters && (
+                    <TableRow className="bg-primary/10">
+                      {headerGroup.headers.map((header) => (
+                        <TableHead
+                          key={`${header.id}-filter`}
+                          className="px-4 py-3"
+                        >
+                          {!header.isPlaceholder &&
+                            renderColumnFilter(header.column)}
+                        </TableHead>
+                      ))}
+                    </TableRow>
                   )}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-4 py-3">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                </>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    onClick={() => onRowClick?.(row.original)}
+                    className={cn(
+                      "transition-colors",
+                      onRowClick && "cursor-pointer hover:bg-muted/60"
+                    )}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4 py-3">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-32 text-center text-muted-foreground"
+                  >
+                    {emptyMessage || t("table.empty")}
+                  </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-32 text-center text-muted-foreground"
-                >
-                  {emptyMessage || t("table.empty")}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {/* Pagination Controls */}
+        <DataTablePagination
+          pageIndex={pagination.pageIndex}
+          pageSize={pagination.pageSize}
+          pageCount={pageCount}
+          canPreviousPage={canPrevious}
+          canNextPage={canNext}
+          onPreviousPage={() => table.previousPage()}
+          onNextPage={() => table.nextPage()}
+          onPageSizeChange={(newSize) => {
+            table.setPageSize(newSize);
+            onPageSizeChange?.(newSize);
+          }}
+        />
       </div>
-
-      {/* Pagination Controls */}
-      <DataTablePagination
-        pageIndex={pagination.pageIndex}
-        pageSize={pagination.pageSize}
-        pageCount={pageCount}
-        canPreviousPage={canPrevious}
-        canNextPage={canNext}
-        onPreviousPage={() => table.previousPage()}
-        onNextPage={() => table.nextPage()}
-        onPageSizeChange={(newSize) => {
-          table.setPageSize(newSize);
-          onPageSizeChange?.(newSize);
-        }}
-      />
     </div>
   );
 }

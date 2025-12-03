@@ -8,7 +8,8 @@
       "phone": "رقم الهاتف",
       "status": "الحالة",
       "roles": "الأدوار",
-      "createdAt": "تاريخ الإنشاء"
+      "createdAt": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
     },
     "filters": {
       "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني",
@@ -20,6 +21,8 @@
       }
     },
     "actions": {
+      "title": "الإجراءات",
+      "openMenu": "فتح القائمة",
       "create": "إضافة مستخدم",
       "edit": "تعديل",
       "delete": "حذف"

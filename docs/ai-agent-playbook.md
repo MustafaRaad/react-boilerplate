@@ -179,11 +179,12 @@ export const WidgetsTable = () => {
 **DataTable features**:
 
 - Automatic column filtering (text input, select dropdown, date range)
+- Smart clear filters button (only shows when filters are active)
 - CSV export with auto-generated filename from URL path and timestamp
-- Column visibility toggle
 - Server/client pagination modes
-- RTL support
-- Modern card-based styling with comfortable spacing
+- Full RTL (right-to-left) support with logical CSS properties
+- Modern card-based styling with comfortable spacing (bg-card, shadow-md, rounded-lg)
+- Icon-only toolbar buttons with tooltips for clean UI
 
 **Filter variants**:
 
@@ -198,6 +199,88 @@ export const WidgetsTable = () => {
 - `dateFilterFn` - Date range filtering with date-fns
 
 **Column configuration**:
+
+- `enableColumnFilter: true/false` - Enable/disable filter for column (defaults to true when `enableColumnFilters` is true on DataTable)
+- `meta.filterVariant` - Type of filter widget (`"input"`, `"select"`, `"date"`)
+- `meta.filterOptions` - Options for select dropdown: `Array<{ id: string | number; name: string }>`
+- `filterFn` - Custom filter function for complex filtering (e.g., `dateFilterFn`, `rolesFilterFn`)
+- `accessorKey` - Direct property access (enables automatic filtering)
+- `accessorFn` - Custom accessor function (use for computed/nested values, required for filtering columns with `id` only)
+
+**Custom filter functions for select dropdowns**:
+
+When using select filters with custom logic (e.g., filtering roles that can be string or array), create a custom `FilterFn`:
+
+```tsx
+import type { FilterFn } from "@tanstack/react-table";
+
+const rolesFilterFn: FilterFn<User> = (row, _columnId, filterValue) => {
+  const user = row.original;
+  const selectedRole = filterValue as string;
+
+  // Handle single role string
+  if (user.role) {
+    return user.role.toLowerCase() === selectedRole.toLowerCase();
+  }
+
+  // Handle roles array
+  if (user.roles && user.roles.length > 0) {
+    return user.roles.some(role =>
+      role.name.toLowerCase() === selectedRole.toLowerCase()
+    );
+  }
+
+  return false;
+};
+
+// In column definition:
+{
+  id: "roles",
+  accessorFn: (row) => {
+    // Provide accessor for filtering to work
+    if (row.roles && row.roles.length > 0) {
+      return row.roles.map(role => role.name).join(", ");
+    }
+    return row.role || "";
+  },
+  enableColumnFilter: true,
+  header: t("list.columns.roles"),
+  cell: ({ row }) => {
+    const user = row.original;
+    if (user.roles && user.roles.length > 0) {
+      return user.roles.map(role => role.name).join(", ");
+    }
+    return user.role || "-";
+  },
+  filterFn: rolesFilterFn,
+  meta: {
+    filterVariant: "select",
+    filterOptions: [
+      { id: "Admin", name: "Admin" },
+      { id: "User", name: "User" },
+    ],
+  },
+}
+```
+
+**Important**: For columns with `id` instead of `accessorKey`, you **must** provide an `accessorFn` for filtering to work properly. TanStack Table's `getCanFilter()` requires an accessor to enable filtering.
+
+**DataTable props**:
+
+- `columns` - Column definitions with filter configuration
+- `data` - Array of data items
+- `total` - Total row count (for server-side pagination)
+- `page` - Current page number (1-indexed)
+- `pageSize` - Items per page
+- `onPageChange` - Page change handler
+- `onPageSizeChange` - Page size change handler
+- `mode` - `"server"` or `"client"` pagination mode
+- `enableColumnFilters` - Enable column filtering UI (defaults to `true`)
+- `showExport` - Show CSV export button (defaults to `false`)
+- `exportFileName` - Optional custom export filename (auto-generated from URL if not provided)
+- `emptyMessage` - Custom empty state message
+- `onRowClick` - Optional row click handler
+- `className` - Additional CSS classes
 
 - `enableColumnFilter: true/false` - Enable/disable filter for column
 - `meta.filterVariant` - Type of filter widget
@@ -241,6 +324,9 @@ const routeTree = rootRoute.addChildren([
 - No ad-hoc Zod schemas inside components or API hooks.
 - No new fetch/axios wrappers; always use `apiFetch` + `useApiQuery`/`useApiMutation`.
 - Keep error message strings as translation keys (e.g., `validation.email.required`).
+- Don't use directional properties (left/right, ml/mr, pl/pr) - always use logical properties (start/end, ms/me, ps/pe) for RTL support.
+- For columns with `id` instead of `accessorKey`, always provide `accessorFn` for filtering to work.
+- Don't use numeric IDs in select filter options when filtering by name - use the name as both `id` and `name` for consistency.
 
 ## 8) i18n translations when adding data/columns
 

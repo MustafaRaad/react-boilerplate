@@ -8,7 +8,8 @@
       "phone": "Phone",
       "status": "Status",
       "roles": "Roles",
-      "createdAt": "Created at"
+      "createdAt": "Created at",
+      "actions": "Actions"
     },
     "filters": {
       "searchPlaceholder": "Search by name or email",
@@ -20,6 +21,8 @@
       }
     },
     "actions": {
+      "title": "Actions",
+      "openMenu": "Open menu",
       "create": "Add user",
       "edit": "Edit",
       "delete": "Delete"
