@@ -178,7 +178,7 @@ export function DataTable<TData>({
   return (
     <div className={cn("w-full space-y-4", className)}>
       {/* Top toolbar with export and column visibility */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           {showExport && (
             <Button variant="outline" size="sm" onClick={handleExport}>
@@ -216,14 +216,17 @@ export function DataTable<TData>({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-lg border bg-card shadow-md shadow-primary/10">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <>
-                <TableRow key={headerGroup.id}>
+                <TableRow key={headerGroup.id} className="bg-muted/50">
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      className="h-12 px-4 font-semibold"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -235,7 +238,7 @@ export function DataTable<TData>({
                 </TableRow>
                 {/* Column filters row */}
                 {enableColumnFilters && (
-                  <TableRow>
+                  <TableRow className="bg-muted/30">
                     {headerGroup.headers.map((header) => {
                       const columnDef = header.column.columnDef as {
                         enableColumnFilter?: boolean;
@@ -253,7 +256,10 @@ export function DataTable<TData>({
                       const filterOptions = columnDef.meta?.filterOptions;
 
                       return (
-                        <TableHead key={`${header.id}-filter`} className="p-2">
+                        <TableHead
+                          key={`${header.id}-filter`}
+                          className="px-4 py-3"
+                        >
                           {shouldShowFilter &&
                           header.column.getCanFilter() &&
                           !header.isPlaceholder ? (
@@ -330,10 +336,13 @@ export function DataTable<TData>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => onRowClick?.(row.original)}
-                  className={onRowClick ? "cursor-pointer" : undefined}
+                  className={cn(
+                    "transition-colors",
+                    onRowClick && "cursor-pointer hover:bg-muted/60"
+                  )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="px-4 py-3">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -346,7 +355,7 @@ export function DataTable<TData>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-32 text-center text-muted-foreground"
                 >
                   {emptyMessage || t("table.empty")}
                 </TableCell>
@@ -357,7 +366,7 @@ export function DataTable<TData>({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between px-2">
+      <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"

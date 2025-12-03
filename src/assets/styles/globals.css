@@ -22,7 +22,7 @@
   --scrollbar-thumb-hover: color-mix(in oklch, var(--primary) 88%, white 12%);
   --scrollbar-thumb-active: color-mix(in oklch, var(--primary) 76%, black 24%);
   --radius: 0.625rem;
-  --background: oklch(94.977% 0.00871 248.203);
+  --background: oklch(95.597% 0.00598 240.368);
   --foreground: oklch(20% 0.02 264);
 
   --card: oklch(100% 0 0);
