@@ -3,6 +3,7 @@
 Guidance for future agents when switching or extending backend integrations (auth, identity, header UI).
 
 ## Current Backend Assumptions (Laravel POS)
+
 - Login `POST /auth/login` body: `{ email, password, type: "web" }`.
 - Login response: `{ message, access_token, token_type, expires_in }`.
 - Tokens stored in auth store as:
@@ -27,6 +28,7 @@ Guidance for future agents when switching or extending backend integrations (aut
 - Header identity uses only `auth-storage.user`; displayName prefers `name -> email -> t("header.user")`; role is optional/null; avatar uses `user.image` if present otherwise initials/icon; no `/me` fetch in header.
 
 ## Files to Update When Changing Backend
+
 - Types: `src/features/auth/types/auth.types.ts` (AuthUser/AuthPos/MeResponse/AuthTokens).
 - Auth endpoints: `src/features/auth/api/auth.endpoints.ts`.
 - Auth store: `src/store/auth.store.ts` (shape persisted + expiry logic).
@@ -35,17 +37,19 @@ Guidance for future agents when switching or extending backend integrations (aut
 - Header identity: `src/shared/components/layout/dashboard-header/*` (useSettingsMenu, SettingsMenu, UserAvatar/UserProfileSection/types) to ensure display matches new shapes.
 
 ## Steps for Switching to a New Backend
-1) **Define shapes**: Document login response, /me (or equivalent) response, token semantics (type, expiry, refresh), and any role/permission fields.
-2) **Update types**: Adjust `AuthTokens`, `AuthUser`, `AuthPos`, `MeResponse` (or new response types) in `auth.types.ts`.
-3) **Endpoints**: Point `auth.endpoints.ts` to the new paths and methods; remove unused endpoints.
-4) **Client normalization**: In `api/client.ts`, normalize login response into `AuthTokens`; set Authorization header to match backend expectations (token type casing, header name); remove refresh logic unless backend provides it.
-5) **Login hook**: Map the new login response to tokens, then fetch/normalize user profile into the store; keep “store tokens first, then /me” pattern if needed for auth headers.
-6) **Store**: Persist the normalized fields (user/pos/permissions/fees or their new equivalents) and adjust expiry checks to new token fields.
-7) **Header identity**: Ensure `useSettingsMenu` still reads only from auth store; update displayName/role/image logic if shapes change (auth store remains the single source of truth).
-8) **Audit consumers**: Search for `useAuthStore` and update any code assuming old fields (e.g., roles array vs string role).
-9) **Tests/lint**: Run `pnpm lint` and relevant tests; address only new errors introduced by your changes.
+
+1. **Define shapes**: Document login response, /me (or equivalent) response, token semantics (type, expiry, refresh), and any role/permission fields.
+2. **Update types**: Adjust `AuthTokens`, `AuthUser`, `AuthPos`, `MeResponse` (or new response types) in `auth.types.ts`.
+3. **Endpoints**: Point `auth.endpoints.ts` to the new paths and methods; remove unused endpoints.
+4. **Client normalization**: In `api/client.ts`, normalize login response into `AuthTokens`; set Authorization header to match backend expectations (token type casing, header name); remove refresh logic unless backend provides it.
+5. **Login hook**: Map the new login response to tokens, then fetch/normalize user profile into the store; keep “store tokens first, then /me” pattern if needed for auth headers.
+6. **Store**: Persist the normalized fields (user/pos/permissions/fees or their new equivalents) and adjust expiry checks to new token fields.
+7. **Header identity**: Ensure `useSettingsMenu` still reads only from auth store; update displayName/role/image logic if shapes change (auth store remains the single source of truth).
+8. **Audit consumers**: Search for `useAuthStore` and update any code assuming old fields (e.g., roles array vs string role).
+9. **Tests/lint**: Run `pnpm lint` and relevant tests; address only new errors introduced by your changes.
 
 ## If Switching to ASP.NET
+
 - **Expected shapes (example; confirm real API)**:
   - Login envelope often: `{ code, message, result: { accessToken, refreshToken?, accessExpiresAtUtc?, refreshExpiresAtUtc? } }`.
   - `/me` often: `{ code, message, result: { id, name, email, roles: Role[] } }`.
@@ -69,12 +73,129 @@ Guidance for future agents when switching or extending backend integrations (aut
 - **Validation**:
   - Smoke-test login + `/me` flow, verify Authorization header matches backend expectation, and ensure header UI shows the expected name/avatar fallback.
 
+### ASP.NET Server-Side Pagination
+
+When ASP.NET provides **server-side pagination** (backend filters/sorts/pages data), update the following:
+
+**1. Environment Configuration**:
+
+```bash
+# .env
+VITE_BACKEND_KIND=aspnet
+```
+
+**2. API Hooks Pattern**:
+
+```ts
+// src/features/<feature>/api/use<Feature>s.ts
+export const useWidgets = (query: {
+  page: number;
+  pageSize: number;
+  search?: string;
+}) => {
+  return useApiQuery<PagedResult<Widget>>({
+    queryKey: ["widgets", "asp-net", query],
+    queryFn: async () => {
+      const response = await apiFetch<PagedResult<Widget>>(
+        endpoints.widgets.list,
+        {
+          query, // Send pagination params to server
+          overrideBackendKind: "asp-net",
+        }
+      );
+      return response;
+    },
+    initialData: emptyPagedResult(),
+  });
+};
+```
+
+**3. DataTable Component Configuration**:
+
+```tsx
+// src/features/<feature>/components/<Feature>Table.tsx
+import { backendKind } from "@/core/config/env";
+
+export const WidgetsTable = () => {
+  const { page, setPage, pageSize, setPageSize } = usePaginationState();
+  const widgetsQuery = useWidgets({ page, pageSize });
+
+  // Server mode for ASP.NET (backend handles filtering/pagination)
+  const mode = backendKind === "asp-net" ? "server" : "client";
+
+  return (
+    <DataTable
+      mode={mode} // "server" for ASP.NET
+      columns={columns}
+      data={widgetsQuery.data?.items ?? []}
+      total={widgetsQuery.data?.rowCount} // Total count from server
+      page={page}
+      pageSize={pageSize}
+      onPageChange={setPage}
+      onPageSizeChange={setPageSize}
+      enableColumnFilters // Filters work client-side on current page data
+    />
+  );
+};
+```
+
+**4. Backend Query Parameters**:
+ASP.NET endpoints typically expect:
+
+- `page` or `pageNumber` (1-based index)
+- `pageSize` or `limit`
+- `search` or `query` (optional global search)
+- Column-specific filters (e.g., `status`, `dateFrom`, `dateTo`)
+
+Adjust `endpoints.<feature>.list` to match your API's query parameter names.
+
+**5. Filter Behavior with Server Pagination**:
+
+- **Column filters** (`enableColumnFilters`) work **client-side** on the current page of data
+- For **server-side filtering**, pass filter values in the query parameters to the API hook
+- Consider extending the hook to accept filter parameters:
+  ```ts
+  export const useWidgets = (query: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    status?: string; // Server-side filter
+    dateFrom?: string; // Server-side filter
+    dateTo?: string; // Server-side filter
+  }) => {
+    /* ... */
+  };
+  ```
+
+**6. Response Normalization**:
+The `apiFetch` client automatically normalizes ASP.NET paged responses to `PagedResult<T>`:
+
+```ts
+// ASP.NET envelope: { code, message, result: { items, currentPage, pageSize, rowCount, pageCount } }
+// Normalized to: { items, currentPage, pageSize, rowCount, pageCount }
+```
+
+Ensure your schemas in `src/core/schemas/endpoints.schema.ts` match the ASP.NET response structure.
+
+**7. Pagination State Management**:
+
+- Use `usePaginationState` hook for consistent page/pageSize state
+- Hook automatically persists to URL query params (optional)
+- On page/pageSize change, React Query refetches with new parameters
+
+**Key Differences**:
+
+- **Laravel (client mode)**: All data fetched at once, filtering/pagination handled by TanStack Table
+- **ASP.NET (server mode)**: Only current page fetched, backend handles pagination, client-side column filters work on visible data only
+
 ## Non-Goals / Do Nots
+
 - Do not reintroduce next-auth/getServerSession/ensureMe/getStoredMe or client-side `/me` fetches inside header.
 - Do not derive role from permissions unless explicitly required; keep role nullable until backend provides it.
 - Do not change auth store persistence keys unless you also handle migrations (localStorage) or communicate breaking changes.
 
 ## AI Agent Checklist (do this before changing backends)
+
 - Read this doc fully and confirm the target backend shapes (login + `/me`) are known and written down.
 - Update types first (`auth.types.ts`) and keep auth store the single source of truth for identity.
 - Adjust endpoints and API client normalization to match the backend’s auth headers and token semantics.

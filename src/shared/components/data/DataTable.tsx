@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ArrowRight, ChevronDown, Download } from "lucide-react";
+import { ChevronDown, Download } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { DateRangePicker } from "@/shared/components/ui/date-picker";
+import { DataTablePagination } from "@/shared/components/data/DataTablePagination";
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
@@ -145,8 +146,6 @@ export function DataTable<TData>({
   const pageCount = table.getPageCount() || 1;
   const canPrevious = table.getCanPreviousPage();
   const canNext = table.getCanNextPage();
-
-  const pageSizeOptions = useMemo(() => [5, 10, 20, 30, 50, 100], []);
 
   // Render filter component based on column configuration
   const renderColumnFilter = (
@@ -281,12 +280,12 @@ export function DataTable<TData>({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border outline-1 bg-card shadow-md shadow-primary/10">
+      <div className="overflow-hidden rounded-lg outline bg-card shadow-md shadow-primary/10">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <>
-                <TableRow key={headerGroup.id} className="bg-primary/15">
+                <TableRow key={headerGroup.id} className="bg-primary/5">
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
@@ -303,7 +302,7 @@ export function DataTable<TData>({
                 </TableRow>
                 {/* Column filters row */}
                 {enableColumnFilters && (
-                  <TableRow className="bg-muted/25">
+                  <TableRow className="bg-primary/5">
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={`${header.id}-filter`}
@@ -355,58 +354,19 @@ export function DataTable<TData>({
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-2"
-            onClick={() => table.previousPage()}
-            disabled={!canPrevious}
-          >
-            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-            <span>{t("table.previous")}</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-2"
-            onClick={() => table.nextPage()}
-            disabled={!canNext}
-          >
-            <span>{t("table.next")}</span>
-            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">
-              {t("table.page")} {pagination.pageIndex + 1} {t("table.of")}{" "}
-              {pageCount}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">{t("table.perPage")}:</p>
-          <Select
-            value={`${pagination.pageSize}`}
-            onValueChange={(value) => {
-              const newSize = Number(value);
-              table.setPageSize(newSize);
-              onPageSizeChange?.(newSize);
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {pageSizeOptions.map((size) => (
-                <SelectItem key={size} value={`${size}`}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <DataTablePagination
+        pageIndex={pagination.pageIndex}
+        pageSize={pagination.pageSize}
+        pageCount={pageCount}
+        canPreviousPage={canPrevious}
+        canNextPage={canNext}
+        onPreviousPage={() => table.previousPage()}
+        onNextPage={() => table.nextPage()}
+        onPageSizeChange={(newSize) => {
+          table.setPageSize(newSize);
+          onPageSizeChange?.(newSize);
+        }}
+      />
     </div>
   );
 }
