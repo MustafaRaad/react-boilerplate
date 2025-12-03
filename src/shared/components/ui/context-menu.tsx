@@ -72,7 +72,7 @@ function ContextMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto" />
+      <ChevronRightIcon className="ltr:ml-auto rtl:mr-auto rtl:-scale-x-100" />
     </ContextMenuPrimitive.SubTrigger>
   )
 }
@@ -150,9 +150,9 @@ function ContextMenuCheckboxItem({
       checked={checked}
       {...props}
     >
-      <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+      <span className="pointer-events-none absolute ltr:left-2 rtl:right-2 flex size-3.5 items-center justify-center">
         <ContextMenuPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
+          <CheckIcon className="size-4 rtl:-scale-x-100" />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -174,9 +174,9 @@ function ContextMenuRadioItem({
       )}
       {...props}
     >
-      <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
+      <span className="pointer-events-none absolute ltr:left-2 rtl:right-2 flex size-3.5 items-center justify-center">
         <ContextMenuPrimitive.ItemIndicator>
-          <CircleIcon className="size-2 fill-current" />
+          <CircleIcon className="size-2 fill-current rtl:-scale-x-100" />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -225,7 +225,7 @@ function ContextMenuShortcut({
     <span
       data-slot="context-menu-shortcut"
       className={cn(
-        "text-muted-foreground ml-auto text-xs tracking-widest",
+        "text-muted-foreground ltr:ml-auto rtl:mr-auto text-xs tracking-widest",
         className
       )}
       {...props}
