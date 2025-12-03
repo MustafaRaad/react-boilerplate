@@ -52,7 +52,17 @@
     "search": "بحث",
     "empty": "لا توجد بيانات",
     "page": "الصفحة",
-    "perPage": "عدد الصفوف"
+    "of": "من",
+    "perPage": "عدد الصفوف",
+    "showing": "عرض",
+    "results": "نتيجة",
+    "columns": "الأعمدة",
+    "previous": "السابق",
+    "next": "التالي",
+    "export": "تصدير CSV",
+    "filter": "تصفية",
+    "all": "الكل",
+    "selectDate": "اختر نطاق التاريخ"
   },
   "actions": {
     "save": "حفظ",

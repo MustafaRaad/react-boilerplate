@@ -52,7 +52,17 @@
     "search": "Search",
     "empty": "No data available",
     "page": "Page",
-    "perPage": "Rows per page"
+    "of": "of",
+    "perPage": "Rows per page",
+    "showing": "Showing",
+    "results": "results",
+    "columns": "Columns",
+    "previous": "Previous",
+    "next": "Next",
+    "export": "Export CSV",
+    "filter": "Filter",
+    "all": "All",
+    "selectDate": "Select date range"
   },
   "actions": {
     "save": "Save",

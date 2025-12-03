@@ -45,6 +45,9 @@ export const UsersTable = () => {
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
         mode={mode}
+        enableColumnFilters={true}
+        showExport={true}
+        exportFileName="users"
       />
     </div>
   );
