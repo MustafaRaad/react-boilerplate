@@ -47,8 +47,7 @@ export const laravelLoginSchema = z.object({
   message: z.string(),
   access_token: z.string(),
   token_type: z.string(), // "bearer"
-  expires_in: z.number(), // e.g. 3600
-  refresh_token: z.string().optional(),
+  expires_in: z.number(), // e.g. 43200
 });
 
 export const laravelRefreshSchema = z.object({
@@ -56,7 +55,42 @@ export const laravelRefreshSchema = z.object({
   access_token: z.string(),
   token_type: z.string(), // "bearer"
   expires_in: z.number(),
-  refresh_token: z.string().optional(),
+});
+
+export const laravelMeSchema = z.object({
+  fees: z.number(),
+  pos: z.object({
+    pos_name: z.string(),
+    pos_lat: z.number(),
+    pos_lng: z.number(),
+    id: z.number(),
+  }),
+  user: z.object({
+    id: z.number(),
+    name: z.string().nullable(),
+    email: z.string().nullable(),
+    phone_no: z.string().nullable(),
+  }),
+  perm: z.array(z.string()),
+});
+
+export const aspNetMeSchema = z.object({
+  id: z.string(),
+  isDeleted: z.boolean(),
+  username: z.string(),
+  phoneNumber: z.string(),
+  firstName: z.string(),
+  secondName: z.string(),
+  lastName: z.string(),
+  surname: z.string(),
+  fullName: z.string(),
+  photo: z.string(),
+  status: z.number(),
+  role: z.object({
+    id: z.string(),
+    isDeleted: z.boolean(),
+    name: z.string(),
+  }),
 });
 
 export type AuthLoginFormValues = z.infer<typeof authLoginFormSchema>;
