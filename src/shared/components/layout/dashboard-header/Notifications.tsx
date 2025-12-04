@@ -12,6 +12,7 @@ import {
 import { useDirection } from "@/shared/hooks/useDirection";
 import { cn } from "@/lib/utils";
 import type { HeaderNotification } from "@/shared/components/layout/dashboard-header/types";
+import { Badge } from "../../ui/badge";
 
 function NotificationCard({
   notification,
@@ -96,16 +97,16 @@ export default function Notifications() {
         <Button
           variant="outline"
           size="sm"
-          className="transition-transform duration-300 hover:-translate-y-0.5 focus-visible:ring-2 bg-sidebar"
+          className="text-sm transition-transform duration-300 hover:-translate-y-0.5 focus-visible:ring-2 bg-sidebar"
           aria-label={t("notifications.button.open")}
         >
-          <Bell className="size-4" aria-hidden />
+          <Bell />
           <span className="hidden md:block">
             {t("notifications.button.label")}
             {unreadCount > 0 ? (
-              <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-1 text-[0.7rem] font-semibold text-primary-foreground">
+              <Badge className="rounded-full h-fit w-fit text-xs ms-1">
                 {unreadCount}
-              </span>
+              </Badge>
             ) : null}
           </span>
         </Button>
