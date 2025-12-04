@@ -4,7 +4,7 @@ import { backendKind } from "@/core/config/env";
 import { DataTable } from "@/shared/components/data/DataTable";
 import { useUsers } from "@/features/users/api/useUsers";
 import { usePaginationState } from "@/shared/hooks/usePaginationState";
-import { createUsersColumns } from "./UsersTable.columns";
+import { createUsersColumns } from "./UsersTable.columns.tsx";
 
 export const UsersTable = () => {
   const { t } = useTranslation("users");

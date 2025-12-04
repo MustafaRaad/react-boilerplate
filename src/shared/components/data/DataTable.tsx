@@ -280,7 +280,7 @@ export function DataTable<TData>({
                   </TableRow>
                   {/* Column filters row */}
                   {enableColumnFilters && (
-                    <TableRow className="bg-primary/10">
+                    <TableRow className="bg-muted/50">
                       {headerGroup.headers.map((header) => (
                         <TableHead
                           key={`${header.id}-filter`}
