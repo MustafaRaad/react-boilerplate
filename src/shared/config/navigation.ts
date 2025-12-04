@@ -11,25 +11,25 @@ export type AppNavItem = {
 
 export const mainNavItems: AppNavItem[] = [
   {
-    label: "Dashboard",
+    label: "navigation.dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     feature: "dashboard",
   },
   {
-    label: "Users",
+    label: "navigation.users",
     href: "/dashboard/users",
     icon: Users,
     feature: "users",
   },
   {
-    label: "Roles",
+    label: "navigation.roles",
     href: "/dashboard/roles",
     icon: Shield,
     feature: "roles",
   },
   {
-    label: "Statistics",
+    label: "navigation.statistics",
     href: "/dashboard/statistics",
     icon: TrendingUp,
     feature: "statistics",

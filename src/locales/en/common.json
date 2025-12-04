@@ -12,7 +12,8 @@
   "navigation": {
     "dashboard": "Dashboard",
     "users": "Users",
-    "roles": "Roles"
+    "roles": "Roles",
+    "statistics": "Statistics"
   },
   "header": {
     "settings": "Settings",

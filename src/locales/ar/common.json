@@ -10,8 +10,9 @@
   },
   "navigation": {
     "dashboard": "لوحة التحكم",
-    "users": "المستخدمون",
-    "roles": "الأدوار"
+    "users": "المستخدمين",
+    "roles": "الأدوار",
+    "statistics": "الإحصائيات"
   },
   "header": {
     "settings": "الإعدادات",

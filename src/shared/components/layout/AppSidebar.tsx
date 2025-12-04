@@ -14,7 +14,7 @@ import { mainNavItems } from "@/shared/config/navigation";
 import { useDirection } from "@/shared/hooks/useDirection";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
   const { location } = useRouterState();
   const { isRtl } = useDirection();
 
@@ -56,12 +56,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <SidebarMenuButton
                       asChild
                       size="md"
-                      tooltip={item.label}
+                      tooltip={t(item.label)}
                       isActive={isActive}
                     >
                       <Link to={item.href}>
                         {item.icon && <item.icon />}
-                        <span>{item.label}</span>
+                        <span>{t(item.label)}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

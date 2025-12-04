@@ -5,8 +5,8 @@ import arCommon from "@/locales/ar/common.json";
 import enCommon from "@/locales/en/common.json";
 import arUsers from "@/locales/ar/users.json";
 import enUsers from "@/locales/en/users.json";
-import arStatistics from "@/locales/ar/statistics";
-import enStatistics from "@/locales/en/statistics";
+import arStatistics from "@/locales/ar/statistics.json";
+import enStatistics from "@/locales/en/statistics.json";
 
 export const resources = {
   en: {
