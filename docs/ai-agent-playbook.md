@@ -1,15 +1,23 @@
-# AI Agent Playbook (tailored to this repo)
+﻿# AI Agent Playbook (tailored to this repo)
 
 Use this checklist to add endpoints, schemas/types, pages, and routes with the patterns used here (React 19 + Vite, TanStack Router/Query/Form, Zod, Tailwind/shadcn, ASP.NET + Laravel backends).
 
 ## 0) Backend & auth source of truth
 
 - Canonical doc: `docs/change-server-instructions.md`. Read it before touching auth/backend.
-- Default backend: Laravel POS.
-  - Login `POST /auth/login` body `{ email, password, type: "web" }` → `{ access_token, token_type, expires_in }`.
-  - Tokens in store: `accessToken`, `accessTokenType`, `accessTokenExpiresIn`, `accessTokenExpiresAt`.
-  - `/auth/me` → `{ fees, pos: { pos_name,pos_lat,pos_lng,id }, user: { id,name,email,phone_no }, perm: string[] }`.
-  - Store normalization: user `{ id, name|null, email|null, phoneNo|null, image:null, role:null }`, pos `{ id,name,lat,lng }`, permissions `perm`, fees `fees`.
+- Default backend: Laravel POS (see `VITE_BACKEND_KIND`).
+  - Login + refresh body `{ email, password, type: "web" }` -> response `{ message, access_token, token_type, expires_in }` (43200s today).
+  - Tokens in store: `{ backend, accessToken, tokenType, expiresIn, accessTokenExpiresAt, refreshToken?, refreshTokenExpiresAt? }`.
+  - `/auth/me` shape `{ fees, pos: { pos_name,pos_lat,pos_lng,id }, user: { id,name,email,phone_no }, perm: string[] }`.
+- ASP.NET (kept ready even when Laravel is default):
+  - Two login payloads (documented in code as `aspNet phone login` and `aspNet username login`):
+    - Phone: `{ phoneNumber, password, clientId, fingerprintHash }`
+    - Username: `{ username, password, clientId, fingerprintHash }`
+  - Login envelope `{ code, message, error, result: { accessToken, refreshToken?, accessExpiresAtUtc, refreshExpiresAtUtc, sessionId } }` -> normalize to the same token shape with `backend: "aspnet"` and `expiresIn` derived from `accessExpiresAtUtc`.
+  - `/auth/me` may be raw or wrapped in `{ code, message, result }` with shape `{ id, isDeleted, username, phoneNumber, firstName, secondName, lastName, surname, fullName, photo, status, role: { id, isDeleted, name } }`.
+- Store normalization (always branch by backend):
+  - Laravel: user `{ id, name|null, email|null, phoneNo|null, image:null, role:null, backend:"laravel" }`, pos `{ id,name,lat,lng }`, permissions `perm`, fees `fees`.
+  - ASP.NET: user `{ id, name(fullName|username|first+last), email: username|null, phoneNo, image: photo|null, role: role?.name ?? null, roles: [role]?, backend:"aspnet" }`; pos null; permissions empty.
 - Header identity: read ONLY from auth store (no `/me` fetch in header). Display name fallback `name -> email -> t("header.user")`; role optional/null; avatar uses image or initials/icon.
 
 ## 1) Add schemas and types
@@ -47,7 +55,7 @@ widgets: {
 
 ## 3) Data hooks (TanStack Query)
 
-Use the shared client/hooks—do not create new fetch wrappers.
+Use the shared client/hooksÃ¢â‚¬â€do not create new fetch wrappers.
 
 ```ts
 // src/features/widgets/api/useWidgets.ts
@@ -447,3 +455,4 @@ const routeTree = rootRoute.addChildren([
   - `pnpm intlayer:fill` - AI auto-fill missing translations (OpenAI)
   - `pnpm intlayer:push` - Push to Intlayer CMS for team collaboration
 - See `docs/intlayer-integration.md` for complete guide
+

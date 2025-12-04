@@ -8,6 +8,7 @@ import { Overview } from "@/features/dashboard/components/Overview";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { UsersListPage } from "@/features/users/pages/UsersListPage";
 import { RolesListPage } from "@/features/roles/pages/RolesListPage";
+import { StatisticsPage } from "@/features/statistics/pages/StatisticsPage";
 import {
   ProtectedDashboard,
   RootComponent,
@@ -56,6 +57,12 @@ const rolesRoute = createRoute({
   component: RolesListPage,
 });
 
+const statisticsRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: "statistics",
+  component: StatisticsPage,
+});
+
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -65,7 +72,12 @@ const notFoundRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   rootIndexRoute,
   loginRoute,
-  dashboardRoute.addChildren([dashboardIndexRoute, usersRoute, rolesRoute]),
+  dashboardRoute.addChildren([
+    dashboardIndexRoute,
+    usersRoute,
+    rolesRoute,
+    statisticsRoute,
+  ]),
   notFoundRoute,
 ]);
 
