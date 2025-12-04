@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -265,8 +265,8 @@ export function DataTable<TData>({
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <>
-                  <TableRow key={headerGroup.id}>
+                <React.Fragment key={headerGroup.id}>
+                  <TableRow>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="h-12 px-4">
                         {header.isPlaceholder
@@ -292,7 +292,7 @@ export function DataTable<TData>({
                       ))}
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </TableHeader>
             <TableBody>

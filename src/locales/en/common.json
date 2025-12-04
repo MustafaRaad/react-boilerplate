@@ -76,7 +76,9 @@
   },
   "toasts": {
     "success": "Action completed successfully",
-    "error": "Something went wrong"
+    "error": "Something went wrong",
+    "loginSuccess": "Welcome back! You have successfully logged in",
+    "loginError": "Login failed. Please check your credentials"
   },
   "errors": {
     "unexpected": "Unexpected error occurred",

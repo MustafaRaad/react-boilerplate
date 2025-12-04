@@ -7,7 +7,7 @@ import { router } from "@/app/router/routeTree";
 import { queryClient } from "@/core/api/queryClient";
 import { i18n } from "@/core/i18n/i18n";
 import { useDirection } from "@/shared/hooks/useDirection";
-import { Toaster } from "sonner";
+import { Toaster } from "@/shared/components/ui/sonner";
 
 const DirectionObserver = () => {
   useDirection();

@@ -1,7 +1,11 @@
 import { endpoints } from "@/core/api/endpoints";
 import { apiFetch } from "@/core/api/client";
 import { useApiMutation } from "@/core/api/hooks";
-import { type AuthTokens, type AuthUser, type MeResponse } from "@/core/types/auth";
+import {
+  type AuthTokens,
+  type AuthUser,
+  type MeResponse,
+} from "@/core/types/auth";
 import { useAuthStore } from "@/store/auth.store";
 import { type LoginFormValues } from "@/features/auth/types";
 
@@ -53,6 +57,6 @@ export const useLogin = () => {
 
       return user;
     },
-    successMessageKey: "common.toasts.success",
+    successMessageKey: "common:toasts.loginSuccess",
   });
 };
