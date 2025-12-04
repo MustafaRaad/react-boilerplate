@@ -35,7 +35,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               src="/vite.svg"
               width={600}
               height={600}
-              alt={t("app.logoAlt")}
+              alt={t("app.logo")}
               className="max-h-20 m-auto group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:m-0"
             />
           </SidebarMenuItem>

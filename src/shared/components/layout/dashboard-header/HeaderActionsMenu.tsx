@@ -1,7 +1,8 @@
 import { memo, useCallback, useMemo, useState } from "react";
-import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, Moon, ShieldCheck, Sun } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "@tanstack/react-router";
+import { useTheme } from "next-themes";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ export default memo(function SettingsMenu() {
   const { t } = useTranslation("common");
   const { dir } = useDirection();
   const { clearAuth, user } = useAuthStore();
+  const { theme, setTheme } = useTheme();
 
   const [open, setOpen] = useState(false);
 
@@ -50,6 +52,10 @@ export default memo(function SettingsMenu() {
     clearAuth();
     router.navigate({ to: "/login" });
   }, [clearAuth, router]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  }, [theme, setTheme]);
 
   return (
     <DropdownMenu dir={dir} open={open} onOpenChange={setOpen}>
@@ -93,6 +99,14 @@ export default memo(function SettingsMenu() {
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={toggleTheme} className="gap-2">
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+          {theme === "dark" ? t("theme.light") : t("theme.dark")}
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleSignOut} className="gap-2">
           <LogOut className="h-4 w-4" />
           {t("auth.logout")}
