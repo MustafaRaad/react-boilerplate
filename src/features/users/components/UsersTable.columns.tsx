@@ -1,16 +1,6 @@
 import type { ColumnDef, CellContext, FilterFn } from "@tanstack/react-table";
 import type { User } from "@/features/users/types";
-import { dateFilterFn } from "@/shared/components/data/filters";
-import { Button } from "@/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { dateFilterFn } from "@/shared/components/data-table/filters";
 
 type TFn = (key: string) => string;
 
@@ -96,48 +86,6 @@ export const createUsersColumns = (t: TFn): ColumnDef<User, unknown>[] =>
       filterFn: dateFilterFn,
       meta: {
         filterVariant: "date",
-      },
-    },
-    {
-      id: "actions",
-      enableColumnFilter: false,
-      header: t("list.columns.actions"),
-      cell: ({ row }: CellContext<User, unknown>) => {
-        const user = row.original;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">{t("list.actions.openMenu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>{t("list.actions.title")}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  console.log("Edit user:", user.id);
-                  // TODO: Implement edit functionality
-                }}
-              >
-                <Pencil className="me-2 h-4 w-4" />
-                {t("list.actions.edit")}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  console.log("Delete user:", user.id);
-                  // TODO: Implement delete functionality
-                }}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="me-2 h-4 w-4" />
-                {t("list.actions.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
       },
     },
   ] as ColumnDef<User, unknown>[];

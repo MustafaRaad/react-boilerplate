@@ -64,7 +64,9 @@
     "clearFilters": "Clear all filters",
     "filter": "Filter",
     "all": "All",
-    "selectDate": "Select date range"
+    "selectDate": "Select date range",
+    "emptyTitle": "No items found",
+    "emptyDescription": "Try adjusting your filters or create a new item."
   },
   "actions": {
     "save": "Save",
@@ -72,7 +74,13 @@
     "back": "Go back",
     "dashboard": "Go to dashboard",
     "retry": "Try again",
-    "logout": "Logout"
+    "logout": "Logout",
+    "title": "Actions",
+    "openMenu": "Open menu",
+    "create": "Create",
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "toasts": {
     "success": "Action completed successfully",

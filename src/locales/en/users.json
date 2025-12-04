@@ -19,17 +19,6 @@
         "active": "Active",
         "inactive": "Inactive"
       }
-    },
-    "actions": {
-      "title": "Actions",
-      "openMenu": "Open menu",
-      "create": "Add user",
-      "edit": "Edit",
-      "delete": "Delete"
-    },
-    "empty": {
-      "title": "No users found",
-      "description": "Try adjusting your filters or add a new user."
     }
   }
 }

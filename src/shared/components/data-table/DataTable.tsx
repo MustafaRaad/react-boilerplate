@@ -35,8 +35,12 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { DateRangePicker } from "@/shared/components/ui/date-picker";
-import { DataTablePagination } from "@/shared/components/data/DataTablePagination";
-import { exportToCsv } from "@/shared/components/data/export-csv";
+import { DataTablePagination } from "@/shared/components/data-table/DataTablePagination";
+import { exportToCsv } from "@/shared/components/data-table/export-csv";
+import {
+  DataTableActions,
+  type DataTableAction,
+} from "@/shared/components/data-table/DataTableActions";
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +77,7 @@ type DataTableProps<TData> = {
   exportFileName?: string;
   emptyMessage?: string;
   className?: string;
+  actions?: DataTableAction<TData>[];
 };
 
 export function DataTable<TData>({
@@ -90,6 +95,7 @@ export function DataTable<TData>({
   exportFileName,
   emptyMessage,
   className,
+  actions,
 }: DataTableProps<TData>) {
   const { t } = useTranslation();
 
@@ -104,9 +110,25 @@ export function DataTable<TData>({
     setPagination({ pageIndex: page - 1, pageSize });
   }, [page, pageSize]);
 
+  // Add actions column if actions are provided
+  const columnsWithActions = React.useMemo(() => {
+    if (!actions || actions.length === 0) return columns;
+
+    const actionsColumn: ColumnDef<TData> = {
+      id: "actions",
+      header: () => t("actions.title", { ns: "common" }),
+      cell: ({ row }) => (
+        <DataTableActions row={row.original} actions={actions} />
+      ),
+      enableColumnFilter: false,
+    };
+
+    return [...columns, actionsColumn];
+  }, [columns, actions, t]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: columnsWithActions,
     state: {
       pagination,
       columnFilters,
@@ -163,7 +185,7 @@ export function DataTable<TData>({
             column.setFilterValue(value === "all" ? undefined : value)
           }
         >
-          <SelectTrigger className="h-8 w-full">
+          <SelectTrigger className="w-full" size="sm">
             <SelectValue placeholder={t("table.filter")} />
           </SelectTrigger>
           <SelectContent>
@@ -261,14 +283,21 @@ export function DataTable<TData>({
             </TooltipProvider>
           </div>
         )}
-        <div className="border shadow rounded-lg my-4 overflow-hidden">
-          <Table>
+        <div className="border shadow rounded-lg my-4 overflow-x-auto">
+          <Table className="min-w-[800px]">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <React.Fragment key={headerGroup.id}>
                   <TableRow>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} className="h-12 px-4">
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          "h-12 px-4",
+                          header.column.id === "actions" &&
+                            "w-[1%] whitespace-nowrap text-center"
+                        )}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -308,7 +337,15 @@ export function DataTable<TData>({
                     )}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4 py-3">
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "px-4",
+                          cell.column.id === "actions"
+                            ? "py-0 w-[1%] whitespace-nowrap"
+                            : "py-3"
+                        )}
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
@@ -348,3 +385,6 @@ export function DataTable<TData>({
     </div>
   );
 }
+
+// Re-export for convenience
+export type { DataTableAction } from "@/shared/components/data-table/DataTableActions";

@@ -69,7 +69,7 @@ Place under `src/features/<feature>/components/`.
 ### Simple list example:
 
 ```tsx
-// src/features/widgets/components/WidgetsPage.tsx
+// src/features/widgets/pages/WidgetsPage.tsx
 import { useWidgets } from "@/features/widgets/api/useWidgets";
 
 export const WidgetsPage = () => {
@@ -95,7 +95,8 @@ export const WidgetsPage = () => {
 **Step 1**: Define columns in a separate file with filter configuration:
 
 ```tsx
-// src/features/widgets/components/WidgetsTable.columns.ts
+// src/features/widgets/components/WidgetsTable.columns.tsx
+// Note: Use .ts extension if no JSX is used, .tsx if columns contain JSX
 import type { ColumnDef, CellContext } from "@tanstack/react-table";
 import type { Widget } from "@/features/widgets/types";
 import { dateFilterFn, stringFilterFn } from "@/shared/components/data/filters";
@@ -185,6 +186,63 @@ export const WidgetsTable = () => {
 - Full RTL (right-to-left) support with logical CSS properties
 - Modern card-based styling with comfortable spacing (bg-card, shadow-md, rounded-lg)
 - Icon-only toolbar buttons with tooltips for clean UI
+- Reusable actions system for row-level operations (view, edit, delete, etc.)
+
+**Step 3 (Optional)**: Add row actions:
+
+```tsx
+// Add to WidgetsTable.tsx imports
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  DataTable,
+  type DataTableAction,
+} from "@/shared/components/data/DataTable";
+import type { Widget } from "@/features/widgets/types";
+
+// Inside WidgetsTable component, add common translations hook
+const { t } = useTranslation("widgets");
+const { t: tCommon } = useTranslation("common");
+
+// Define actions using common namespace for labels
+const actions: DataTableAction<Widget>[] = useMemo(
+  () => [
+    {
+      icon: Eye,
+      label: tCommon("actions.view"),
+      onClick: (widget) => console.log("View widget:", widget),
+    },
+    {
+      icon: Pencil,
+      label: tCommon("actions.edit"),
+      onClick: (widget) => console.log("Edit widget:", widget),
+    },
+    {
+      icon: Trash2,
+      label: tCommon("actions.delete"),
+      onClick: (widget) => console.log("Delete widget:", widget),
+      variant: "destructive", // Red styling for delete actions
+    },
+  ],
+  [tCommon]
+);
+
+// Pass actions to DataTable
+<DataTable
+  columns={columns}
+  data={widgetsQuery.data?.items ?? []}
+  // ...other props
+  actions={actions}
+/>;
+```
+
+**Actions system**:
+
+- Import `DataTableAction` type and Lucide icons
+- Each action needs: `icon`, `label` (translated string), `onClick` (handler function)
+- Optional `variant: "destructive"` for delete-style actions (red text)
+- Actions render as icon buttons with tooltips in a dedicated column
+- Common icons: `Eye` (view), `Pencil` (edit), `Trash2` (delete), `Copy`, `Download`
+- **Important**: Action labels should use the `common` namespace (e.g., `tCommon("actions.view")`) for consistency across the app
 
 **Filter variants**:
 
@@ -197,15 +255,6 @@ export const WidgetsTable = () => {
 - `stringFilterFn` - Case-insensitive text search
 - `exactFilterFn` - Exact value matching
 - `dateFilterFn` - Date range filtering with date-fns
-
-**Column configuration**:
-
-- `enableColumnFilter: true/false` - Enable/disable filter for column (defaults to true when `enableColumnFilters` is true on DataTable)
-- `meta.filterVariant` - Type of filter widget (`"input"`, `"select"`, `"date"`)
-- `meta.filterOptions` - Options for select dropdown: `Array<{ id: string | number; name: string }>`
-- `filterFn` - Custom filter function for complex filtering (e.g., `dateFilterFn`, `rolesFilterFn`)
-- `accessorKey` - Direct property access (enables automatic filtering)
-- `accessorFn` - Custom accessor function (use for computed/nested values, required for filtering columns with `id` only)
 
 **Custom filter functions for select dropdowns**:
 
@@ -275,24 +324,32 @@ const rolesFilterFn: FilterFn<User> = (row, _columnId, filterValue) => {
 - `onPageChange` - Page change handler
 - `onPageSizeChange` - Page size change handler
 - `mode` - `"server"` or `"client"` pagination mode
-- `enableColumnFilters` - Enable column filtering UI (defaults to `true`)
+- `enableColumnFilters` - Enable column filtering UI (defaults to `false`)
 - `showExport` - Show CSV export button (defaults to `false`)
 - `exportFileName` - Optional custom export filename (auto-generated from URL if not provided)
 - `emptyMessage` - Custom empty state message
 - `onRowClick` - Optional row click handler
 - `className` - Additional CSS classes
+- `actions` - Optional array of action definitions for row-level operations
 
-- `enableColumnFilter: true/false` - Enable/disable filter for column
-- `meta.filterVariant` - Type of filter widget
-- `meta.filterOptions` - Options for select dropdown
-- `filterFn` - Custom filter function for complex filtering
+**Column configuration**:
+
+- `enableColumnFilter: true/false` - Enable/disable filter for column (defaults to true when `enableColumnFilters` is true on DataTable)
+- `meta.filterVariant` - Type of filter widget (`"input"`, `"select"`, `"date"`)
+- `meta.filterOptions` - Options for select dropdown: `Array<{ id: string | number; name: string }>`
+- `filterFn` - Custom filter function for complex filtering (e.g., `dateFilterFn`, `rolesFilterFn`)
+- `accessorKey` - Direct property access (enables automatic filtering)
+- `accessorFn` - Custom accessor function (use for computed/nested values, required for filtering columns with `id` only)
+- `size` - Optional column width (e.g., `120` for actions column)
+- `header` - Column header (use translation keys, e.g., `t("list.columns.name")`)
+- `cell` - Custom cell renderer function
 
 ## 5) Wire the route (TanStack Router)
 
-Edit `src/app/router/routeTree.tsx`; add under `/dashboard` to inherit `DashboardLayout` + auth guard.
+Edit `src/app/router/routeTree.ts`; add under `/dashboard` to inherit `DashboardLayout` + auth guard.
 
 ```ts
-import { WidgetsPage } from "@/features/widgets/components/WidgetsPage";
+import { WidgetsPage } from "@/features/widgets/pages/WidgetsPage";
 
 const widgetsRoute = createRoute({
   getParentRoute: () => dashboardRoute,
@@ -327,6 +384,7 @@ const routeTree = rootRoute.addChildren([
 - Don't use directional properties (left/right, ml/mr, pl/pr) - always use logical properties (start/end, ms/me, ps/pe) for RTL support.
 - For columns with `id` instead of `accessorKey`, always provide `accessorFn` for filtering to work.
 - Don't use numeric IDs in select filter options when filtering by name - use the name as both `id` and `name` for consistency.
+- Don't define actions column manually in column definitions - use the `actions` prop on DataTable for consistency and reusability.
 
 ## 8) i18n translations when adding data/columns
 
@@ -345,10 +403,10 @@ const routeTree = rootRoute.addChildren([
 
 - Define row types in `src/features/<feature>/types.ts` (e.g., `export type Widget = { id: string; name: string; status: "active" | "inactive"; };`).
 - Keep Zod schemas in `src/core/schemas/endpoints.schema.ts` (backend shape, non-auth) and `src/features/<feature>/schemas/<feature>.schema.ts` (form/client validation).
-- Define table columns in a dedicated file next to the table or page (e.g., `src/features/<feature>/components/<Feature>Table.columns.ts`) if shared; otherwise keep them local but non-exported if only used once.
+- Define table columns in a dedicated file next to the table or page (e.g., `src/features/<feature>/components/<Feature>Table.columns.tsx`) if shared; otherwise keep them local but non-exported if only used once.
 - Columns should use translation keys for headers and derived display (e.g., `accessorKey: "name", header: t("users.table.name")`).
 - When mapping sample data, normalize within hooks or selectors, not inside the component render. Keep columns purely presentational.
-- For lint compliance (`react-refresh/only-export-components`), keep column factories in `.ts` files exporting pure functions (e.g., `createUsersColumns(t)`) and call them inside components via `useMemo`.
+- For lint compliance (`react-refresh/only-export-components`), keep column factories in `.ts`/`.tsx` files exporting pure functions (e.g., `createUsersColumns(t)`) and call them inside components via `useMemo`.
 
 ## 10) Auth-specific locations
 
