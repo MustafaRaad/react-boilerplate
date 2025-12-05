@@ -559,11 +559,417 @@ const routeTree = rootRoute.addChildren([
 - **Don't pass `mode` prop to DataTable** - Mode is auto-detected based on `backendKind`.
 - **Don't manually extract data/total from query** - Use `queryResult` prop on DataTable for automatic extraction.
 
-## 8) Quick Start: Adding a New Paginated Feature
+## 8) Quick Start: Adding a New Paginated List Feature
 
-**Complete Example**: Adding a "Products" feature with server-side filtering (ASP.NET) or client-side filtering (Laravel).
+**⚠️ CRITICAL FIRST STEP: Always ask for an example API response if not provided!**
 
-### Step 1: Define Types
+Before creating any files, ask:
+
+```
+Can you provide an example JSON response from your API endpoint?
+For example, what does a single item look like with all its fields and their data types?
+
+Example:
+{
+  "id": 1,
+  "name": "Sample Item",
+  "email": "user@example.com",
+  "created_at": "2025-12-05T10:00:00Z",
+  ...
+}
+```
+
+This ensures accurate schema generation and prevents rework.
+
+---
+
+**Complete Example**: Adding a "Users" feature (following the existing users implementation).
+
+### Step 1: Create Zod Schema (Based on API Response)
+
+```ts
+// src/features/users/schemas/user.schema.ts
+import { z } from "zod";
+
+/**
+ * User schema from backend API
+ * Match the exact structure from the API response
+ */
+export const userSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string().email(),
+  email_verified_at: z.string().nullable(),
+  phone_no: z.string(),
+  approved: z.number().int().min(0).max(1), // 0 or 1 (boolean as integer)
+  created_at: z.string(), // ISO date string
+  updated_at: z.string(), // ISO date string
+  role: z.string(),
+});
+
+/**
+ * User form schema for create/edit
+ * Error messages MUST be translation keys (never hardcoded strings)
+ */
+export const createUserFormSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(2, t("validation.nameMinLength")),
+    email: z.string().email(t("validation.invalidEmail")),
+    phone_no: z
+      .string()
+      .min(10, t("validation.phoneMinLength"))
+      .max(15, t("validation.phoneMaxLength")),
+    role: z.string().min(1, t("validation.roleRequired")),
+    approved: z.boolean().default(true),
+  });
+
+/**
+ * User update schema (all fields optional except id)
+ */
+export const createUserUpdateSchema = (t: (key: string) => string) =>
+  z.object({
+    id: z.number(),
+    name: z.string().min(2, t("validation.nameMinLength")).optional(),
+    email: z.string().email(t("validation.invalidEmail")).optional(),
+    phone_no: z
+      .string()
+      .min(10, t("validation.phoneMinLength"))
+      .max(15, t("validation.phoneMaxLength"))
+      .optional(),
+    role: z.string().optional(),
+    approved: z.number().int().min(0).max(1).optional(),
+  });
+
+export type User = z.infer<typeof userSchema>;
+export type UserFormData = z.infer<ReturnType<typeof createUserFormSchema>>;
+export type UserUpdateData = z.infer<ReturnType<typeof createUserUpdateSchema>>;
+```
+
+### Step 2: Create Types File (Re-export from Schema)
+
+```ts
+// src/features/users/types.ts
+// Export types from schema for consistency
+export type { User, UserFormData, UserUpdateData } from "./schemas/user.schema";
+```
+
+### Step 3: Add API Endpoint
+
+```ts
+// src/core/api/endpoints.ts
+import { type User } from "@/features/users/types";
+
+export const endpoints = {
+  // ... existing endpoints
+  users: {
+    list: {
+      path: "/Users/ListUsers", // ASP.NET format, or "/users" for Laravel
+      method: "GET",
+      requiresAuth: true,
+    } as EndpointDef<
+      Record<string, unknown> | undefined,
+      AspNetEnvelope<AspNetPagedResult<User>> | LaravelDataTableResponse<User>
+    >,
+  },
+};
+```
+
+### Step 4: Create Data Hook (One Line with Factory!)
+
+```ts
+// src/features/users/api/useUsers.ts
+import { endpoints } from "@/core/api/endpoints";
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import { type User } from "../types";
+
+// Simple version - no filters needed
+export const useUsers = createDataTableHook<User>(
+  "users",
+  endpoints.users.list
+);
+```
+
+### Step 5: Define Table Columns
+
+```tsx
+// src/features/users/components/UsersTable.columns.tsx
+import type { ColumnDef } from "@tanstack/react-table";
+import type { User } from "../types";
+
+type TFn = (key: string) => string;
+
+export const createUsersColumns = (t: TFn): ColumnDef<User>[] => [
+  {
+    accessorKey: "name",
+    header: t("list.columns.name"),
+    enableColumnFilter: true,
+  },
+  {
+    accessorKey: "email",
+    header: t("list.columns.email"),
+    enableColumnFilter: true,
+  },
+  {
+    accessorKey: "phone_no",
+    header: t("list.columns.phone"),
+    enableColumnFilter: true,
+  },
+  {
+    accessorKey: "role",
+    header: t("list.columns.roles"),
+    enableColumnFilter: true,
+  },
+  {
+    accessorKey: "created_at",
+    header: t("list.columns.createdAt"),
+    cell: ({ row }) => {
+      const date = row.getValue("created_at");
+      return date ? new Date(date as string).toLocaleDateString() : "-";
+    },
+  },
+];
+```
+
+### Step 6: Create Table Component
+
+```tsx
+// src/features/users/components/UsersTable.tsx
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  DataTable,
+  type DataTableAction,
+} from "@/shared/components/data-table/DataTable";
+import { useUsers } from "../api/useUsers";
+import { createUsersColumns } from "./UsersTable.columns";
+import type { User } from "../types";
+
+export const UsersTable = () => {
+  const { t } = useTranslation("users");
+  const { t: tCommon } = useTranslation("common");
+  const usersQuery = useUsers();
+  const columns = useMemo(() => createUsersColumns(t), [t]);
+
+  const actions: DataTableAction<User>[] = useMemo(
+    () => [
+      {
+        icon: Eye,
+        label: tCommon("actions.view"),
+        onClick: (user) => console.log("View user:", user),
+      },
+      {
+        icon: Pencil,
+        label: tCommon("actions.edit"),
+        onClick: (user) => console.log("Edit user:", user),
+      },
+      {
+        icon: Trash2,
+        label: tCommon("actions.delete"),
+        onClick: (user) => console.log("Delete user:", user),
+        variant: "destructive",
+      },
+    ],
+    [tCommon]
+  );
+
+  return (
+    <DataTable
+      columns={columns}
+      queryResult={usersQuery}
+      enableColumnFilters
+      showExport
+      actions={actions}
+    />
+  );
+};
+```
+
+### Step 7: Create Page Component
+
+```tsx
+// src/features/users/pages/UsersListPage.tsx
+import { UsersTable } from "../components/UsersTable";
+import { Button } from "@/shared/components/ui/button";
+import { UserPlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+export const UsersListPage = () => {
+  const { t } = useTranslation("users");
+  const { t: tCommon } = useTranslation("common");
+
+  return (
+    <div className="flex flex-col gap-6 p-6">
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("list.title")}
+          </h1>
+          <p className="text-muted-foreground">{t("list.description")}</p>
+        </div>
+        <Button size="default" className="gap-2">
+          <UserPlus className="h-4 w-4" />
+          {tCommon("actions.add")}
+        </Button>
+      </div>
+
+      {/* Data Table */}
+      <UsersTable />
+    </div>
+  );
+};
+```
+
+### Step 8: Wire Up Route
+
+```ts
+// src/app/router/routeTree.ts
+import { UsersListPage } from "@/features/users/pages/UsersListPage";
+
+const usersRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: "users",
+  component: UsersListPage,
+});
+
+// Add to route tree
+dashboardRoute.addChildren([
+  dashboardIndexRoute,
+  usersRoute, // Add here
+  statisticsRoute,
+]);
+```
+
+### Step 9: Add Navigation Item
+
+```ts
+// src/shared/config/navigation.ts
+import { Users } from "lucide-react";
+
+export const mainNavItems = [
+  // ... existing items
+  {
+    label: "users",
+    href: "/dashboard/users",
+    icon: Users,
+  },
+];
+```
+
+### Step 10: Add Translations (English)
+
+```json
+// src/locales/en/users.json
+{
+  "list": {
+    "title": "Users",
+    "description": "Manage system users and their access.",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "status": "Status",
+      "roles": "Roles",
+      "createdAt": "Created at",
+      "actions": "Actions"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by name or email",
+      "status": {
+        "label": "Status",
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive"
+      }
+    }
+  },
+  "validation": {
+    "nameMinLength": "Name must be at least 2 characters",
+    "invalidEmail": "Invalid email address",
+    "phoneMinLength": "Phone number must be at least 10 digits",
+    "phoneMaxLength": "Phone number must be at most 15 digits",
+    "roleRequired": "Role is required"
+  }
+}
+```
+
+### Step 11: Add Translations (Arabic)
+
+```json
+// src/locales/ar/users.json
+{
+  "list": {
+    "title": "المستخدمين",
+    "description": "إدارة مستخدمي النظام وصلاحياتهم.",
+    "columns": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "status": "الحالة",
+      "roles": "الأدوار",
+      "createdAt": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "filters": {
+      "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني",
+      "status": {
+        "label": "الحالة",
+        "all": "الكل",
+        "active": "نشط",
+        "inactive": "غير نشط"
+      }
+    }
+  },
+  "validation": {
+    "nameMinLength": "يجب أن يكون الاسم حرفين على الأقل",
+    "invalidEmail": "عنوان البريد الإلكتروني غير صالح",
+    "phoneMinLength": "يجب أن يكون رقم الهاتف 10 أرقام على الأقل",
+    "phoneMaxLength": "يجب أن لا يزيد رقم الهاتف عن 15 رقماً",
+    "roleRequired": "الدور مطلوب"
+  }
+}
+```
+
+---
+
+**✅ You now have a fully functional paginated list with:**
+
+- ✅ URL-based pagination (shareable links, browser back/forward)
+- ✅ Automatic backend detection (Laravel/ASP.NET)
+- ✅ Type-safe Zod schemas with translated validation
+- ✅ Column filtering
+- ✅ CSV export
+- ✅ Row actions (view, edit, delete)
+- ✅ RTL support
+- ✅ Fully translated interface (English + Arabic)
+- ✅ Zero boilerplate with automated data handling
+- ✅ Professional layout with header and description
+
+**🎯 Key Patterns to Follow:**
+
+1. **Always ask for API response example first**
+2. **Schema first** - Create Zod schema matching exact API structure
+3. **Use factory** - `createDataTableHook` for automatic pagination
+4. **Translation keys only** - Never hardcode text, always use `t("key")`
+5. **Re-export types** - types.ts re-exports from schema
+6. **Consistent structure** - Follow users feature as reference
+
+**📁 File Structure Created:**
+
+```
+src/features/users/
+├── api/
+│   └── useUsers.ts (1 line with factory!)
+├── components/
+│   ├── UsersTable.tsx
+│   └── UsersTable.columns.tsx
+├── pages/
+│   └── UsersListPage.tsx
+├── schemas/
+│   └── user.schema.ts (Zod schemas + types)
+└── types.ts (re-exports from schema)
+```
 
 ```ts
 // src/features/products/types.ts
