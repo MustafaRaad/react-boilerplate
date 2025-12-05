@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useRouter } from "@tanstack/react-router";
 import { DashboardLayout } from "@/shared/components/layout/DashboardLayout";
 import { useAuthGuard } from "@/features/auth/hooks/useAuthGuard";
-import { useAuthStore } from "@/store/auth.store";
+import { useAuthUser, useIsInitializing } from "@/store/auth.store";
 
 export const RootComponent = () => <Outlet />;
 
@@ -12,7 +12,8 @@ export const ProtectedDashboard = () => {
 };
 
 export const RootIndex = () => {
-  const { user, isInitializing } = useAuthStore();
+  const user = useAuthUser(); // ✅ Selective subscription
+  const isInitializing = useIsInitializing(); // ✅ Selective subscription
   const router = useRouter();
 
   useEffect(() => {

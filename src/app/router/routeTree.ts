@@ -3,16 +3,19 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
+import { lazy } from "react";
 import { NotFoundPage } from "@/shared/components/layout/NotFoundPage";
 import { Overview } from "@/features/dashboard/components/Overview";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
-import { UsersListPage } from "@/features/users/pages/UsersListPage";
-import { StatisticsPage } from "@/features/statistics/pages/StatisticsPage";
 import {
   ProtectedDashboard,
   RootComponent,
   RootIndex,
 } from "./routeComponents";
+
+// ✅ Lazy load feature pages for better code splitting
+const UsersListPage = lazy(() => import("@/features/users/pages/UsersListPage").then(m => ({ default: m.UsersListPage })));
+const StatisticsPage = lazy(() => import("@/features/statistics/pages/StatisticsPage").then(m => ({ default: m.StatisticsPage })));
 
 // Error boundary wrapper
 

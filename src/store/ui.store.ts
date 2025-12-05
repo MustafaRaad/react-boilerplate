@@ -21,3 +21,10 @@ export const useUiStore = create<UiState>()(
     },
   ),
 )
+
+// ✅ Performance optimization: Selective subscriptions
+// Components only re-render when their specific slice changes
+export const useIsSidebarOpen = () => useUiStore((state) => state.isSidebarOpen)
+export const useToggleSidebar = () => useUiStore((state) => state.toggleSidebar)
+export const useOpenSidebar = () => useUiStore((state) => state.openSidebar)
+export const useCloseSidebar = () => useUiStore((state) => state.closeSidebar)

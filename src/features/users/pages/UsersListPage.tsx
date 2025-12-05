@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { UsersTable } from "@/features/users/components/UsersTable";
 import { Button } from "@/shared/components/ui/button";
 import { UserPlus } from "lucide-react";
@@ -8,8 +9,9 @@ import { useDialogState } from "@/shared/hooks/useDialogState";
 import { createUserFormSchema } from "../schemas/user.schema";
 import { userFieldsDefinition } from "../config/dialogConfig";
 import { useCreateUser } from "../api/useUsers";
+import type { UserFormData } from "../types";
 
-export const UsersListPage = () => {
+export const UsersListPage = memo(function UsersListPage() {
   const { t } = useTranslation("users");
   const { t: tCommon } = useTranslation("common");
   const createDialog = useDialogState();
@@ -21,6 +23,14 @@ export const UsersListPage = () => {
     },
     onError: () => toast.error("Failed to create user"),
   });
+
+  // Memoize submit handler to prevent child re-renders
+  const handleCreateSubmit = useCallback(
+    async (values: UserFormData) => {
+      await createUserMutation.mutateAsync(values);
+    },
+    [createUserMutation]
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,9 +57,7 @@ export const UsersListPage = () => {
         schema={createUserFormSchema(t)}
         open={createDialog.isOpen}
         onOpenChange={createDialog.setOpen}
-        onSubmit={async (values) => {
-          await createUserMutation.mutateAsync(values);
-        }}
+        onSubmit={handleCreateSubmit}
         titleKey="users:dialogs.create.title"
         description={t("dialogs.create.description")}
         namespace="users"
@@ -57,4 +65,4 @@ export const UsersListPage = () => {
       />
     </div>
   );
-};
+});

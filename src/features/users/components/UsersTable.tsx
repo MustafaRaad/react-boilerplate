@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Eye, Pencil, Trash2 } from "lucide-react";
@@ -13,9 +13,9 @@ import { useDialogState } from "@/shared/hooks/useDialogState";
 import { createUserUpdateSchema } from "../schemas/user.schema";
 import { userEditFieldsDefinition } from "../config/dialogConfig";
 import { useUpdateUser, useDeleteUser } from "../api/useUsers";
-import type { User } from "@/features/users/types";
+import type { User, UserUpdateData } from "@/features/users/types";
 
-export const UsersTable = () => {
+export const UsersTable = memo(function UsersTable() {
   const { t } = useTranslation("users");
   const { t: tCommon } = useTranslation("common");
   const usersQuery = useUsers();
@@ -57,6 +57,14 @@ export const UsersTable = () => {
     [tCommon, editDialog.open, deleteUserMutation]
   );
 
+  // Memoize submit handler to prevent child re-renders
+  const handleUpdateSubmit = useCallback(
+    async (values: UserUpdateData) => {
+      await updateUserMutation.mutateAsync(values);
+    },
+    [updateUserMutation]
+  );
+
   return (
     <>
       <DataTable
@@ -74,9 +82,7 @@ export const UsersTable = () => {
           initialValues={editDialog.data}
           open={editDialog.isOpen}
           onOpenChange={editDialog.setOpen}
-          onSubmit={async (values) => {
-            await updateUserMutation.mutateAsync(values);
-          }}
+          onSubmit={handleUpdateSubmit}
           titleKey="users:dialogs.edit.title"
           description={t("dialogs.edit.description")}
           namespace="users"
@@ -85,4 +91,4 @@ export const UsersTable = () => {
       )}
     </>
   );
-};
+});

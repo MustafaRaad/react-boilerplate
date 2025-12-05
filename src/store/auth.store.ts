@@ -75,3 +75,12 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// ✅ Performance optimization: Selective subscriptions
+// Components only re-render when their specific slice changes
+export const useAuthUser = () => useAuthStore((state) => state.user);
+export const useAuthTokens = () => useAuthStore((state) => state.tokens);
+export const useAuthPermissions = () => useAuthStore((state) => state.permissions);
+export const useAuthPos = () => useAuthStore((state) => state.pos);
+export const useAuthFees = () => useAuthStore((state) => state.fees);
+export const useIsInitializing = () => useAuthStore((state) => state.isInitializing);
