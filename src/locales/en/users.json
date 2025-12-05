@@ -20,5 +20,12 @@
         "inactive": "Inactive"
       }
     }
+  },
+  "validation": {
+    "nameMinLength": "Name must be at least 2 characters",
+    "invalidEmail": "Invalid email address",
+    "phoneMinLength": "Phone number must be at least 10 digits",
+    "phoneMaxLength": "Phone number must be at most 15 digits",
+    "roleRequired": "Role is required"
   }
 }
