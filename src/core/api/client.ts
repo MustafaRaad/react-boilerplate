@@ -21,6 +21,9 @@ import {
 } from "@/core/types/api";
 import { type AspNetLoginResult, type AuthTokens } from "@/core/types/auth";
 import { useAuthStore } from "@/store/auth.store";
+import { addCsrfHeader, initializeCsrfToken, requiresCsrfProtection } from "@/core/security/csrf";
+import { rateLimiter, DEFAULT_RATE_LIMITS, ExponentialBackoff, type RateLimitConfig } from "@/core/security/rateLimit";
+import { sanitizeObject } from "@/core/security/sanitize";
 
 type ApiFetchOptions = {
   body?: unknown;
@@ -244,7 +247,7 @@ const performFetch = async (
   backendHint?: BackendKind
 ) => {
   const url = buildUrl(endpoint.path, options.query);
-  const headers: Record<string, string> = {
+  let headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
@@ -269,10 +272,20 @@ const performFetch = async (
     }
   }
 
+  // Add CSRF token for state-changing requests
+  if (requiresCsrfProtection(endpoint.method)) {
+    headers = addCsrfHeader(headers) as Record<string, string>;
+  }
+
+  // Sanitize request body to prevent XSS
+  const sanitizedBody = options.body && typeof options.body === "object"
+    ? sanitizeObject(options.body as Record<string, unknown>)
+    : options.body;
+
   const response = await fetch(url, {
     method: endpoint.method,
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: sanitizedBody ? JSON.stringify(sanitizedBody) : undefined,
     signal: options.signal,
   });
 
@@ -287,6 +300,40 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
     options.overrideBackendKind ??
     useAuthStore.getState().tokens?.backend ??
     defaultBackendKind;
+
+  // Initialize CSRF token on first request
+  if (requiresCsrfProtection(endpoint.method)) {
+    initializeCsrfToken();
+  }
+
+  // Apply rate limiting based on endpoint type
+  const rateLimitKey = `${endpoint.method}:${endpoint.path}`;
+  let rateLimitConfig: RateLimitConfig = DEFAULT_RATE_LIMITS.api;
+
+  // Use stricter rate limits for sensitive endpoints
+  if (endpoint.path.includes('login')) {
+    rateLimitConfig = DEFAULT_RATE_LIMITS.login;
+  } else if (endpoint.path.includes('register')) {
+    rateLimitConfig = DEFAULT_RATE_LIMITS.register;
+  } else if (endpoint.path.includes('password')) {
+    rateLimitConfig = DEFAULT_RATE_LIMITS.resetPassword;
+  } else if (endpoint.path.includes('upload')) {
+    rateLimitConfig = DEFAULT_RATE_LIMITS.upload;
+  } else if (endpoint.path.includes('search') || options.query) {
+    rateLimitConfig = DEFAULT_RATE_LIMITS.search;
+  }
+
+  if (!rateLimiter.check(rateLimitKey, rateLimitConfig)) {
+    const retryAfter = rateLimiter.getRetryAfter(rateLimitKey);
+    throw normalizeError(backend, 429, {
+      message: rateLimitConfig.message || `Rate limit exceeded. Retry after ${Math.ceil(retryAfter / 1000)} seconds.`,
+      retryAfter,
+    });
+  }
+
+  // Exponential backoff for retries
+  const backoff = new ExponentialBackoff(3, 1000, 10000);
+
   const execute = () => performFetch(endpoint, options, undefined, backend);
 
   const handleResponse = async (response: Response): Promise<TNormalized> => {
@@ -311,13 +358,34 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
     return normalizeLaravelResponse<TNormalized>(body) as TNormalized;
   };
 
-  try {
-    const response = await execute();
-    return await handleResponse(response);
-  } catch (error: unknown) {
-    if ((error as UnifiedApiError).message) {
-      throw error;
+  // Retry logic with exponential backoff
+  while (backoff.shouldRetry()) {
+    try {
+      const response = await execute();
+      backoff.reset();
+      return await handleResponse(response);
+    } catch (error: unknown) {
+      const apiError = error as UnifiedApiError;
+      
+      // Don't retry on 4xx errors (except 429)
+      if (apiError.code !== undefined && typeof apiError.code === 'number' && apiError.code >= 400 && apiError.code < 500 && apiError.code !== 429) {
+        throw error;
+      }
+
+      // Don't retry if this is the last attempt
+      if (!backoff.shouldRetry()) {
+        if (apiError.message) {
+          throw error;
+        }
+        throw normalizeError(backend, 500, error);
+      }
+
+      // Wait before retrying
+      backoff.nextAttempt();
+      await new Promise(resolve => setTimeout(resolve, backoff.getDelay()));
     }
-    throw normalizeError(backend, 500, error);
   }
+
+  // This should never be reached, but TypeScript needs it
+  throw normalizeError(backend, 500, { message: 'Max retries exceeded' });
 }
