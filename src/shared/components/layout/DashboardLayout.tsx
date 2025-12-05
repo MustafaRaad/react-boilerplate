@@ -4,6 +4,10 @@ import { AppSidebar } from "@/shared/components/layout/AppSidebar";
 import { DashboardHeader } from "@/shared/components/layout/dashboard-header";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { ErrorBoundary } from "@/shared/components/error/ErrorBoundary";
+import { InstallPrompt } from "@/shared/components/pwa/InstallPrompt";
+import { UpdatePrompt } from "@/shared/components/pwa/UpdatePrompt";
+import { OfflineIndicator } from "@/shared/components/pwa/OfflineIndicator";
+import { workbox } from "@/main";
 import { Loader } from "lucide-react";
 
 const LoadingFallback = () => (
@@ -26,6 +30,11 @@ export const DashboardLayout = () => {
           </ErrorBoundary>
         </div>
       </SidebarInset>
+      
+      {/* PWA Components */}
+      <OfflineIndicator />
+      <InstallPrompt />
+      <UpdatePrompt workbox={workbox} />
     </SidebarProvider>
   );
 };
