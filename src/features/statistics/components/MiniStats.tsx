@@ -56,53 +56,66 @@ export function MiniStats<T extends AnyRecord = AnyRecord>({
     return `mini-${stableHash(`${series}|${title}`)}`;
   }, [id, series, title]);
 
-  const gradientId = `${baseId}-gradient`;
-
   return (
-    <Card className={"p-0 gap-0 ".concat(className ?? "").trim()}>
-      <div className="flex flex-col gap-1 px-6 pt-4">
-        <p className="text-slate-500 text-lg">{title}</p>
-        <h1 className="text-4xl">{value}</h1>
+    <Card
+      className={"overflow-hidden border-border/40 shadow-sm hover:shadow-md hover:border-border transition-all duration-300 "
+        .concat(className ?? "")
+        .trim()}
+    >
+      <div className="flex flex-col gap-3 p-6">
+        {/* Header Section */}
+        <div className="flex items-start justify-between">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            {title}
+          </p>
+          <div
+            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
+              trend.direction === "up"
+                ? "text-green-700 dark:text-green-400 ring-1 ring-green-200 dark:ring-green-900/30"
+                : trend.direction === "down"
+                ? "text-red-700 dark:text-red-400 ring-1 ring-red-200 dark:ring-red-900/30"
+                : "text-muted-foreground ring-1 ring-border"
+            }`}
+          >
+            {trend.direction === "up" ? (
+              <TrendingUp className="w-3.5 h-3.5" aria-hidden />
+            ) : trend.direction === "down" ? (
+              <TrendingDown className="w-3.5 h-3.5" aria-hidden />
+            ) : null}
+            {trend.text}
+          </div>
+        </div>
 
-        <div
-          className="flex gap-1 items-center text-sm"
-          style={{ color: trend.color || `var(--color-${series})` }}
-        >
-          {trend.text}
-          {trend.direction === "up" ? (
-            <TrendingUp aria-hidden />
-          ) : trend.direction === "down" ? (
-            <TrendingDown aria-hidden />
-          ) : null}
+        {/* Value Section */}
+        <div className="flex items-baseline gap-2">
+          <h2 className="text-4xl font-bold tracking-tight">{value}</h2>
+        </div>
+
+        {/* Chart Section */}
+        <div className="mt-2 -mx-2">
+          <ChartContainer
+            id={baseId}
+            config={chartConfig}
+            className="h-16 w-full"
+          >
+            <AreaChart
+              accessibilityLayer
+              data={data}
+              margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+            >
+              <Area
+                dataKey={series}
+                type="monotone"
+                fill="none"
+                stroke={`var(--color-${series})`}
+                strokeWidth={2}
+                dot={false}
+                activeDot={false}
+              />
+            </AreaChart>
+          </ChartContainer>
         </div>
       </div>
-
-      <ChartContainer id={baseId} config={chartConfig} className="h-20 pb-4">
-        <AreaChart accessibilityLayer data={data}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor={`var(--color-${series})`}
-                stopOpacity={0.8}
-              />
-              <stop
-                offset="95%"
-                stopColor={`var(--color-${series})`}
-                stopOpacity={0.1}
-              />
-            </linearGradient>
-          </defs>
-          <Area
-            dataKey={series}
-            type="monotone"
-            fill={`url(#${gradientId})`}
-            fillOpacity={0.4}
-            stroke={`var(--color-${series})`}
-            stackId="a"
-          />
-        </AreaChart>
-      </ChartContainer>
     </Card>
   );
 }
