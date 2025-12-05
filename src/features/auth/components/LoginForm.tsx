@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { authLoginFormSchema as loginSchema } from "@/features/auth/schemas/auth.schema";
 import { type LoginFormValues } from "@/features/auth/types";
 import { useLogin } from "@/features/auth/hooks/useLogin";
+import { OptimizedImage } from "@/shared/components/ui/optimized-image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -169,9 +170,12 @@ export function LoginForm({
             </div>
             <div className="relative flex h-full items-center justify-center">
               <div>
-                <img
+                <OptimizedImage
                   src="/logo.svg"
                   alt={t("auth.brandTitle", "App logo")}
+                  width={120}
+                  height={120}
+                  priority
                   className="m-auto h-30 w-30"
                 />
                 <div className="mt-4 text-center">

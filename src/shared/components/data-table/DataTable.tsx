@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { memo, useEffect, useState, useRef } from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -9,6 +9,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTranslation } from "react-i18next";
 import { Download, FilterX } from "lucide-react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -45,6 +46,7 @@ import {
 } from "@/shared/components/data-table/DataTableActions";
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
+import { useDebounce } from "@/shared/hooks/useDebounce";
 
 // Extend TanStack Table column meta for filter configuration
 declare module "@tanstack/react-table" {
@@ -75,6 +77,8 @@ type DataTableProps<TData> = {
   emptyMessage?: string;
   className?: string;
   actions?: DataTableAction<TData>[];
+  enableVirtualization?: boolean; // Enable virtual scrolling for large datasets
+  estimateRowHeight?: number; // Estimated row height in pixels (default: 53)
 };
 
 // Overload for query result (recommended)
@@ -94,7 +98,37 @@ type DataTableUnionProps<TData> =
   | DataTableProps<TData>
   | DataTablePropsWithQuery<TData>;
 
-export function DataTable<TData>(props: DataTableUnionProps<TData>) {
+// Debounced input component for column filters
+function DebouncedInput({
+  column,
+  t,
+}: {
+  column: {
+    getFilterValue: () => unknown;
+    setFilterValue: (value: unknown) => void;
+  };
+  t: (key: string) => string;
+}) {
+  const filterValue = column.getFilterValue();
+  const [inputValue, setInputValue] = useState((filterValue as string) ?? "");
+  const debouncedValue = useDebounce(inputValue, 500);
+
+  // Update filter when debounced value changes
+  useEffect(() => {
+    column.setFilterValue(debouncedValue || undefined);
+  }, [debouncedValue, column]);
+
+  return (
+    <Input
+      placeholder={t("table.filter")}
+      value={inputValue}
+      onChange={(e) => setInputValue(e.target.value)}
+      className="h-8 w-full"
+    />
+  );
+}
+
+const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   const {
     columns,
     onRowClick,
@@ -104,6 +138,8 @@ export function DataTable<TData>(props: DataTableUnionProps<TData>) {
     emptyMessage,
     className,
     actions,
+    enableVirtualization = false,
+    estimateRowHeight = 53,
   } = props;
 
   // Automatically determine mode based on backend
@@ -128,6 +164,7 @@ export function DataTable<TData>(props: DataTableUnionProps<TData>) {
   });
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync pagination state with URL params
   useEffect(() => {
@@ -243,12 +280,13 @@ export function DataTable<TData>(props: DataTableUnionProps<TData>) {
       );
     }
 
+    // Use debounced input for text filters
+    // Key prop resets state when filters are cleared
     return (
-      <Input
-        placeholder={t("table.filter")}
-        value={(filterValue as string) ?? ""}
-        onChange={(e) => column.setFilterValue(e.target.value)}
-        className="h-8 w-full"
+      <DebouncedInput
+        key={String(filterValue ?? "")}
+        column={column}
+        t={t}
       />
     );
   };
@@ -269,6 +307,21 @@ export function DataTable<TData>(props: DataTableUnionProps<TData>) {
   };
 
   const hasActiveFilters = columnFilters.length > 0;
+
+  // Virtual scrolling setup for large datasets
+  const rows = table.getRowModel().rows;
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => estimateRowHeight,
+    overscan: 5,
+    enabled: enableVirtualization && mode === "client",
+  });
+
+  const virtualRows = enableVirtualization && mode === "client" ? rowVirtualizer.getVirtualItems() : [];
+  const totalSize = enableVirtualization && mode === "client" ? rowVirtualizer.getTotalSize() : 0;
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start || 0 : 0;
+  const paddingBottom = virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0) : 0;
 
   return (
     <div className={cn("w-full space-y-4", className)}>
@@ -316,7 +369,13 @@ export function DataTable<TData>(props: DataTableUnionProps<TData>) {
             </TooltipProvider>
           </div>
         )}
-        <div className="border shadow rounded-lg my-4 overflow-x-auto">
+        <div
+          ref={tableContainerRef}
+          className={cn(
+            "border shadow rounded-lg my-4 overflow-x-auto",
+            enableVirtualization && mode === "client" && "max-h-[600px] overflow-y-auto"
+          )}
+        >
           <Table className="min-w-[800px]">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -358,35 +417,83 @@ export function DataTable<TData>(props: DataTableUnionProps<TData>) {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    onClick={() => onRowClick?.(row.original)}
-                    className={cn(
-                      "transition-colors",
-                      onRowClick && "cursor-pointer hover:bg-muted/60"
+              {rows.length ? (
+                enableVirtualization && mode === "client" ? (
+                  // Virtual scrolling mode
+                  <>
+                    {paddingTop > 0 && (
+                      <tr>
+                        <td style={{ height: `${paddingTop}px` }} />
+                      </tr>
                     )}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className={cn(
-                          "px-4",
-                          cell.column.id === "actions"
-                            ? "py-0 w-[1%] whitespace-nowrap"
-                            : "py-3"
-                        )}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                    {virtualRows.map((virtualRow) => {
+                      const row = rows[virtualRow.index];
+                      return (
+                        <TableRow
+                          key={row.id}
+                          data-state={row.getIsSelected() && "selected"}
+                          onClick={() => onRowClick?.(row.original)}
+                          className={cn(
+                            "transition-colors",
+                            onRowClick && "cursor-pointer hover:bg-muted/60"
+                          )}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              className={cn(
+                                "px-4",
+                                cell.column.id === "actions"
+                                  ? "py-0 w-[1%] whitespace-nowrap"
+                                  : "py-3"
+                              )}
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })}
+                    {paddingBottom > 0 && (
+                      <tr>
+                        <td style={{ height: `${paddingBottom}px` }} />
+                      </tr>
+                    )}
+                  </>
+                ) : (
+                  // Normal rendering mode
+                  rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      onClick={() => onRowClick?.(row.original)}
+                      className={cn(
+                        "transition-colors",
+                        onRowClick && "cursor-pointer hover:bg-muted/60"
+                      )}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          key={cell.id}
+                          className={cn(
+                            "px-4",
+                            cell.column.id === "actions"
+                              ? "py-0 w-[1%] whitespace-nowrap"
+                              : "py-3"
+                          )}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )
               ) : (
                 <TableRow>
                   <TableCell
@@ -416,7 +523,10 @@ export function DataTable<TData>(props: DataTableUnionProps<TData>) {
       </div>
     </div>
   );
-}
+};
+
+// Export memoized version for performance
+export const DataTable = memo(DataTableInner) as typeof DataTableInner;
 
 // Re-export for convenience
 export type { DataTableAction } from "@/shared/components/data-table/DataTableActions";

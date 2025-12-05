@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { OptimizedImage } from "@/shared/components/ui/optimized-image";
 import {
   Sidebar,
   SidebarContent,
@@ -31,11 +32,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <span className="font-extrabold group-data-[collapsible=icon]:hidden mx-auto text-center">
               {t("app.title")}
             </span>
-            <img
-              src="/vite.svg"
+            <OptimizedImage
+              src="/logo.svg"
               width={600}
               height={600}
               alt={t("app.logo")}
+              priority
               className="max-h-20 m-auto group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:m-0"
             />
           </SidebarMenuItem>
