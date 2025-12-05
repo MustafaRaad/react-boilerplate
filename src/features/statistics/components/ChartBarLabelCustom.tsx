@@ -56,7 +56,7 @@ export function ChartBarLabelCustom({ className }: { className?: string }) {
       ({
         volume: {
           label: t("barLabelCustom.series.volume"),
-          color: "var(--chart-1)",
+          color: "var(--chart-2)",
         },
         label: {
           color: "var(--background)",
@@ -117,7 +117,7 @@ export function ChartBarLabelCustom({ className }: { className?: string }) {
                 dataKey="company"
                 position="insideLeft"
                 offset={8}
-                className="fill-[--color-label]"
+                className="fill-background font-medium"
                 fontSize={12}
               />
               {/* Values on the right edge */}
@@ -125,7 +125,7 @@ export function ChartBarLabelCustom({ className }: { className?: string }) {
                 dataKey="volume"
                 position="right"
                 offset={8}
-                className="fill-foreground"
+                className="fill-foreground font-medium"
                 fontSize={12}
                 formatter={(v: number) => formatValue(v)}
               />
