@@ -1,6 +1,16 @@
 {
   "pageTitle": "Statistics",
   "pageDescription": "Financial analytics and insights dashboard",
+  "charts": {
+    "income": "Income",
+    "expense": "Expense",
+    "areaTitle": "Income vs Expense Trends",
+    "areaDescription": "Daily financial overview for the selected period",
+    "selectPeriod": "Select period",
+    "last7Days": "Last 7 days",
+    "last30Days": "Last 30 days",
+    "last90Days": "Last 90 days"
+  },
   "miniStats": {
     "sales": {
       "title": "Monthly Sales",

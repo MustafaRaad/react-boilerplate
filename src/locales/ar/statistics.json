@@ -1,6 +1,16 @@
 {
   "pageTitle": "الإحصائيات",
   "pageDescription": "لوحة تحليلات ورؤى مالية",
+  "charts": {
+    "income": "الدخل",
+    "expense": "المصروفات",
+    "areaTitle": "اتجاهات الدخل مقابل المصروفات",
+    "areaDescription": "نظرة مالية يومية للفترة المحددة",
+    "selectPeriod": "اختر الفترة",
+    "last7Days": "آخر 7 أيام",
+    "last30Days": "آخر 30 يوماً",
+    "last90Days": "آخر 90 يوماً"
+  },
   "miniStats": {
     "sales": {
       "title": "المبيعات الشهرية",

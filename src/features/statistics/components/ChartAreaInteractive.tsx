@@ -150,16 +150,19 @@ export function ChartAreaInteractive({ className }: { className?: string }) {
   }, [timeRange]);
 
   return (
-    <Card className={cn("pt-0", className)}>
+    <Card className={cn(className)}>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1">
+        <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle>{t("charts.areaTitle")}</CardTitle>
           <CardDescription>{t("charts.areaDescription")}</CardDescription>
         </div>
 
-        <Select value={timeRange} onValueChange={(v) => setTimeRange(v as "7d" | "30d" | "90d")}>
+        <Select
+          value={timeRange}
+          onValueChange={(v) => setTimeRange(v as "7d" | "30d" | "90d")}
+        >
           <SelectTrigger
-            className="hidden w-[180px] rounded-lg sm:ml-auto sm:flex"
+            className="w-[160px] rounded-lg sm:ml-auto"
             aria-label={t("charts.selectPeriod")}
           >
             <SelectValue placeholder={t("charts.selectPeriod")} />
@@ -183,7 +186,13 @@ export function ChartAreaInteractive({ className }: { className?: string }) {
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={filteredData}>
+          <AreaChart
+            data={filteredData}
+            margin={{
+              left: 12,
+              right: 12,
+            }}
+          >
             <defs>
               <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -223,7 +232,7 @@ export function ChartAreaInteractive({ className }: { className?: string }) {
             <YAxis
               tickLine={false}
               axisLine={false}
-              width={80}
+              tickMargin={8}
               tickFormatter={(v) => formatAmount(v)}
             />
 
@@ -231,7 +240,6 @@ export function ChartAreaInteractive({ className }: { className?: string }) {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  indicator="dot"
                   labelFormatter={(v) => formatDate(new Date(v))}
                   formatter={(value) => formatAmount(Number(value))}
                 />
@@ -242,13 +250,17 @@ export function ChartAreaInteractive({ className }: { className?: string }) {
               dataKey="expense"
               type="natural"
               fill="url(#fillExpense)"
+              fillOpacity={0.4}
               stroke="var(--color-expense)"
+              stackId="a"
             />
             <Area
               dataKey="income"
               type="natural"
               fill="url(#fillIncome)"
+              fillOpacity={0.4}
               stroke="var(--color-income)"
+              stackId="a"
             />
 
             <ChartLegend content={<ChartLegendContent />} />
