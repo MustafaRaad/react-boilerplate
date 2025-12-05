@@ -1,12 +1,9 @@
 import { type User } from "@/features/users/types";
-import { type Role } from "@/core/types/auth";
 import {
   type AspNetEnvelope,
   type AspNetPagedResult,
   type LaravelDataTableResponse,
 } from "@/core/types/api";
-import { type UsersQuery } from "@/features/users/types";
-import { type RolesQuery } from "@/features/roles/types";
 import { authEndpoints } from "@/features/auth/api/auth.endpoints";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -28,7 +25,7 @@ export const endpoints = {
       method: "GET",
       requiresAuth: true,
     } as EndpointDef<
-      UsersQuery | undefined,
+      Record<string, unknown> | undefined,
       AspNetEnvelope<AspNetPagedResult<User>> | LaravelDataTableResponse<User>
     >,
     get: {
@@ -51,16 +48,6 @@ export const endpoints = {
       method: "DELETE",
       requiresAuth: true,
     } as EndpointDef<{ id: number }, AspNetEnvelope<null> | null>,
-  },
-  roles: {
-    list: {
-      path: "/roles",
-      method: "GET",
-      requiresAuth: true,
-    } as EndpointDef<
-      RolesQuery | undefined,
-      AspNetEnvelope<AspNetPagedResult<Role>> | LaravelDataTableResponse<Role>
-    >,
   },
 } as const;
 

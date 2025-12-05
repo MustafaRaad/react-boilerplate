@@ -95,52 +95,92 @@ export const useWidget = (id: string) =>
 
 ### Centralized Pagination Hook (for DataTable):
 
-**CURRENT PATTERN**: Use `useDataTableQuery` for fully automated pagination and data handling.
+**RECOMMENDED PATTERN**: Use `createDataTableHook` factory for one-line data hooks with automatic backend handling.
 
-This hook automatically:
+This factory automatically:
 
 - Reads `page` and `pageSize` from URL search params (managed by DataTable)
 - Formats query params based on backend type:
-  - **Laravel**: `{ page, size }` (lowercase)
-  - **ASP.NET**: `{ PageNumber, PageSize }` (capital case)
-- Enables shareable links and browser back/forward navigation
+  - **Laravel**: `{ page, size }` (lowercase) - applies client-side filtering
+  - **ASP.NET**: `{ PageNumber, PageSize }` (capital case) - sends filters to server
+- Handles shareable links and browser back/forward navigation
+- Supports optional filters for both backends
+
+#### Simple Usage (no filters):
 
 ```ts
 // src/features/widgets/api/useWidgets.ts
-import { apiFetch } from "@/core/api/client";
 import { endpoints } from "@/core/api/endpoints";
-import { useDataTableQuery } from "@/shared/hooks/useDataTableQuery";
-import { type PagedResult } from "@/core/types/api";
-import { type Widget, type WidgetsQuery } from "@/features/widgets/types";
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import { type Widget } from "../types";
 
-// Pass additional query params (search, filters, etc.) - pagination is handled automatically
-// No need for page/pageSize in WidgetsQuery type
-export const useWidgets = (additionalQuery?: WidgetsQuery) => {
-  return useDataTableQuery<Widget>({
-    queryKey: ["widgets"],
-    queryFn: async ({ query }) => {
-      const response = await apiFetch<PagedResult<Widget>>(
-        endpoints.widgets.list,
-        {
-          query: { ...query, ...additionalQuery },
-        }
-      );
-      return response;
-    },
-  });
-};
+export const useWidgets = createDataTableHook<Widget>(
+  "widgets",
+  endpoints.widgets.list
+);
 ```
 
-**Query Type Example**:
+#### With Server-Side Filters (ASP.NET):
+
+```ts
+// src/features/products/api/useProducts.ts
+import { endpoints } from "@/core/api/endpoints";
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import { type Product, type ProductFilters } from "../types";
+
+// Filters will be sent as query params to ASP.NET for server-side filtering
+export const useProducts = createDataTableHook<Product, ProductFilters>(
+  "products",
+  endpoints.products.list,
+  {
+    filters: { status: "active" }, // Default filters
+  }
+);
+
+// Usage in component: useProducts({ category: "electronics" })
+```
+
+#### With Client-Side Filtering (Laravel):
+
+```ts
+// src/features/orders/api/useOrders.ts
+import { endpoints } from "@/core/api/endpoints";
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import { type Order, type OrderFilters } from "../types";
+
+// For Laravel: custom filter function processes items client-side
+export const useOrders = createDataTableHook<Order, OrderFilters>(
+  "orders",
+  endpoints.orders.list,
+  {
+    clientFilter: (items, filters) => {
+      if (!filters?.search) return items;
+      return items.filter((item) =>
+        item.customerName.toLowerCase().includes(filters.search.toLowerCase())
+      );
+    },
+  }
+);
+
+// Usage in component: useOrders({ search: "john" })
+```
+
+**Query Type Example** (optional, only if you need filters):
 
 ```ts
 // src/features/widgets/types.ts
-export type WidgetsQuery = {
+export type WidgetFilters = {
   search?: string;
   status?: string;
   // NO page, pageSize, PageNumber, or PageSize - these are handled automatically
 };
 ```
+
+**Important Notes:**
+
+- For ASP.NET: Filters are automatically sent as query params to the server
+- For Laravel: Use `clientFilter` option to process filters on the client side
+- Always use the factory for new features - it eliminates boilerplate and ensures consistency
 
 ## 4) Page component (dashboard-protected example)
 
@@ -172,7 +212,21 @@ export const WidgetsPage = () => {
 
 ### DataTable list page (recommended pattern):
 
-**Step 1**: Define columns in a separate file with filter configuration:
+**Step 1**: Create data hook (one line with factory):
+
+```tsx
+// src/features/widgets/api/useWidgets.ts
+import { endpoints } from "@/core/api/endpoints";
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import { type Widget } from "../types";
+
+export const useWidgets = createDataTableHook<Widget>(
+  "widgets",
+  endpoints.widgets.list
+);
+```
+
+**Step 2**: Define columns in a separate file with filter configuration:
 
 ```tsx
 // src/features/widgets/components/WidgetsTable.columns.tsx
@@ -217,7 +271,7 @@ export const createWidgetsColumns = (t: TFn): ColumnDef<Widget, unknown>[] => [
 ];
 ```
 
-**Step 2**: Create table component using DataTable:
+**Step 2**: Create table component using DataTable (zero boilerplate):
 
 ```tsx
 // src/features/widgets/components/WidgetsTable.tsx
@@ -243,12 +297,33 @@ export const WidgetsTable = () => {
 };
 ```
 
+**With Dynamic Filters** (optional):
+
+```tsx
+// Example: Products table with category filter
+export const ProductsTable = () => {
+  const [category, setCategory] = useState<string>();
+  const productsQuery = useProducts({ category }); // Filters passed dynamically
+
+  return (
+    <div className="space-y-4">
+      <select onChange={(e) => setCategory(e.target.value)}>
+        <option value="">All Categories</option>
+        <option value="electronics">Electronics</option>
+        <option value="clothing">Clothing</option>
+      </select>
+      <DataTable columns={columns} queryResult={productsQuery} />
+    </div>
+  );
+};
+```
+
 **DataTable features** (fully automated):
 
 - ✅ **Centralized Pagination**: Automatically manages `page`/`pageSize` in URL params—no manual state
 - ✅ **Auto Mode Detection**: Automatically determines `"client"` (Laravel) or `"server"` (ASP.NET) mode based on `backendKind`
 - ✅ **Auto Data Extraction**: Pass `queryResult` prop—`items` and `rowCount` extracted automatically
-- ✅ **Backend-Aware**: Automatically sends correct query params (`page`/`size` for Laravel, `PageNumber`/`PageSize` for ASP.NET)
+- ✅ **Backend-Aware Filtering**: Automatically sends filters to server (ASP.NET) or processes client-side (Laravel)
 - ✅ **No Props Needed**: No `data`, `total`, `page`, `pageSize`, `onPageChange`, `onPageSizeChange`, or `mode` props required
 - Automatic column filtering (text input, select dropdown, date range)
 - Smart clear filters button (only shows when filters are active)
@@ -484,7 +559,264 @@ const routeTree = rootRoute.addChildren([
 - **Don't pass `mode` prop to DataTable** - Mode is auto-detected based on `backendKind`.
 - **Don't manually extract data/total from query** - Use `queryResult` prop on DataTable for automatic extraction.
 
-## 8) i18n translations when adding data/columns
+## 8) Quick Start: Adding a New Paginated Feature
+
+**Complete Example**: Adding a "Products" feature with server-side filtering (ASP.NET) or client-side filtering (Laravel).
+
+### Step 1: Define Types
+
+```ts
+// src/features/products/types.ts
+export type Product = {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  status: "active" | "inactive";
+  createdAt: string;
+};
+
+export type ProductFilters = {
+  search?: string;
+  category?: string;
+  status?: string;
+};
+```
+
+### Step 2: Add API Endpoint
+
+```ts
+// src/core/api/endpoints.ts
+export const endpoints = {
+  // ... existing endpoints
+  products: {
+    list: {
+      path: "/Products/List",
+      method: "GET",
+      requiresAuth: true,
+    } as EndpointDef<
+      Record<string, unknown> | undefined,
+      | AspNetEnvelope<AspNetPagedResult<Product>>
+      | LaravelDataTableResponse<Product>
+    >,
+  },
+};
+```
+
+### Step 3: Create Data Hook (One Line!)
+
+```ts
+// src/features/products/api/useProducts.ts
+import { endpoints } from "@/core/api/endpoints";
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import { type Product, type ProductFilters } from "../types";
+
+// For ASP.NET (server-side filtering):
+export const useProducts = createDataTableHook<Product, ProductFilters>(
+  "products",
+  endpoints.products.list
+);
+
+// For Laravel (client-side filtering):
+export const useProducts = createDataTableHook<Product, ProductFilters>(
+  "products",
+  endpoints.products.list,
+  {
+    clientFilter: (items, filters) => {
+      let filtered = items;
+
+      if (filters?.search) {
+        const search = filters.search.toLowerCase();
+        filtered = filtered.filter((item) =>
+          item.name.toLowerCase().includes(search)
+        );
+      }
+
+      if (filters?.category) {
+        filtered = filtered.filter(
+          (item) => item.category === filters.category
+        );
+      }
+
+      if (filters?.status) {
+        filtered = filtered.filter((item) => item.status === filters.status);
+      }
+
+      return filtered;
+    },
+  }
+);
+```
+
+### Step 4: Define Table Columns
+
+```tsx
+// src/features/products/components/ProductsTable.columns.tsx
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Product } from "../types";
+
+type TFn = (key: string) => string;
+
+export const createProductsColumns = (t: TFn): ColumnDef<Product>[] => [
+  {
+    accessorKey: "name",
+    header: t("products.columns.name"),
+    enableColumnFilter: true,
+  },
+  {
+    accessorKey: "category",
+    header: t("products.columns.category"),
+    enableColumnFilter: true,
+    meta: {
+      filterVariant: "select",
+      filterOptions: [
+        { id: "electronics", name: t("products.categories.electronics") },
+        { id: "clothing", name: t("products.categories.clothing") },
+      ],
+    },
+  },
+  {
+    accessorKey: "price",
+    header: t("products.columns.price"),
+    cell: ({ row }) => `$${row.getValue("price")}`,
+  },
+  {
+    accessorKey: "status",
+    header: t("products.columns.status"),
+    enableColumnFilter: true,
+    meta: {
+      filterVariant: "select",
+      filterOptions: [
+        { id: "active", name: t("common.status.active") },
+        { id: "inactive", name: t("common.status.inactive") },
+      ],
+    },
+  },
+];
+```
+
+### Step 5: Create Table Component (Zero Boilerplate!)
+
+```tsx
+// src/features/products/components/ProductsTable.tsx
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { DataTable } from "@/shared/components/data-table/DataTable";
+import { useProducts } from "../api/useProducts";
+import { createProductsColumns } from "./ProductsTable.columns";
+
+export const ProductsTable = () => {
+  const { t } = useTranslation("products");
+  const [filters, setFilters] = useState<{ category?: string }>();
+
+  // Pass filters dynamically - automatic backend handling!
+  const productsQuery = useProducts(filters);
+  const columns = useMemo(() => createProductsColumns(t), [t]);
+
+  return (
+    <div className="space-y-4">
+      {/* Optional: Custom filter UI */}
+      <select
+        onChange={(e) => setFilters({ category: e.target.value || undefined })}
+      >
+        <option value="">All Categories</option>
+        <option value="electronics">Electronics</option>
+        <option value="clothing">Clothing</option>
+      </select>
+
+      {/* DataTable handles everything else automatically */}
+      <DataTable
+        columns={columns}
+        queryResult={productsQuery} // Auto-extracts data, total, handles pagination
+        enableColumnFilters // Column-level filtering
+        showExport // CSV export
+      />
+    </div>
+  );
+};
+```
+
+### Step 6: Create Page Component
+
+```tsx
+// src/features/products/pages/ProductsListPage.tsx
+import { ProductsTable } from "../components/ProductsTable";
+
+export const ProductsListPage = () => {
+  return (
+    <div className="space-y-4 p-6">
+      <h1 className="text-2xl font-bold">Products</h1>
+      <ProductsTable />
+    </div>
+  );
+};
+```
+
+### Step 7: Wire Up Route
+
+```ts
+// src/app/router/routeTree.ts
+import { ProductsListPage } from "@/features/products/pages/ProductsListPage";
+
+const productsRoute = createRoute({
+  getParentRoute: () => dashboardRoute,
+  path: "products",
+  component: ProductsListPage,
+});
+
+// Add to route tree
+dashboardRoute.addChildren([
+  dashboardIndexRoute,
+  usersRoute,
+  productsRoute, // New!
+]);
+```
+
+### Step 8: Add Navigation Item
+
+```ts
+// src/shared/config/navigation.ts
+import { Package } from "lucide-react";
+
+export const mainNavItems = [
+  // ... existing items
+  {
+    label: "products",
+    href: "/dashboard/products",
+    icon: Package,
+  },
+];
+```
+
+### Step 9: Add Translations
+
+```json
+// src/locales/en/products.json
+{
+  "columns": {
+    "name": "Product Name",
+    "category": "Category",
+    "price": "Price",
+    "status": "Status"
+  },
+  "categories": {
+    "electronics": "Electronics",
+    "clothing": "Clothing"
+  }
+}
+```
+
+**That's it!** You now have a fully functional paginated table with:
+
+- ✅ URL-based pagination (shareable links, browser back/forward)
+- ✅ Automatic backend detection (Laravel/ASP.NET)
+- ✅ Server-side or client-side filtering based on backend
+- ✅ Column filtering
+- ✅ CSV export
+- ✅ RTL support
+- ✅ Zero boilerplate
+
+## 9) i18n translations when adding data/columns
 
 - Translations now use **JSON format** with Intlayer integration. Add to `src/locales/en/<namespace>.json` and `src/locales/ar/<namespace>.json`.
 - **Option 1: Direct JSON editing** - Edit JSON files directly for quick updates.

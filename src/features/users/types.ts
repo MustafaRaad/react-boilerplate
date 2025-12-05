@@ -12,7 +12,3 @@ export type User = {
   role: string; // Single role name from Laravel
   roles?: Role[]; // Optional for compatibility
 };
-
-export type UsersQuery = {
-  search?: string;
-};
