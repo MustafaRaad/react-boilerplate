@@ -2,6 +2,27 @@
 
 Use this checklist to add endpoints, schemas/types, pages, and routes with the patterns used here (React 19 + Vite, TanStack Router/Query/Form, Zod, Tailwind/shadcn, ASP.NET + Laravel backends).
 
+## Key Automation Features
+
+This project features **fully automated DataTable pagination and data handling**:
+
+✅ **Zero Boilerplate**: No manual pagination state management needed  
+✅ **URL-Based State**: Pagination in URL params for shareable links and browser navigation  
+✅ **Backend-Agnostic**: Automatically handles Laravel vs ASP.NET query param differences  
+✅ **Auto Data Extraction**: Pass query result directly—data and total extracted automatically  
+✅ **Auto Mode Detection**: Client/server mode determined automatically based on backend type
+
+**Quick example:**
+
+```tsx
+// Just 3 lines for a complete data table with pagination!
+const widgetsQuery = useWidgets(); // Hook handles pagination via URL
+const columns = useMemo(() => createWidgetsColumns(t), [t]);
+return <DataTable columns={columns} queryResult={widgetsQuery} />;
+```
+
+No `page`, `pageSize`, `onPageChange`, `mode`, `data`, or `total` props needed!
+
 ## 0) Backend & auth source of truth
 
 - Canonical doc: `docs/change-server-instructions.md`. Read it before touching auth/backend.
@@ -55,19 +76,70 @@ widgets: {
 
 ## 3) Data hooks (TanStack Query)
 
-Use the shared client/hooksÃ¢â‚¬â€do not create new fetch wrappers.
+Use the shared client/hooks—do not create new fetch wrappers.
+
+### Standard Query Hook (for non-paginated data):
+
+```ts
+// src/features/widgets/api/useWidget.ts
+import { apiFetch } from "@/core/api/client";
+import { endpoints } from "@/core/api/endpoints";
+import { useApiQuery } from "@/core/api/hooks";
+
+export const useWidget = (id: string) =>
+  useApiQuery({
+    queryKey: ["widget", id],
+    queryFn: () => apiFetch(endpoints.widgets.get, { query: { id } }),
+  });
+```
+
+### Centralized Pagination Hook (for DataTable):
+
+**CURRENT PATTERN**: Use `useDataTableQuery` for fully automated pagination and data handling.
+
+This hook automatically:
+
+- Reads `page` and `pageSize` from URL search params (managed by DataTable)
+- Formats query params based on backend type:
+  - **Laravel**: `{ page, size }` (lowercase)
+  - **ASP.NET**: `{ PageNumber, PageSize }` (capital case)
+- Enables shareable links and browser back/forward navigation
 
 ```ts
 // src/features/widgets/api/useWidgets.ts
 import { apiFetch } from "@/core/api/client";
 import { endpoints } from "@/core/api/endpoints";
-import { useApiQuery } from "@/core/api/hooks";
+import { useDataTableQuery } from "@/shared/hooks/useDataTableQuery";
+import { type PagedResult } from "@/core/types/api";
+import { type Widget, type WidgetsQuery } from "@/features/widgets/types";
 
-export const useWidgets = (query?: { search?: string }) =>
-  useApiQuery({
-    queryKey: ["widgets", query],
-    queryFn: () => apiFetch(endpoints.widgets.list, { query }),
+// Pass additional query params (search, filters, etc.) - pagination is handled automatically
+// No need for page/pageSize in WidgetsQuery type
+export const useWidgets = (additionalQuery?: WidgetsQuery) => {
+  return useDataTableQuery<Widget>({
+    queryKey: ["widgets"],
+    queryFn: async ({ query }) => {
+      const response = await apiFetch<PagedResult<Widget>>(
+        endpoints.widgets.list,
+        {
+          query: { ...query, ...additionalQuery },
+        }
+      );
+      return response;
+    },
   });
+};
+```
+
+**Query Type Example**:
+
+```ts
+// src/features/widgets/types.ts
+export type WidgetsQuery = {
+  search?: string;
+  status?: string;
+  // NO page, pageSize, PageNumber, or PageSize - these are handled automatically
+};
 ```
 
 ## 4) Page component (dashboard-protected example)
@@ -151,33 +223,19 @@ export const createWidgetsColumns = (t: TFn): ColumnDef<Widget, unknown>[] => [
 // src/features/widgets/components/WidgetsTable.tsx
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { backendKind } from "@/core/config/env";
-import { DataTable } from "@/shared/components/data/DataTable";
+import { DataTable } from "@/shared/components/data-table/DataTable";
 import { useWidgets } from "@/features/widgets/api/useWidgets";
-import { usePaginationState } from "@/shared/hooks/usePaginationState";
 import { createWidgetsColumns } from "./WidgetsTable.columns";
 
 export const WidgetsTable = () => {
   const { t } = useTranslation("widgets");
-  const { page, setPage, pageSize, setPageSize } = usePaginationState();
-
-  const widgetsQuery = useWidgets({ page, pageSize });
+  const widgetsQuery = useWidgets(); // Pagination handled automatically via URL params
   const columns = useMemo(() => createWidgetsColumns(t), [t]);
-
-  // Use "client" mode for Laravel (client-side filtering/pagination)
-  // Use "server" mode for ASP.NET (server-side filtering/pagination)
-  const mode = backendKind === "laravel" ? "client" : "server";
 
   return (
     <DataTable
       columns={columns}
-      data={widgetsQuery.data?.items ?? []}
-      total={widgetsQuery.data?.rowCount}
-      page={page}
-      pageSize={pageSize}
-      onPageChange={setPage}
-      onPageSizeChange={setPageSize}
-      mode={mode}
+      queryResult={widgetsQuery} // Pass query directly - everything extracted automatically
       enableColumnFilters // Enable column-level filtering
       showExport // Enable CSV export with auto-generated filename
     />
@@ -185,16 +243,29 @@ export const WidgetsTable = () => {
 };
 ```
 
-**DataTable features**:
+**DataTable features** (fully automated):
 
+- ✅ **Centralized Pagination**: Automatically manages `page`/`pageSize` in URL params—no manual state
+- ✅ **Auto Mode Detection**: Automatically determines `"client"` (Laravel) or `"server"` (ASP.NET) mode based on `backendKind`
+- ✅ **Auto Data Extraction**: Pass `queryResult` prop—`items` and `rowCount` extracted automatically
+- ✅ **Backend-Aware**: Automatically sends correct query params (`page`/`size` for Laravel, `PageNumber`/`PageSize` for ASP.NET)
+- ✅ **No Props Needed**: No `data`, `total`, `page`, `pageSize`, `onPageChange`, `onPageSizeChange`, or `mode` props required
 - Automatic column filtering (text input, select dropdown, date range)
 - Smart clear filters button (only shows when filters are active)
 - CSV export with auto-generated filename from URL path and timestamp
-- Server/client pagination modes
 - Full RTL (right-to-left) support with logical CSS properties
-- Modern card-based styling with comfortable spacing (bg-card, shadow-md, rounded-lg)
+- Modern card-based styling with comfortable spacing
 - Icon-only toolbar buttons with tooltips for clean UI
-- Reusable actions system for row-level operations (view, edit, delete, etc.)
+- Reusable actions system for row-level operations
+
+**What you DON'T need anymore**:
+
+- ❌ `usePaginationState()` hook
+- ❌ `backendKind` import in table components
+- ❌ `mode` prop calculation
+- ❌ `data={query.data?.items ?? []}` extraction
+- ❌ `total={query.data?.rowCount}` extraction
+- ❌ Manual `page`, `pageSize`, `onPageChange`, `onPageSizeChange` props
 
 **Step 3 (Optional)**: Add row actions:
 
@@ -204,43 +275,49 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import {
   DataTable,
   type DataTableAction,
-} from "@/shared/components/data/DataTable";
+} from "@/shared/components/data-table/DataTable";
 import type { Widget } from "@/features/widgets/types";
 
-// Inside WidgetsTable component, add common translations hook
-const { t } = useTranslation("widgets");
-const { t: tCommon } = useTranslation("common");
+// Inside WidgetsTable component
+export const WidgetsTable = () => {
+  const { t } = useTranslation("widgets");
+  const { t: tCommon } = useTranslation("common");
+  const widgetsQuery = useWidgets();
+  const columns = useMemo(() => createWidgetsColumns(t), [t]);
 
-// Define actions using common namespace for labels
-const actions: DataTableAction<Widget>[] = useMemo(
-  () => [
-    {
-      icon: Eye,
-      label: tCommon("actions.view"),
-      onClick: (widget) => console.log("View widget:", widget),
-    },
-    {
-      icon: Pencil,
-      label: tCommon("actions.edit"),
-      onClick: (widget) => console.log("Edit widget:", widget),
-    },
-    {
-      icon: Trash2,
-      label: tCommon("actions.delete"),
-      onClick: (widget) => console.log("Delete widget:", widget),
-      variant: "destructive", // Red styling for delete actions
-    },
-  ],
-  [tCommon]
-);
+  // Define actions using common namespace for labels
+  const actions: DataTableAction<Widget>[] = useMemo(
+    () => [
+      {
+        icon: Eye,
+        label: tCommon("actions.view"),
+        onClick: (widget) => console.log("View widget:", widget),
+      },
+      {
+        icon: Pencil,
+        label: tCommon("actions.edit"),
+        onClick: (widget) => console.log("Edit widget:", widget),
+      },
+      {
+        icon: Trash2,
+        label: tCommon("actions.delete"),
+        onClick: (widget) => console.log("Delete widget:", widget),
+        variant: "destructive", // Red styling for delete actions
+      },
+    ],
+    [tCommon]
+  );
 
-// Pass actions to DataTable
-<DataTable
-  columns={columns}
-  data={widgetsQuery.data?.items ?? []}
-  // ...other props
-  actions={actions}
-/>;
+  return (
+    <DataTable
+      columns={columns}
+      queryResult={widgetsQuery}
+      enableColumnFilters
+      showExport
+      actions={actions} // Pass actions array
+    />
+  );
+};
 ```
 
 **Actions system**:
@@ -322,16 +399,15 @@ const rolesFilterFn: FilterFn<User> = (row, _columnId, filterValue) => {
 
 **Important**: For columns with `id` instead of `accessorKey`, you **must** provide an `accessorFn` for filtering to work properly. TanStack Table's `getCanFilter()` requires an accessor to enable filtering.
 
-**DataTable props**:
+**DataTable props** (simplified):
+
+Required props:
 
 - `columns` - Column definitions with filter configuration
-- `data` - Array of data items
-- `total` - Total row count (for server-side pagination)
-- `page` - Current page number (1-indexed)
-- `pageSize` - Items per page
-- `onPageChange` - Page change handler
-- `onPageSizeChange` - Page size change handler
-- `mode` - `"server"` or `"client"` pagination mode
+- `queryResult` - Query result from `useDataTableQuery` hook (contains data, total, loading state)
+
+Optional props:
+
 - `enableColumnFilters` - Enable column filtering UI (defaults to `false`)
 - `showExport` - Show CSV export button (defaults to `false`)
 - `exportFileName` - Optional custom export filename (auto-generated from URL if not provided)
@@ -339,6 +415,16 @@ const rolesFilterFn: FilterFn<User> = (row, _columnId, filterValue) => {
 - `onRowClick` - Optional row click handler
 - `className` - Additional CSS classes
 - `actions` - Optional array of action definitions for row-level operations
+
+**REMOVED props** (now handled automatically):
+
+- ❌ `data` - Extracted from `queryResult.data.items`
+- ❌ `total` - Extracted from `queryResult.data.rowCount`
+- ❌ `page` - Managed in URL params
+- ❌ `pageSize` - Managed in URL params
+- ❌ `onPageChange` - Handled internally
+- ❌ `onPageSizeChange` - Handled internally
+- ❌ `mode` - Auto-detected based on `backendKind`
 
 **Column configuration**:
 
@@ -393,6 +479,10 @@ const routeTree = rootRoute.addChildren([
 - For columns with `id` instead of `accessorKey`, always provide `accessorFn` for filtering to work.
 - Don't use numeric IDs in select filter options when filtering by name - use the name as both `id` and `name` for consistency.
 - Don't define actions column manually in column definitions - use the `actions` prop on DataTable for consistency and reusability.
+- **Don't add pagination fields to query types** - `page`, `pageSize`, `PageNumber`, `PageSize` are handled automatically by `useDataTableQuery`.
+- **Don't import `usePaginationState`** - This hook has been removed; pagination is now fully automated.
+- **Don't pass `mode` prop to DataTable** - Mode is auto-detected based on `backendKind`.
+- **Don't manually extract data/total from query** - Use `queryResult` prop on DataTable for automatic extraction.
 
 ## 8) i18n translations when adding data/columns
 
@@ -455,4 +545,3 @@ const routeTree = rootRoute.addChildren([
   - `pnpm intlayer:fill` - AI auto-fill missing translations (OpenAI)
   - `pnpm intlayer:push` - Push to Intlayer CMS for team collaboration
 - See `docs/intlayer-integration.md` for complete guide
-

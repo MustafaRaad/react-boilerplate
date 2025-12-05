@@ -11,6 +11,8 @@ import {
 } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import { Download, FilterX } from "lucide-react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { backendKind } from "@/core/config/env";
 import { Button } from "@/shared/components/ui/button";
 import {
   Tooltip,
@@ -66,12 +68,7 @@ type DataTableProps<TData> = {
   columns: ColumnDef<TData, unknown>[];
   data: TData[];
   total?: number;
-  page?: number;
-  pageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
   onRowClick?: (row: TData) => void;
-  mode: "server" | "client";
   enableColumnFilters?: boolean;
   showExport?: boolean;
   exportFileName?: string;
@@ -80,35 +77,72 @@ type DataTableProps<TData> = {
   actions?: DataTableAction<TData>[];
 };
 
-export function DataTable<TData>({
-  columns,
-  data,
-  total,
-  page = 1,
-  pageSize = 10,
-  onPageChange,
-  onPageSizeChange,
-  onRowClick,
-  mode,
-  enableColumnFilters = false,
-  showExport = false,
-  exportFileName,
-  emptyMessage,
-  className,
-  actions,
-}: DataTableProps<TData>) {
+// Overload for query result (recommended)
+type DataTablePropsWithQuery<TData> = Omit<
+  DataTableProps<TData>,
+  "data" | "total"
+> & {
+  queryResult: {
+    data?: {
+      items: TData[];
+      rowCount?: number;
+    };
+  };
+};
+
+type DataTableUnionProps<TData> =
+  | DataTableProps<TData>
+  | DataTablePropsWithQuery<TData>;
+
+export function DataTable<TData>(props: DataTableUnionProps<TData>) {
+  const {
+    columns,
+    onRowClick,
+    enableColumnFilters = false,
+    showExport = false,
+    exportFileName,
+    emptyMessage,
+    className,
+    actions,
+  } = props;
+
+  // Automatically determine mode based on backend
+  const mode = backendKind === "laravel" ? "client" : "server";
+
+  // Extract data and total from either direct props or queryResult
+  const data =
+    "queryResult" in props ? props.queryResult.data?.items ?? [] : props.data;
+  const total =
+    "queryResult" in props ? props.queryResult.data?.rowCount : props.total;
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as Record<string, unknown>;
+
+  // Read pagination from URL params
+  const urlPage = Number(searchParams.page ?? 1);
+  const urlPageSize = Number(searchParams.pageSize ?? 10);
 
   const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: page - 1,
-    pageSize,
+    pageIndex: urlPage - 1,
+    pageSize: urlPageSize,
   });
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
+  // Sync pagination state with URL params
   useEffect(() => {
-    setPagination({ pageIndex: page - 1, pageSize });
-  }, [page, pageSize]);
+    setPagination({ pageIndex: urlPage - 1, pageSize: urlPageSize });
+  }, [urlPage, urlPageSize]);
+
+  // Update URL when pagination changes
+  const updateUrlPagination = (newPage: number, newPageSize: number) => {
+    navigate({
+      search: {
+        page: newPage,
+        pageSize: newPageSize,
+      } as never, // Type workaround for generic route search params
+    });
+  };
 
   // Add actions column if actions are provided
   const columnsWithActions = React.useMemo(() => {
@@ -147,8 +181,7 @@ export function DataTable<TData>({
                 ? updater(pagination)
                 : (updater as PaginationState);
             setPagination(next);
-            onPageChange?.(next.pageIndex + 1);
-            onPageSizeChange?.(next.pageSize);
+            updateUrlPagination(next.pageIndex + 1, next.pageSize);
           },
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -378,7 +411,6 @@ export function DataTable<TData>({
           onNextPage={() => table.nextPage()}
           onPageSizeChange={(newSize) => {
             table.setPageSize(newSize);
-            onPageSizeChange?.(newSize);
           }}
         />
       </div>

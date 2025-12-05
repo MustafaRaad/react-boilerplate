@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Shield, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Users, TrendingUp } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export type AppNavItem = {
@@ -21,12 +21,6 @@ export const mainNavItems: AppNavItem[] = [
     href: "/dashboard/users",
     icon: Users,
     feature: "users",
-  },
-  {
-    label: "navigation.roles",
-    href: "/dashboard/roles",
-    icon: Shield,
-    feature: "roles",
   },
   {
     label: "navigation.statistics",

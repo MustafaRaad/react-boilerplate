@@ -1,23 +1,19 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { backendKind } from "@/core/config/env";
 import {
   DataTable,
   type DataTableAction,
 } from "@/shared/components/data-table/DataTable.tsx";
 import { useUsers } from "@/features/users/api/useUsers";
-import { usePaginationState } from "@/shared/hooks/usePaginationState";
 import { createUsersColumns } from "./UsersTable.columns.tsx";
 import type { User } from "@/features/users/types";
 
 export const UsersTable = () => {
   const { t } = useTranslation("users");
   const { t: tCommon } = useTranslation("common");
-  const { page, setPage, pageSize, setPageSize } = usePaginationState();
-  const usersQuery = useUsers({ page, pageSize });
+  const usersQuery = useUsers();
   const columns = useMemo(() => createUsersColumns(t), [t]);
-  const mode = backendKind === "laravel" ? "client" : "server";
 
   const actions: DataTableAction<User>[] = useMemo(
     () => [
@@ -44,13 +40,7 @@ export const UsersTable = () => {
   return (
     <DataTable
       columns={columns}
-      data={usersQuery.data?.items ?? []}
-      total={usersQuery.data?.rowCount}
-      page={page}
-      pageSize={pageSize}
-      onPageChange={setPage}
-      onPageSizeChange={setPageSize}
-      mode={mode}
+      queryResult={usersQuery}
       enableColumnFilters
       showExport
       actions={actions}

@@ -14,7 +14,5 @@ export type User = {
 };
 
 export type UsersQuery = {
-  page?: number;
-  pageSize?: number;
   search?: string;
 };
