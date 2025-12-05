@@ -69,9 +69,15 @@ export function StatisticsPage() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <ChartAreaInteractive />
-        <ChartBarLabelCustom />
+      <div
+        className="grid gap-4 md:grid-cols-3
+      "
+      >
+        <ChartAreaInteractive
+          className="md:col-span-3
+        "
+        />
+        <ChartBarLabelCustom className="md:col-span-2" />
         <ChartBarStacked />
         <ChartLineLabel />
         <ChartRadialText />

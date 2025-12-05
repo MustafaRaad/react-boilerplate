@@ -66,13 +66,13 @@ export function ChartBarStacked({ className }: { className?: string }) {
   const fmtTooltip = (v: number) => `${num(v)} ${t("barStacked.units.order")}`;
 
   return (
-    <Card className={cn(className)}>
+    <Card className={cn("h-full flex flex-col " + className)}>
       <CardHeader>
         <CardTitle>{t("barStacked.title")}</CardTitle>
         <CardDescription>{t("barStacked.subtitle")}</CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-1">
+      <CardContent className="flex-1 pb-0">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <BarChart accessibilityLayer data={data}>
             <CartesianGrid vertical={false} />
@@ -82,7 +82,6 @@ export function ChartBarStacked({ className }: { className?: string }) {
               tickMargin={10}
               axisLine={false}
             />
-
             <ChartTooltip
               cursor={{ fill: "hsl(var(--muted))", opacity: 0.35 }}
               content={
