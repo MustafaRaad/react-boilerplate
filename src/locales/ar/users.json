@@ -24,8 +24,53 @@
   "validation": {
     "nameMinLength": "يجب أن يكون الاسم حرفين على الأقل",
     "invalidEmail": "عنوان البريد الإلكتروني غير صالح",
+    "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
     "phoneMinLength": "يجب أن يكون رقم الهاتف 10 أرقام على الأقل",
     "phoneMaxLength": "يجب أن لا يزيد رقم الهاتف عن 15 رقماً",
     "roleRequired": "الدور مطلوب"
+  },
+  "dialogs": {
+    "create": {
+      "title": "إنشاء مستخدم جديد",
+      "description": "إضافة مستخدم جديد إلى النظام.",
+      "success": "تم إنشاء المستخدم بنجاح"
+    },
+    "edit": {
+      "title": "تعديل المستخدم",
+      "description": "تحديث معلومات المستخدم.",
+      "success": "تم تحديث المستخدم بنجاح"
+    }
+  },
+  "form": {
+    "name": {
+      "label": "الاسم",
+      "placeholder": "أدخل الاسم الكامل للمستخدم"
+    },
+    "email": {
+      "label": "البريد الإلكتروني",
+      "placeholder": "user@example.com"
+    },
+    "password": {
+      "label": "كلمة المرور",
+      "placeholder": "أدخل كلمة المرور"
+    },
+    "phone_no": {
+      "label": "رقم الهاتف",
+      "placeholder": "+1234567890"
+    },
+    "role": {
+      "label": "الدور",
+      "placeholder": "اختر دور"
+    },
+    "approved": {
+      "label": "الحساب موافق عليه",
+      "placeholder": ""
+    }
+  },
+  "roles": {
+    "admin": "مدير",
+    "manager": "مدير فرع",
+    "user": "مستخدم",
+    "cashier": "أمين الصندوق"
   }
 }

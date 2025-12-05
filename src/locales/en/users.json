@@ -24,8 +24,53 @@
   "validation": {
     "nameMinLength": "Name must be at least 2 characters",
     "invalidEmail": "Invalid email address",
+    "passwordMinLength": "Password must be at least 6 characters",
     "phoneMinLength": "Phone number must be at least 10 digits",
     "phoneMaxLength": "Phone number must be at most 15 digits",
     "roleRequired": "Role is required"
+  },
+  "dialogs": {
+    "create": {
+      "title": "Create New User",
+      "description": "Add a new user to the system.",
+      "success": "User created successfully"
+    },
+    "edit": {
+      "title": "Edit User",
+      "description": "Update user information.",
+      "success": "User updated successfully"
+    }
+  },
+  "form": {
+    "name": {
+      "label": "Name",
+      "placeholder": "Enter user's full name"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "user@example.com"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "Enter password"
+    },
+    "phone_no": {
+      "label": "Phone Number",
+      "placeholder": "+1234567890"
+    },
+    "role": {
+      "label": "Role",
+      "placeholder": "Select a role"
+    },
+    "approved": {
+      "label": "Account Approved",
+      "placeholder": ""
+    }
+  },
+  "roles": {
+    "admin": "Administrator",
+    "manager": "Manager",
+    "user": "User",
+    "cashier": "Cashier"
   }
 }

@@ -23,6 +23,7 @@ export const createUserFormSchema = (t: (key: string) => string) =>
   z.object({
     name: z.string().min(2, t("validation.nameMinLength")),
     email: z.string().email(t("validation.invalidEmail")),
+    password: z.string().min(6, t("validation.passwordMinLength")),
     phone_no: z
       .string()
       .min(10, t("validation.phoneMinLength"))
@@ -39,6 +40,7 @@ export const createUserUpdateSchema = (t: (key: string) => string) =>
     id: z.number(),
     name: z.string().min(2, t("validation.nameMinLength")).optional(),
     email: z.string().email(t("validation.invalidEmail")).optional(),
+    password: z.string().min(6, t("validation.passwordMinLength")).optional(),
     phone_no: z
       .string()
       .min(10, t("validation.phoneMinLength"))

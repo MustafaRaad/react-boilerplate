@@ -1222,6 +1222,245 @@ export const mainNavItems = [
 - ✅ RTL support
 - ✅ Zero boilerplate
 
+## 8.1) Using Generic Dialogs for Create/Edit Forms
+
+**Generic dialogs automatically generate form fields from your Zod schemas** - no need to manually create form inputs!
+
+### Quick Example: Add User Dialog
+
+```tsx
+// src/features/users/components/UsersTable.tsx
+import { useState } from "react";
+import { GenericCreateDialog } from "@/shared/components/dialogs/GenericCreateDialog";
+import { createUserFormSchema } from "../schemas/user.schema";
+import { useTranslation } from "react-i18next";
+
+export const UsersTable = () => {
+  const { t } = useTranslation("users");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const handleCreateUser = async (values: UserFormData) => {
+    // Call your API
+    await createUserMutation.mutateAsync(values);
+  };
+
+  return (
+    <>
+      <Button onClick={() => setCreateDialogOpen(true)}>
+        <UserPlus className="h-4 w-4 mr-2" />
+        {t("actions.add")}
+      </Button>
+
+      <GenericCreateDialog
+        schema={createUserFormSchema(t)}
+        titleKey="users.dialogs.create.title"
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSubmit={handleCreateUser}
+        fieldConfig={{
+          name: {
+            label: t("form.name.label"),
+            placeholder: t("form.name.placeholder"),
+            order: 1,
+          },
+          email: {
+            label: t("form.email.label"),
+            placeholder: t("form.email.placeholder"),
+            type: "email",
+            order: 2,
+          },
+          phone_no: {
+            label: t("form.phone.label"),
+            placeholder: t("form.phone.placeholder"),
+            order: 3,
+          },
+          role: {
+            label: t("form.role.label"),
+            type: "select",
+            options: [
+              { value: "admin", label: t("roles.admin") },
+              { value: "manager", label: t("roles.manager") },
+              { value: "user", label: t("roles.user") },
+            ],
+            order: 4,
+          },
+          approved: {
+            label: t("form.approved.label"),
+            type: "checkbox",
+            order: 5,
+          },
+        }}
+      />
+    </>
+  );
+};
+```
+
+### Field Type Auto-Detection
+
+The dialog automatically infers field types from your Zod schema:
+
+```ts
+z.string() → text input
+z.string().email() → email input  
+z.number() → number input
+z.boolean() → checkbox
+z.date() → date input
+z.enum(["a", "b"]) → select dropdown (auto-generates options!)
+```
+
+You can override with `fieldConfig`:
+
+```ts
+fieldConfig={{
+  description: {
+    type: "textarea", // Override z.string() to textarea
+  },
+  password: {
+    type: "password", // Override z.string() to password input
+  }
+}}
+```
+
+### Field Configuration Options
+
+```ts
+type FieldConfig = {
+  label?: string;          // Field label (use translation key)
+  placeholder?: string;    // Placeholder text
+  type?: "text" | "email" | "password" | "number" | "textarea" | "select" | "checkbox" | "date";
+  hidden?: boolean;        // Hide field completely
+  options?: Array<{        // For select fields
+    value: string | number;
+    label: string;
+  }>;
+  order?: number;          // Control field order (lower = first)
+};
+```
+
+### Edit Dialog Example
+
+```tsx
+import { GenericEditDialog } from "@/shared/components/dialogs/GenericEditDialog";
+import { createUserUpdateSchema } from "../schemas/user.schema";
+
+const handleEditUser = async (values: UserUpdateData) => {
+  await updateUserMutation.mutateAsync(values);
+};
+
+<GenericEditDialog
+  schema={createUserUpdateSchema(t)}
+  initialValues={selectedUser} // Pre-populate form
+  titleKey="users.dialogs.edit.title"
+  open={editDialogOpen}
+  onOpenChange={setEditDialogOpen}
+  onSubmit={handleEditUser}
+  fieldConfig={{
+    // Same as create dialog
+  }}
+/>
+```
+
+### Advanced: Custom Trigger
+
+```tsx
+<GenericCreateDialog
+  schema={schema}
+  titleKey="..."
+  onSubmit={handleSubmit}
+  trigger={
+    <Button variant="outline">
+      <Plus className="h-4 w-4 mr-2" />
+      Custom Trigger
+    </Button>
+  }
+  fieldConfig={...}
+/>
+```
+
+### Key Features
+
+✅ **Auto Field Generation** - Fields created automatically from Zod schema  
+✅ **Type Inference** - Automatically detects input types (email, number, etc.)  
+✅ **Enum Support** - Auto-generates select options from `z.enum()`  
+✅ **Real-time Validation** - Validates on change and on submit  
+✅ **Translation Support** - All labels and errors use translation keys  
+✅ **Field Ordering** - Control field order with `order` property  
+✅ **Flexible Customization** - Override any field type or config  
+✅ **RTL Support** - Proper right-to-left layout for Arabic  
+✅ **Animations** - Smooth fade/zoom animations from shadcn  
+✅ **Accessibility** - Full keyboard navigation and ARIA labels
+
+### Translation Structure
+
+```json
+// src/locales/en/users.json
+{
+  "dialogs": {
+    "create": {
+      "title": "Create New User",
+      "description": "Add a new user to the system."
+    },
+    "edit": {
+      "title": "Edit User",
+      "description": "Update user information."
+    }
+  },
+  "form": {
+    "name": {
+      "label": "Name",
+      "placeholder": "Enter user's name"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "user@example.com"
+    },
+    "phone": {
+      "label": "Phone Number",
+      "placeholder": "+1234567890"
+    },
+    "role": {
+      "label": "Role"
+    },
+    "approved": {
+      "label": "Account approved"
+    }
+  },
+  "roles": {
+    "admin": "Administrator",
+    "manager": "Manager",
+    "user": "User"
+  }
+}
+```
+
+### Best Practices
+
+1. **Use Schema Factory Functions** - Always pass `t` function to schema factory:
+   ```ts
+   createUserFormSchema(t) // ✅ Good
+   userFormSchema          // ❌ Bad - no translations
+   ```
+
+2. **Leverage Auto-Detection** - Let the dialog infer field types from schema, only override when needed
+
+3. **Order Fields** - Use `order` property for better UX:
+   ```ts
+   { name: { order: 1 }, email: { order: 2 }, ... }
+   ```
+
+4. **Hide Unnecessary Fields** - Use `hidden: true` for fields like `id`:
+   ```ts
+   { id: { hidden: true } }
+   ```
+
+5. **Enum Auto-Options** - For `z.enum()`, no need to manually specify options - they're auto-generated!
+
+6. **Consistent Translations** - Keep translation keys consistent across features:
+   - `[feature].dialogs.create.title`
+   - `[feature].dialogs.edit.title`
+   - `[feature].form.[field].label`
+
 ## 9) i18n translations when adding data/columns
 
 - Translations now use **JSON format** with Intlayer integration. Add to `src/locales/en/<namespace>.json` and `src/locales/ar/<namespace>.json`.
