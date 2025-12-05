@@ -17,17 +17,8 @@ const rolesFilterFn: FilterFn<User> = (row, _columnId, filterValue) => {
   const user = row.original;
   const selectedRole = filterValue as string;
 
-  // Handle Laravel backend (single role string)
   if (user.role) {
     return user.role.toLowerCase() === selectedRole.toLowerCase();
-  }
-
-  // Handle ASP.NET backend (roles array)
-  if (user.roles && user.roles.length > 0) {
-    return user.roles.some(
-      (role: { name: string }) =>
-        role.name.toLowerCase() === selectedRole.toLowerCase()
-    );
   }
 
   return false;
@@ -47,26 +38,11 @@ export const createUsersColumns = (t: TFn): ColumnDef<User, unknown>[] =>
     },
     {
       id: "roles",
-      accessorFn: (row) => {
-        // Return role name for filtering
-        if (row.roles && row.roles.length > 0) {
-          return row.roles
-            .map((role: { name: string }) => role.name)
-            .join(", ");
-        }
-        return row.role || "";
-      },
+      accessorFn: (row) => row.role || "",
       enableColumnFilter: true,
       header: t("list.columns.roles"),
       cell: ({ row }: CellContext<User, unknown>) => {
-        // Handle both Laravel (role as string) and ASP.NET (roles as array)
-        const user = row.original;
-        if (user.roles && user.roles.length > 0) {
-          return user.roles
-            .map((role: { name: string }) => role.name)
-            .join(", ");
-        }
-        return user.role || "-";
+        return row.original.role || "-";
       },
       filterFn: rolesFilterFn,
       meta: {

@@ -112,11 +112,21 @@ Protection is handled by `useAuthGuard`, which redirects unauthenticated users t
 
 ## Adding a new feature (pattern)
 1) Declare endpoints in `src/core/api/endpoints.ts` (or feature-specific if applicable).
-2) Add a data hook (e.g., `useFoos`) calling `apiFetch` via `useApiQuery`/`useApiMutation`.
+2) Add data hooks:
+   - For queries: use `createDataTableHook<T>()` factory for paginated data
+   - For mutations: use `createMutationHook<TVariables>()` factory (see `useUsers.ts` example)
+   - Factory pattern eliminates boilerplate and ensures consistency
 3) Build UI under `src/features/foo/components` or `src/features/foo/pages`; reuse shared UI/DataTable/FormField.
-4) Register a route in `routeTree.ts` under `dashboardRoute` for protected pages.
-5) Add navigation item to `src/shared/config/navigation.ts` in `mainNavItems`.
-6) Add translations to `src/locales/en/*.ts` / `src/locales/ar/*.ts` (and JSON if syncing via Intlayer).
+4) For dialogs: pass `namespace` and `fieldsDefinition` to `GenericActionDialog` (config generated internally)
+5) Register a route in `routeTree.ts` under `dashboardRoute` for protected pages.
+6) Add navigation item to `src/shared/config/navigation.ts` in `mainNavItems`.
+7) Add translations to `src/locales/en/*.ts` / `src/locales/ar/*.ts` (and JSON if syncing via Intlayer).
+
+## Optimized patterns
+- **Generic mutation factory**: Single `createMutationHook` eliminates create/update/delete duplication
+- **Simplified dialogs**: Pass `namespace` + `fieldsDefinition`; field config generated automatically
+- **Auto-refresh**: TanStack Query's `invalidateQueries` handles table updates after mutations
+- **Performance**: Uses `useCallback` and optimized form lifecycle (single useEffect for reset)
 
 ## Docs
 - AI agent playbook: `docs/ai-agent-playbook.md`

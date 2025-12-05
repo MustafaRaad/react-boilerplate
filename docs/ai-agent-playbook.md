@@ -93,6 +93,91 @@ export const useWidget = (id: string) =>
   });
 ```
 
+### Generic Mutation Hooks (for Create/Update/Delete):
+
+**RECOMMENDED PATTERN**: Use `createMutationHook` factory for DRY mutations (see `src/features/users/api/useUsers.ts`).
+
+This factory automatically:
+- Handles mutation logic with `apiFetch`
+- Invalidates query cache on success
+- Provides success/error callbacks
+- Supports optional data transformation
+- Eliminates 40+ lines of duplicate code per feature
+
+```ts
+// src/features/widgets/api/useWidgets.ts
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/core/api/client";
+import { endpoints } from "@/core/api/endpoints";
+import { type Widget, type WidgetFormData } from "../types";
+import type { EndpointDef } from "@/core/api/endpoints";
+
+/**
+ * Generic mutation hook factory - DRY pattern for all CRUD operations
+ */
+function createMutationHook<TVariables>(
+  queryKey: string,
+  endpoint: EndpointDef<unknown, unknown>,
+  transform?: (data: TVariables) => unknown
+) {
+  return (options?: {
+    onSuccess?: () => void;
+    onError?: (error: unknown) => void;
+  }) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async (data: TVariables) => {
+        return await apiFetch(endpoint, {
+          body: transform ? transform(data) : data,
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [queryKey] });
+        options?.onSuccess?.();
+      },
+      onError: (error) => {
+        console.error(`Mutation failed for ${queryKey}:`, error);
+        options?.onError?.(error);
+      },
+    });
+  };
+}
+
+// Optional: Transform function for field mapping
+const transformWidgetData = (data: WidgetFormData) => ({
+  ...data,
+  // Map form fields to API format
+  created_date: data.createdDate,
+});
+
+// Export mutation hooks (one line each!)
+export const useCreateWidget = createMutationHook<WidgetFormData>(
+  "widgets",
+  endpoints.widgets.create,
+  transformWidgetData
+);
+
+export const useUpdateWidget = createMutationHook<WidgetFormData>(
+  "widgets",
+  endpoints.widgets.update,
+  transformWidgetData
+);
+
+export const useDeleteWidget = createMutationHook<number>(
+  "widgets",
+  endpoints.widgets.delete,
+  (id) => ({ id })
+);
+```
+
+**Key Benefits:**
+- Single factory function = zero duplication
+- Automatic cache invalidation
+- Consistent error handling
+- Optional data transformation
+- Type-safe with generics
+
 ### Centralized Pagination Hook (for DataTable):
 
 **RECOMMENDED PATTERN**: Use `createDataTableHook` factory for one-line data hooks with automatic backend handling.
@@ -182,7 +267,79 @@ export type WidgetFilters = {
 - For Laravel: Use `clientFilter` option to process filters on the client side
 - Always use the factory for new features - it eliminates boilerplate and ensures consistency
 
-## 4) Page component (dashboard-protected example)
+## 4) Dialog components (optimized pattern)
+
+**GenericActionDialog** now handles field config generation internally. Just pass `namespace` and `fieldsDefinition`:
+
+```tsx
+// src/features/widgets/pages/WidgetsListPage.tsx
+import { GenericActionDialog } from "@/shared/components/dialogs/GenericActionDialog";
+import { useDialogState } from "@/shared/hooks/useDialogState";
+import { createWidgetFormSchema } from "../schemas/widget.schema";
+import { widgetFieldsDefinition } from "../config/dialogConfig";
+import { useCreateWidget } from "../api/useWidgets";
+
+export const WidgetsListPage = () => {
+  const { t } = useTranslation("widgets");
+  const createDialog = useDialogState();
+  
+  const createWidgetMutation = useCreateWidget({
+    onSuccess: () => {
+      toast.success(t("dialogs.create.success"));
+      createDialog.close();
+    },
+    onError: () => toast.error("Failed to create widget"),
+  });
+
+  return (
+    <>
+      <Button onClick={() => createDialog.open()}>
+        {t("actions.add")}
+      </Button>
+      
+      {/* Simplified dialog usage - no useDialogConfig call needed! */}
+      <GenericActionDialog
+        schema={createWidgetFormSchema(t)}
+        open={createDialog.isOpen}
+        onOpenChange={createDialog.setOpen}
+        onSubmit={async (values) => {
+          await createWidgetMutation.mutateAsync(values);
+        }}
+        titleKey="widgets:dialogs.create.title"
+        description={t("dialogs.create.description")}
+        namespace="widgets"  {/* Config generated internally */}
+        fieldsDefinition={widgetFieldsDefinition}  {/* From dialogConfig.ts */}
+      />
+    </>
+  );
+};
+```
+
+**Key improvements:**
+- ❌ No `useDialogConfig` call in component
+- ❌ No manual `fieldConfig` generation
+- ✅ Pass `namespace` + `fieldsDefinition` directly
+- ✅ Dialog handles config generation internally
+- ✅ Eliminates 2+ hook calls per page
+
+**Field definition example:**
+
+```ts
+// src/features/widgets/config/dialogConfig.ts
+import type { WidgetFormData } from "../types";
+
+export const widgetFieldsDefinition: Record<keyof WidgetFormData, unknown> = {
+  name: { type: "text", order: 1 },
+  description: { type: "textarea", order: 2 },
+  status: {
+    type: "select",
+    order: 3,
+    options: ["active", "inactive"],
+  },
+};
+```
+
+## 5) Page component (dashboard-protected example)
 
 Place under `src/features/<feature>/components/`.
 

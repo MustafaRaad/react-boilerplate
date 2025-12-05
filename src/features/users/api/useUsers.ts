@@ -7,6 +7,7 @@ import {
   type UserFormData,
   type UserUpdateData,
 } from "@/features/users/types";
+import type { EndpointDef } from "@/core/api/endpoints";
 
 export const useUsers = createDataTableHook<User>(
   "users",
@@ -14,100 +15,71 @@ export const useUsers = createDataTableHook<User>(
 );
 
 /**
- * Hook for creating a new user
- * Auto-handles success notifications and cache invalidation
+ * Generic mutation hook factory - DRY pattern for all CRUD operations
+ * Eliminates code duplication across create/update/delete mutations
  */
-export function useCreateUser(options?: {
-  onSuccess?: () => void;
-  onError?: (error: unknown) => void;
-}) {
-  const queryClient = useQueryClient();
+function createMutationHook<TVariables>(
+  queryKey: string,
+  endpoint: EndpointDef<unknown, unknown>,
+  transform?: (data: TVariables) => unknown
+) {
+  return (options?: {
+    onSuccess?: () => void;
+    onError?: (error: unknown) => void;
+  }) => {
+    const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (data: UserFormData) => {
-      return await apiFetch(endpoints.users.create, {
-        body: {
-          name: data.name,
-          email: data.email,
-          password: data.password || "defaultPassword123", // TODO: Handle password properly
-          phone: data.phone_no, // API expects 'phone' but form uses 'phone_no'
-          approved: data.approved ? 1 : 0,
-          role: data.role,
-        },
-      });
-    },
-    onSuccess: () => {
-      // Invalidate users list to trigger refetch
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      options?.onSuccess?.();
-    },
-    onError: (error) => {
-      console.error("Failed to create user:", error);
-      options?.onError?.(error);
-    },
-  });
+    return useMutation({
+      mutationFn: async (data: TVariables) => {
+        return await apiFetch(endpoint, {
+          body: transform ? transform(data) : data,
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [queryKey] });
+        options?.onSuccess?.();
+      },
+      onError: (error) => {
+        console.error(`Mutation failed for ${queryKey}:`, error);
+        options?.onError?.(error);
+      },
+    });
+  };
 }
 
 /**
- * Hook for updating an existing user
- * Auto-handles success notifications and cache invalidation
+ * Transform form data to API format
+ * Handles field mapping and data type conversions
  */
-export function useUpdateUser(options?: {
-  onSuccess?: () => void;
-  onError?: (error: unknown) => void;
-}) {
-  const queryClient = useQueryClient();
+const transformUserData = (data: UserFormData | UserUpdateData) => ({
+  ...data,
+  phone: data.phone_no,
+  approved:
+    data.approved !== undefined
+      ? typeof data.approved === "boolean"
+        ? data.approved
+          ? 1
+          : 0
+        : data.approved
+      : undefined,
+  password: "password" in data && data.password ? data.password : undefined,
+});
 
-  return useMutation({
-    mutationFn: async (data: UserUpdateData) => {
-      return await apiFetch(endpoints.users.update, {
-        body: {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          phone: data.phone_no, // API expects 'phone' but form uses 'phone_no'
-          approved:
-            data.approved !== undefined ? (data.approved ? 1 : 0) : undefined,
-          role: data.role,
-        },
-      });
-    },
-    onSuccess: () => {
-      // Invalidate users list and specific user cache
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      options?.onSuccess?.();
-    },
-    onError: (error) => {
-      console.error("Failed to update user:", error);
-      options?.onError?.(error);
-    },
-  });
-}
+// Mutation hooks using factory pattern
+export const useCreateUser = createMutationHook<UserFormData>(
+  "users",
+  endpoints.users.create,
+  transformUserData
+);
 
-/**
- * Hook for deleting a user
- * Auto-handles success notifications and cache invalidation
- */
-export function useDeleteUser(options?: {
-  onSuccess?: () => void;
-  onError?: (error: unknown) => void;
-}) {
-  const queryClient = useQueryClient();
+export const useUpdateUser = createMutationHook<UserUpdateData>(
+  "users",
+  endpoints.users.update,
+  transformUserData
+);
 
-  return useMutation({
-    mutationFn: async (userId: number) => {
-      return await apiFetch(endpoints.users.delete, {
-        body: { id: userId },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      options?.onSuccess?.();
-    },
-    onError: (error) => {
-      console.error("Failed to delete user:", error);
-      options?.onError?.(error);
-    },
-  });
-}
+export const useDeleteUser = createMutationHook<number>(
+  "users",
+  endpoints.users.delete,
+  (userId) => ({ id: userId })
+);

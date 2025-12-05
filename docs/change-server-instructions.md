@@ -35,6 +35,7 @@ Guidance for future agents when switching or extending backend integrations (aut
 - Login flow: `src/features/auth/hooks/useLogin.ts` (request/response mapping).
 - API client: `src/core/api/client.ts` (token handling, normalization, headers).
 - Header identity: `src/shared/components/layout/dashboard-header/*` (useSettingsMenu, SettingsMenu, UserAvatar/UserProfileSection/types) to ensure display matches new shapes.
+- **Mutation hooks**: If adding/changing endpoints, use `createMutationHook` factory pattern (see `src/features/users/api/useUsers.ts` for reference).
 
 ## Steps for Switching to a New Backend
 
@@ -84,19 +85,60 @@ When ASP.NET provides **server-side pagination** (backend filters/sorts/pages da
 VITE_BACKEND_KIND=aspnet
 ```
 
-**2. API Hooks Pattern**:
+**2. Data Hooks with Factory Pattern**:
+
+For CRUD operations, use the **generic mutation factory** pattern to eliminate boilerplate:
 
 ```ts
-// src/features/<feature>/api/use<Feature>s.ts
-export const useWidgets = (query: {
-  page: number;
-  pageSize: number;
-  search?: string;
-}) => {
-  return useApiQuery<PagedResult<Widget>>({
-    queryKey: ["widgets", "asp-net", query],
-    queryFn: async () => {
-      const response = await apiFetch<PagedResult<Widget>>(
+// src/features/widgets/api/useWidgets.ts
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/core/api/client";
+import { endpoints } from "@/core/api/endpoints";
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import type { Widget, WidgetFormData } from "../types";
+import type { EndpointDef } from "@/core/api/endpoints";
+
+// Pagination hook (auto-handles backend params)
+export const useWidgets = createDataTableHook<Widget>(
+  "widgets",
+  endpoints.widgets.list
+);
+
+// Generic mutation factory (DRY pattern)
+function createMutationHook<TVariables>(
+  queryKey: string,
+  endpoint: EndpointDef<unknown, unknown>,
+  transform?: (data: TVariables) => unknown
+) {
+  return (options?: { onSuccess?: () => void; onError?: (error: unknown) => void }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: async (data: TVariables) => {
+        return await apiFetch(endpoint, { body: transform ? transform(data) : data });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [queryKey] });
+        options?.onSuccess?.();
+      },
+      onError: (error) => {
+        console.error(`Mutation failed for ${queryKey}:`, error);
+        options?.onError?.(error);
+      },
+    });
+  };
+}
+
+// Export mutation hooks (one line each!)
+export const useCreateWidget = createMutationHook<WidgetFormData>("widgets", endpoints.widgets.create);
+export const useUpdateWidget = createMutationHook<WidgetFormData>("widgets", endpoints.widgets.update);
+export const useDeleteWidget = createMutationHook<number>("widgets", endpoints.widgets.delete, (id) => ({ id }));
+```
+
+**Key Benefits:**
+- Single factory eliminates 40+ lines of duplicate code per feature
+- Automatic cache invalidation on success
+- Consistent error handling
+- Type-safe with generics
         endpoints.widgets.list,
         {
           query, // Send pagination params to server

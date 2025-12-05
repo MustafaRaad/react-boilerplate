@@ -62,13 +62,17 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
   const dialogOpen = isControlled ? open : internalOpen;
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleOpenChange = (next: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(next);
-    }
-    onOpenChange?.(next);
-  };
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(next);
+      }
+      onOpenChange?.(next);
+    },
+    [isControlled, onOpenChange]
+  );
 
+  // Compute default values with proper schema parsing
   const defaultValues = React.useMemo(() => {
     const baseValues = initialValues ?? {};
     if (schema instanceof ZodObject) {
@@ -107,15 +111,12 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
     },
   });
 
-  React.useEffect(() => {
-    form.reset(defaultValues);
-  }, [defaultValues, form]);
-
+  // Reset form when dialog closes
   React.useEffect(() => {
     if (!dialogOpen) {
-      form.reset(defaultValues);
+      form.reset();
     }
-  }, [dialogOpen, defaultValues, form]);
+  }, [dialogOpen, form]);
 
   const resolvedCancelLabel = cancelLabel ?? t("actions.cancel", "Cancel");
   const resolvedSubmitLabel =
