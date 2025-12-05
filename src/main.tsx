@@ -26,7 +26,7 @@ onTTFB(sendToAnalytics); // Time to First Byte
 // Register Service Worker for PWA
 let workbox: Workbox | null = null;
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   workbox = new Workbox('/sw.js', { scope: '/' });
 
   // Listen for waiting event
@@ -52,6 +52,10 @@ if ('serviceWorker' in navigator) {
     .catch((error) => {
       console.error('Service worker registration failed:', error);
     });
+} else if (!('serviceWorker' in navigator)) {
+  console.warn('Service Worker not supported in this browser');
+} else {
+  console.log('Service Worker disabled in development mode');
 }
 
 // Export workbox instance for use in components

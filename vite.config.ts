@@ -10,12 +10,20 @@ import type { Plugin } from "vite";
 const securityHeadersPlugin = (): Plugin => ({
   name: "security-headers",
   configureServer(server) {
-    server.middlewares.use((_req, res, next) => {
-      // Strict Transport Security (HSTS)
-      res.setHeader(
-        "Strict-Transport-Security",
-        "max-age=31536000; includeSubDomains"
-      );
+    server.middlewares.use((req, res, next) => {
+      // Set correct MIME type for service worker
+      if (req.url === "/sw.js" || req.url?.endsWith("sw.js")) {
+        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+        res.setHeader("Service-Worker-Allowed", "/");
+      }
+
+      // Strict Transport Security (HSTS) - only in production
+      if (process.env.NODE_ENV === "production") {
+        res.setHeader(
+          "Strict-Transport-Security",
+          "max-age=31536000; includeSubDomains"
+        );
+      }
 
       // X-Frame-Options
       res.setHeader("X-Frame-Options", "DENY");
@@ -34,6 +42,9 @@ const securityHeadersPlugin = (): Plugin => ({
         "Permissions-Policy",
         "camera=(), microphone=(), geolocation=()"
       );
+
+      // Content-Security-Policy (frame-ancestors only works via header)
+      res.setHeader("Content-Security-Policy", "frame-ancestors 'none'");
 
       next();
     });
@@ -74,6 +85,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        navigateFallback: null, // Disable to avoid service worker errors in dev
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -138,7 +150,7 @@ export default defineConfig({
         clientsClaim: true,
       },
       devOptions: {
-        enabled: true,
+        enabled: false, // Disable in dev to avoid MIME type issues
         type: "module",
       },
     }),

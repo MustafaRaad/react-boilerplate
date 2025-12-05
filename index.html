@@ -5,24 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- Content Security Policy -->
+    <!-- Content Security Policy (excluding frame-ancestors which requires HTTP header) -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval';
       style-src 'self' 'unsafe-inline';
       img-src 'self' data: https:;
       font-src 'self' data:;
-      connect-src 'self' http://localhost:* https:;
-      frame-ancestors 'none';
+      connect-src 'self' http://localhost:* https: ws://localhost:*;
       base-uri 'self';
       form-action 'self';
     ">
     
-    <!-- Security Headers via meta tags -->
+    <!-- Referrer Policy (only this one works via meta) -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
-    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
     
     <title>Mustafa Raad Dashboard</title>
   </head>
