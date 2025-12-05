@@ -162,7 +162,7 @@ export function LoginForm({
             </FieldGroup>
           </form>
 
-          <div className="relative hidden md:block bg-gradient-to-br from-primary/15 via-secondary/15 to-background px-6 py-8 dark:from-primary/20 dark:via-secondary/20 dark:to-background">
+          <div className="relative hidden md:block bg-linear-to-br from-primary/15 via-secondary/15 to-background px-6 py-8 dark:from-primary/20 dark:via-secondary/20 dark:to-background">
             <div className="absolute inset-0 opacity-70">
               <div className="bg-primary/20 dark:bg-primary/15 absolute -left-10 -top-10 h-40 w-40 rounded-full blur-3xl" />
               <div className="bg-secondary/25 dark:bg-secondary/15 absolute bottom-0 right-4 h-48 w-48 rounded-full blur-3xl" />

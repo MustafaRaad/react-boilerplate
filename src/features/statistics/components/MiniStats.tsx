@@ -78,7 +78,7 @@ export function MiniStats<T extends AnyRecord = AnyRecord>({
       </div>
 
       <ChartContainer id={baseId} config={chartConfig} className="h-20 pb-4">
-        <AreaChart accessibilityLayer data={data as any}>
+        <AreaChart accessibilityLayer data={data}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop

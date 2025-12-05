@@ -1,5 +1,12 @@
 import { memo, useCallback, useMemo, useState } from "react";
-import { ChevronDown, LogOut, Moon, ShieldCheck, Sun } from "lucide-react";
+import {
+  ChevronDown,
+  Languages,
+  LogOut,
+  Moon,
+  ShieldCheck,
+  Sun,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
@@ -9,7 +16,13 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useDirection } from "@/shared/hooks/useDirection";
@@ -20,12 +33,14 @@ import type { MenuLink } from "./types";
 
 export default memo(function SettingsMenu() {
   const router = useRouter();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const { dir } = useDirection();
   const { clearAuth, user } = useAuthStore();
   const { theme, setTheme } = useTheme();
 
   const [open, setOpen] = useState(false);
+
+  const currentLanguage = i18n.language || "en";
 
   const currentUser = user;
   const displayName = currentUser?.name || t("header.user");
@@ -56,6 +71,13 @@ export default memo(function SettingsMenu() {
   const toggleTheme = useCallback(() => {
     setTheme(theme === "dark" ? "light" : "dark");
   }, [theme, setTheme]);
+
+  const changeLanguage = useCallback(
+    (langCode: string) => {
+      void i18n.changeLanguage(langCode);
+    },
+    [i18n]
+  );
 
   return (
     <DropdownMenu dir={dir} open={open} onOpenChange={setOpen}>
@@ -98,7 +120,6 @@ export default memo(function SettingsMenu() {
           ))}
         </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={toggleTheme} className="gap-2">
           {theme === "dark" ? (
             <Sun className="h-4 w-4" />
@@ -107,6 +128,30 @@ export default memo(function SettingsMenu() {
           )}
           {theme === "dark" ? t("theme.light") : t("theme.dark")}
         </DropdownMenuItem>
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Languages className="h-4 w-4 me-2" />
+            {t("language.switch")}
+          </DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup
+                value={currentLanguage}
+                onValueChange={changeLanguage}
+              >
+                <DropdownMenuRadioItem value="en">
+                  English
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="ar">
+                  العربية
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="gap-2">
           <LogOut className="h-4 w-4" />
           {t("auth.logout")}
