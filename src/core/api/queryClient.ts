@@ -1,13 +1,14 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from "@tanstack/react-query";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
-      gcTime: 10 * 60 * 1000, // 10 minutes - cache retention (formerly cacheTime)
-      retry: 1,
+      staleTime: 30 * 1000, // 30 seconds - balance between freshness and performance
+      gcTime: 5 * 60 * 1000, // 5 minutes - cache retention (formerly cacheTime)
+      retry: false, // Disable React Query retry (we have interceptor retry logic)
       refetchOnWindowFocus: false, // Prevent refetch on window focus
-      refetchOnMount: false, // Prevent automatic refetch on component mount
+      refetchOnMount: true, // Always fetch fresh data on mount/refresh
+      refetchOnReconnect: true, // Refetch when network reconnects
     },
   },
-})
+});

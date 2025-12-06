@@ -21,16 +21,79 @@ import {
 } from "@/core/types/api";
 import { type AspNetLoginResult, type AuthTokens } from "@/core/types/auth";
 import { useAuthStore } from "@/store/auth.store";
-import { addCsrfHeader, initializeCsrfToken, requiresCsrfProtection } from "@/core/security/csrf";
-import { rateLimiter, DEFAULT_RATE_LIMITS, ExponentialBackoff, type RateLimitConfig } from "@/core/security/rateLimit";
+import {
+  addCsrfHeader,
+  initializeCsrfToken,
+  requiresCsrfProtection,
+} from "@/core/security/csrf";
+import {
+  rateLimiter,
+  DEFAULT_RATE_LIMITS,
+  type RateLimitConfig,
+} from "@/core/security/rateLimit";
 import { sanitizeObject } from "@/core/security/sanitize";
+import {
+  executeRequestInterceptors,
+  executeResponseInterceptors,
+  executeErrorInterceptors,
+  type RequestConfig,
+  type InterceptedResponse,
+  type InterceptedError,
+} from "@/core/api/interceptors";
+import {
+  ExponentialBackoffCalculator,
+  type RetryConfig,
+  type RetryableError,
+  DEFAULT_RETRY_CONFIG,
+} from "@/core/api/retry";
 
 type ApiFetchOptions = {
   body?: unknown;
   query?: Record<string, unknown>;
   overrideBackendKind?: BackendKind;
   signal?: AbortSignal;
+  /**
+   * Custom retry configuration for this request
+   */
+  retryConfig?: Partial<RetryConfig>;
+  /**
+   * Skip interceptors for this request
+   */
+  skipInterceptors?: boolean;
 };
+
+// Re-export interceptor and retry utilities for convenience
+export {
+  addRequestInterceptor,
+  addResponseInterceptor,
+  addErrorInterceptor,
+  clearInterceptors,
+  createLoggingInterceptor,
+  createPerformanceInterceptor,
+  createHeadersInterceptor,
+  createAuthRefreshInterceptor,
+} from "./interceptors";
+
+export {
+  createRetryConfig,
+  ExponentialBackoffCalculator,
+  withRetry,
+} from "./retry";
+
+export { setupApiConfig, getGlobalRetryConfig, API_PRESETS } from "./config";
+
+export type {
+  RequestInterceptor,
+  ResponseInterceptor,
+  ErrorInterceptor,
+  RequestConfig,
+  InterceptedResponse,
+  InterceptedError,
+} from "./interceptors";
+
+export type { RetryConfig, RetryableError, RetryState } from "./retry";
+
+export type { ApiConfig } from "./config";
 
 const buildUrl = (path: string, query?: Record<string, unknown>) => {
   const base = apiBaseUrl || window.location.origin;
@@ -142,7 +205,9 @@ const normalizeAspNetResponse = <T>(
 
   const loginEnvelope = parseAspNetLoginEnvelope(raw);
   if (loginEnvelope.success) {
-    return mapAspNetLoginResult(loginEnvelope.data.result as AspNetLoginResult) as T;
+    return mapAspNetLoginResult(
+      loginEnvelope.data.result as AspNetLoginResult
+    ) as T;
   }
 
   const envelope = parseAspNetEnvelope(raw);
@@ -245,8 +310,10 @@ const performFetch = async (
   options: ApiFetchOptions = {},
   tokenOverride?: string,
   backendHint?: BackendKind
-) => {
+): Promise<Response> => {
   const url = buildUrl(endpoint.path, options.query);
+  const startTime = Date.now();
+
   let headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -278,15 +345,35 @@ const performFetch = async (
   }
 
   // Sanitize request body to prevent XSS
-  const sanitizedBody = options.body && typeof options.body === "object"
-    ? sanitizeObject(options.body as Record<string, unknown>)
-    : options.body;
+  const sanitizedBody =
+    options.body && typeof options.body === "object"
+      ? sanitizeObject(options.body as Record<string, unknown>)
+      : options.body;
 
-  const response = await fetch(url, {
+  // Build request config for interceptors
+  let requestConfig: RequestConfig = {
+    url,
     method: endpoint.method,
     headers,
     body: sanitizedBody ? JSON.stringify(sanitizedBody) : undefined,
     signal: options.signal,
+    metadata: {
+      endpoint: endpoint.path,
+      timestamp: startTime,
+    },
+  };
+
+  // Execute request interceptors
+  if (!options.skipInterceptors) {
+    requestConfig = await executeRequestInterceptors(requestConfig);
+  }
+
+  // Perform the fetch
+  const response = await fetch(requestConfig.url, {
+    method: requestConfig.method,
+    headers: requestConfig.headers,
+    body: requestConfig.body,
+    signal: requestConfig.signal,
   });
 
   return response;
@@ -301,6 +388,8 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
     useAuthStore.getState().tokens?.backend ??
     defaultBackendKind;
 
+  const startTime = Date.now();
+
   // Initialize CSRF token on first request
   if (requiresCsrfProtection(endpoint.method)) {
     initializeCsrfToken();
@@ -311,81 +400,170 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
   let rateLimitConfig: RateLimitConfig = DEFAULT_RATE_LIMITS.api;
 
   // Use stricter rate limits for sensitive endpoints
-  if (endpoint.path.includes('login')) {
+  if (endpoint.path.includes("login")) {
     rateLimitConfig = DEFAULT_RATE_LIMITS.login;
-  } else if (endpoint.path.includes('register')) {
+  } else if (endpoint.path.includes("register")) {
     rateLimitConfig = DEFAULT_RATE_LIMITS.register;
-  } else if (endpoint.path.includes('password')) {
+  } else if (endpoint.path.includes("password")) {
     rateLimitConfig = DEFAULT_RATE_LIMITS.resetPassword;
-  } else if (endpoint.path.includes('upload')) {
+  } else if (endpoint.path.includes("upload")) {
     rateLimitConfig = DEFAULT_RATE_LIMITS.upload;
-  } else if (endpoint.path.includes('search') || options.query) {
+  } else if (endpoint.path.includes("search") || options.query) {
     rateLimitConfig = DEFAULT_RATE_LIMITS.search;
   }
 
   if (!rateLimiter.check(rateLimitKey, rateLimitConfig)) {
     const retryAfter = rateLimiter.getRetryAfter(rateLimitKey);
     throw normalizeError(backend, 429, {
-      message: rateLimitConfig.message || `Rate limit exceeded. Retry after ${Math.ceil(retryAfter / 1000)} seconds.`,
+      message:
+        rateLimitConfig.message ||
+        `Rate limit exceeded. Retry after ${Math.ceil(
+          retryAfter / 1000
+        )} seconds.`,
       retryAfter,
     });
   }
 
-  // Exponential backoff for retries
-  const backoff = new ExponentialBackoff(3, 1000, 10000);
+  // Configure retry with exponential backoff
+  const retryConfig: RetryConfig = {
+    ...DEFAULT_RETRY_CONFIG,
+    ...options.retryConfig,
+    onRetry: (attempt, error, delay) => {
+      console.log(
+        `[API Retry] Attempt ${attempt} after ${delay}ms for ${endpoint.path}`,
+        error
+      );
+      options.retryConfig?.onRetry?.(attempt, error, delay);
+    },
+  };
 
-  const execute = () => performFetch(endpoint, options, undefined, backend);
+  const calculator = new ExponentialBackoffCalculator(retryConfig);
+
+  const execute = async (): Promise<Response> => {
+    return performFetch(endpoint, options, undefined, backend);
+  };
 
   const handleResponse = async (response: Response): Promise<TNormalized> => {
     const body = await parseJson(response);
+    const duration = Date.now() - startTime;
 
+    // Build intercepted response
+    let interceptedResponse: InterceptedResponse = {
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+      body,
+      metadata: {
+        endpoint: endpoint.path,
+        duration,
+        timestamp: startTime,
+      },
+    };
+
+    // Execute response interceptors
+    if (!options.skipInterceptors) {
+      interceptedResponse = await executeResponseInterceptors(
+        interceptedResponse
+      );
+    }
+
+    // Handle 401 errors
     if (response.status === 401) {
       useAuthStore.getState().clearAuth();
-      throw normalizeError(backend, response.status, body);
+
+      const error: InterceptedError = {
+        code: response.status,
+        message: "Unauthorized",
+        raw: interceptedResponse.body,
+        metadata: interceptedResponse.metadata,
+      };
+
+      // Try error interceptors (might refresh token)
+      if (!options.skipInterceptors) {
+        const result = await executeErrorInterceptors(error);
+
+        // If interceptor recovered (e.g., refreshed token), retry the request
+        if ("ok" in result && result.ok) {
+          // Retry once with refreshed token
+          const retryResponse = await execute();
+          return handleResponse(retryResponse);
+        }
+      }
+
+      throw normalizeError(backend, response.status, interceptedResponse.body);
     }
 
+    // Handle other errors
     if (!response.ok) {
-      throw normalizeError(backend, response.status, body);
+      const error: InterceptedError = {
+        code: response.status,
+        message: response.statusText || "Request failed",
+        raw: interceptedResponse.body,
+        metadata: interceptedResponse.metadata,
+      };
+
+      // Execute error interceptors
+      if (!options.skipInterceptors) {
+        const result = await executeErrorInterceptors(error);
+
+        // If interceptor recovered, return the recovered response
+        if ("ok" in result && result.ok) {
+          interceptedResponse = result;
+        } else {
+          throw normalizeError(
+            backend,
+            response.status,
+            interceptedResponse.body
+          );
+        }
+      } else {
+        throw normalizeError(
+          backend,
+          response.status,
+          interceptedResponse.body
+        );
+      }
     }
 
+    // Normalize response based on backend
     if (backend === "aspnet") {
       return normalizeAspNetResponse<TNormalized>(
-        body,
+        interceptedResponse.body,
         options.query
       ) as TNormalized;
     }
 
-    return normalizeLaravelResponse<TNormalized>(body) as TNormalized;
+    return normalizeLaravelResponse<TNormalized>(
+      interceptedResponse.body
+    ) as TNormalized;
   };
 
-  // Retry logic with exponential backoff
-  while (backoff.shouldRetry()) {
+  // Retry loop with exponential backoff
+  while (true) {
     try {
       const response = await execute();
-      backoff.reset();
+      calculator.reset();
       return await handleResponse(response);
     } catch (error: unknown) {
       const apiError = error as UnifiedApiError;
-      
-      // Don't retry on 4xx errors (except 429)
-      if (apiError.code !== undefined && typeof apiError.code === 'number' && apiError.code >= 400 && apiError.code < 500 && apiError.code !== 429) {
+      const retryableError: RetryableError = {
+        code: typeof apiError.code === "number" ? apiError.code : 0,
+        message: apiError.message ?? "Unknown error",
+        raw: error,
+        isNetworkError:
+          error instanceof TypeError && error.message.includes("fetch"),
+        isTimeout: error instanceof DOMException && error.name === "AbortError",
+      };
+
+      // Check if we should retry
+      if (!calculator.shouldRetry(retryableError)) {
         throw error;
       }
 
-      // Don't retry if this is the last attempt
-      if (!backoff.shouldRetry()) {
-        if (apiError.message) {
-          throw error;
-        }
-        throw normalizeError(backend, 500, error);
-      }
-
-      // Wait before retrying
-      backoff.nextAttempt();
-      await new Promise(resolve => setTimeout(resolve, backoff.getDelay()));
+      // Calculate delay and wait
+      const delay = calculator.nextAttempt(retryableError);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
-
-  // This should never be reached, but TypeScript needs it
-  throw normalizeError(backend, 500, { message: 'Max retries exceeded' });
 }
