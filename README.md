@@ -9,13 +9,6 @@ Modern admin starter built with React 19, Vite, and TypeScript. Ships with TanSt
 - **[AI Agent Implementation Guide](./docs/AI_AGENT_IMPLEMENTATION_GUIDE.md)** - Complete guide for adding new features
 - **[Backend Switching Guide](./docs/BACKEND_SWITCHING_GUIDE.md)** - Laravel ↔ ASP.NET switching instructions
 
-**Additional Docs:**
-
-- [API Enhancements](./docs/API_ENHANCEMENTS.md) - Interceptors, retry logic, exponential backoff
-- [Accessibility](./docs/ACCESSIBILITY.md) - WCAG 2.1 AA compliance features
-- [Security](./docs/SECURITY.md) - CSRF, XSS protection, rate limiting
-- [PWA](./docs/PWA.md) - Progressive Web App features
-
 ## Requirements
 
 - Node 18+ and pnpm (`corepack enable` or `npm i -g pnpm`)
@@ -74,7 +67,7 @@ src/
       data/                    DataTable (server/client pagination)
       form/                    FormField helper for TanStack Form
       layout/                  DashboardLayout, AppSidebar, SiteHeader, error/not-found
-      ui/                      shadcn UI primitives (button, card, input, sidebar, etc.)
+      ui/                      shadcn UI primitives (button, card, input, sidebar, etc.; includes calendar for date picker)
     config/
       navigation.ts            Centralized nav config (mainNavItems)
     hooks/                     Generic hooks (locale direction, pagination)
