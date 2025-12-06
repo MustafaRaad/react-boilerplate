@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useDirection } from "@/shared/hooks/useDirection";
 import { SchemaFormFields } from "./SchemaFormFields";
 import type { SchemaFieldConfig } from "./SchemaFormFields";
+import { Loader } from "lucide-react";
 
 export type DialogMode = "create" | "edit";
 
@@ -155,10 +156,12 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
             >
               {resolvedCancelLabel}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
               {resolvedSubmitLabel}
             </Button>
             {footerExtra}
