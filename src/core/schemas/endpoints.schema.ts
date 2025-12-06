@@ -5,24 +5,7 @@
  */
 
 import { z } from "zod";
-
-export const roleSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-});
-
-export const userSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  email: z.string().email(),
-  email_verified_at: z.string().nullable(),
-  phone_no: z.string(),
-  approved: z.number(),
-  created_at: z.string().nullable(),
-  updated_at: z.string().nullable(),
-  role: z.string(), // Single role name from Laravel
-  roles: z.array(roleSchema).optional().default([]), // Optional for compatibility
-});
+import { userSchema } from "@/features/users/schemas/user.schema";
 
 export const aspNetEnvelopeSchema = z.object({
   code: z.number(),
