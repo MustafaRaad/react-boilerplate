@@ -37,13 +37,26 @@ export function Breadcrumbs() {
             <BreadcrumbItem>
               {item.isLast ? (
                 <BreadcrumbPage>
-                  {item.isDashboard ? <Home className="h-4 w-4" /> : item.label}
+                  {item.isDashboard ? (
+                    <>
+                      <Home className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">{item.label}</span>
+                    </>
+                  ) : (
+                    item.label
+                  )}
                 </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>
-                  <Link to={item.href}>
+                  <Link
+                    to={item.href}
+                    aria-label={item.isDashboard ? item.label : undefined}
+                  >
                     {item.isDashboard ? (
-                      <Home className="h-4 w-4" />
+                      <>
+                        <Home className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{item.label}</span>
+                      </>
                     ) : (
                       item.label
                     )}

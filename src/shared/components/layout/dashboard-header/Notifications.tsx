@@ -9,10 +9,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/shared/components/ui/sheet";
-import { useDirection } from "@/shared/hooks/useDirection";
 import { cn } from "@/lib/utils";
 import type { HeaderNotification } from "@/shared/components/layout/dashboard-header/types";
-import { Badge } from "../../ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 
 function NotificationCard({
   notification,
@@ -28,7 +27,7 @@ function NotificationCard({
       )}
     >
       {notification.unread ? (
-        <span className="absolute right-0 top-0">
+        <span className="absolute ltr:right-2 rtl:left-2 top-2">
           <span className="relative flex size-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
             <span className="relative inline-flex size-2 rounded-full bg-primary" />
@@ -40,8 +39,8 @@ function NotificationCard({
         <div className="flex flex-1 flex-col gap-1.5">
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-sm text-foreground">{notification.title}</h3>
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-light">
-              <History className="size-3.5" aria-hidden />
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-light whitespace-nowrap">
+              <History className="size-3.5" aria-hidden="true" />
               {notification.timestamp}
             </span>
           </div>
@@ -56,7 +55,6 @@ function NotificationCard({
 
 export default function Notifications() {
   const { t } = useTranslation("common");
-  const { dir } = useDirection();
 
   // TODO: Replace with TanStack Query hook (e.g., useNotificationsQuery())
   // For now, using localized sample data
@@ -97,40 +95,58 @@ export default function Notifications() {
         <Button
           variant="outline"
           size="sm"
-          className="text-sm transition-transform duration-300 hover:-translate-y-0.5 focus-visible:ring-2 bg-sidebar"
+          className="relative text-sm transition-transform duration-300 hover:-translate-y-0.5 focus-visible:ring-2 bg-sidebar"
           aria-label={t("notifications.button.open")}
         >
-          <Bell />
+          <div className="relative">
+            <Bell className="size-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75" />
+                <span className="relative inline-flex size-2 rounded-full bg-secondary" />
+              </span>
+            )}
+          </div>
           <span className="hidden md:block">
             {t("notifications.button.label")}
-            {unreadCount > 0 ? (
-              <Badge className="rounded-full h-fit w-fit text-xs ms-1">
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="rounded-full h-fit px-1.5 py-0 text-xs ms-1.5 font-medium">
                 {unreadCount}
               </Badge>
-            ) : null}
+            )}
           </span>
         </Button>
       </SheetTrigger>
 
-      <SheetContent side={dir === "rtl" ? "left" : "right"}>
-        <SheetHeader className="text-center">
-          <SheetTitle>{t("notifications.title")}</SheetTitle>
+      <SheetContent side="right" className="flex w-full sm:max-w-md flex-col gap-0 p-0">
+        <SheetHeader className="border-b border-border/50 px-6 py-4">
+          <SheetTitle className="text-start">{t("notifications.title")}</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4">
-          <div className="space-y-4">
-            {items.map((n) => (
-              <NotificationCard key={n.id} notification={n} />
-            ))}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-3">
+            {items.length > 0 ? (
+              items.map((n) => (
+                <NotificationCard key={n.id} notification={n} />
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Bell className="size-12 text-muted-foreground/50 mb-3" aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">
+                  {t("notifications.empty", { defaultValue: "No notifications" })}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        <SheetFooter className="gap-3 border-t border-border/50 bg-card p-6 shadow-inner">
+        <SheetFooter className="border-t border-border/50 px-6 py-4 mt-auto">
           <Button
             className="w-full justify-center gap-2"
             aria-label={t("notifications.actions.markAllRead")}
+            disabled={unreadCount === 0}
           >
-            <CheckCircle className="size-4" aria-hidden />
+            <CheckCircle className="size-4" aria-hidden="true" />
             {t("notifications.actions.markAllRead")}
           </Button>
         </SheetFooter>
