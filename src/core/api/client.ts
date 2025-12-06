@@ -19,7 +19,10 @@ import {
   type PagedResult,
   type UnifiedApiError,
 } from "@/core/types/api";
-import { type AspNetLoginResult, type AuthTokens } from "@/core/types/auth";
+import {
+  type AspNetLoginResult,
+  type AuthTokens,
+} from "@/features/auth/types/auth.types";
 import { useAuthStore } from "@/store/auth.store";
 import {
   addCsrfHeader,

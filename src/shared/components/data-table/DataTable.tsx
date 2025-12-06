@@ -51,7 +51,6 @@ import { DataTableSkeleton } from "@/shared/components/data-table/DataTableSkele
 
 // Extend TanStack Table column meta for filter configuration
 declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
     filterVariant?: "select" | "input" | "date";
     filterOptions?: Array<{ id: string | number; name: string }>;

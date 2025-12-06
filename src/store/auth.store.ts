@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { type AuthPos, type AuthTokens, type AuthUser } from "@/core/types/auth";
+import {
+  type AuthPos,
+  type AuthTokens,
+  type AuthUser,
+} from "@/features/auth/types/auth.types";
 
 type AuthState = {
   user: AuthUser | null;
@@ -37,9 +41,7 @@ export const useAuthStore = create<AuthState>()(
           tokens: tokens !== undefined ? tokens : state.tokens,
           pos: pos !== undefined ? pos : state.pos,
           permissions:
-            permissions !== undefined
-              ? permissions ?? []
-              : state.permissions,
+            permissions !== undefined ? permissions ?? [] : state.permissions,
           fees: fees !== undefined ? fees : state.fees,
         })),
       clearAuth: () =>
@@ -80,7 +82,9 @@ export const useAuthStore = create<AuthState>()(
 // Components only re-render when their specific slice changes
 export const useAuthUser = () => useAuthStore((state) => state.user);
 export const useAuthTokens = () => useAuthStore((state) => state.tokens);
-export const useAuthPermissions = () => useAuthStore((state) => state.permissions);
+export const useAuthPermissions = () =>
+  useAuthStore((state) => state.permissions);
 export const useAuthPos = () => useAuthStore((state) => state.pos);
 export const useAuthFees = () => useAuthStore((state) => state.fees);
-export const useIsInitializing = () => useAuthStore((state) => state.isInitializing);
+export const useIsInitializing = () =>
+  useAuthStore((state) => state.isInitializing);

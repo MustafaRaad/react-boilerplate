@@ -1,14 +1,18 @@
 /**
  * Backend Normalizers - Centralized data transformation layer
- * 
+ *
  * This module provides unified normalizers for converting backend-specific
  * responses (Laravel vs ASP.NET) into standardized internal types.
- * 
+ *
  * ALL backend differences should be handled here, not in components or hooks.
  */
 
 import { type BackendKind } from "@/core/types/api";
-import { type AuthTokens, type AuthUser, type AuthPos } from "@/core/types/auth";
+import {
+  type AuthTokens,
+  type AuthUser,
+  type AuthPos,
+} from "@/features/auth/types/auth.types";
 import {
   laravelLoginSchema,
   laravelRefreshSchema,
@@ -19,11 +23,11 @@ import {
 
 /**
  * Normalizes login response from either backend into unified AuthTokens
- * 
+ *
  * @param raw - Raw response from login endpoint
  * @param backend - Which backend type
  * @returns Normalized AuthTokens with expiration timestamps
- * 
+ *
  * @example
  * // Laravel
  * const tokens = normalizeLoginResponse(laravelResponse, "laravel");
@@ -37,7 +41,7 @@ export function normalizeLoginResponse(
   if (backend === "laravel") {
     const parsed = laravelLoginSchema.parse(raw);
     const expiresAt = Date.now() + parsed.expires_in * 1000;
-    
+
     return {
       backend: "laravel",
       accessToken: parsed.access_token,
@@ -51,11 +55,11 @@ export function normalizeLoginResponse(
     // ASP.NET returns envelope: { code, message, result: { accessToken, refreshToken, ... } }
     const envelope = aspNetLoginEnvelopeSchema.parse(raw);
     const result = envelope.result;
-    
+
     const accessExpiresAt = new Date(result.accessExpiresAtUtc).getTime();
     const refreshExpiresAt = new Date(result.refreshExpiresAtUtc).getTime();
     const expiresIn = Math.floor((accessExpiresAt - Date.now()) / 1000);
-    
+
     return {
       backend: "aspnet",
       accessToken: result.accessToken,
@@ -78,7 +82,7 @@ export function normalizeRefreshResponse(
   if (backend === "laravel") {
     const parsed = laravelRefreshSchema.parse(raw);
     const expiresAt = Date.now() + parsed.expires_in * 1000;
-    
+
     return {
       backend: "laravel",
       accessToken: parsed.access_token,
@@ -96,9 +100,9 @@ export function normalizeRefreshResponse(
 
 /**
  * Normalizes /me endpoint response into unified AuthUser
- * 
+ *
  * Also extracts permissions, POS data, and fees where available
- * 
+ *
  * @param raw - Raw /me response
  * @param backend - Which backend type
  * @returns Object with user, permissions, pos, fees
@@ -114,7 +118,7 @@ export function normalizeUserProfile(
 } {
   if (backend === "laravel") {
     const parsed = laravelMeSchema.parse(raw);
-    
+
     return {
       user: {
         id: parsed.user.id,
@@ -137,7 +141,7 @@ export function normalizeUserProfile(
   } else {
     // ASP.NET /me response structure
     const parsed = aspNetMeSchema.parse(raw);
-    
+
     return {
       user: {
         id: parsed.id,
@@ -158,14 +162,19 @@ export function normalizeUserProfile(
 
 /**
  * Builds login request body based on backend and credentials
- * 
+ *
  * @param credentials - User input (email/password or phone/password)
  * @param backend - Which backend type
  * @param options - Additional options like clientId, fingerprintHash for ASP.NET
  * @returns Properly formatted login request body
  */
 export function buildLoginRequestBody(
-  credentials: { email?: string; phone?: string; username?: string; password: string },
+  credentials: {
+    email?: string;
+    phone?: string;
+    username?: string;
+    password: string;
+  },
   backend: BackendKind,
   options?: { clientId?: string; fingerprintHash?: string }
 ): unknown {
@@ -198,11 +207,11 @@ export function buildLoginRequestBody(
 
 /**
  * Normalizes field names for server requests
- * 
+ *
  * Converts internal camelCase to backend-specific format:
  * - Laravel: snake_case
  * - ASP.NET: PascalCase
- * 
+ *
  * @param data - Object with internal field names
  * @param backend - Which backend type
  * @returns Object with backend-specific field names
@@ -215,7 +224,10 @@ export function normalizeFieldNamesToServer(
     // Convert camelCase to snake_case
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(data)) {
-      const snakeKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+      const snakeKey = key.replace(
+        /[A-Z]/g,
+        (letter) => `_${letter.toLowerCase()}`
+      );
       result[snakeKey] = value;
     }
     return result;
@@ -232,11 +244,11 @@ export function normalizeFieldNamesToServer(
 
 /**
  * Normalizes field names from server responses
- * 
+ *
  * Converts backend-specific format to internal camelCase:
  * - Laravel: snake_case → camelCase
  * - ASP.NET: PascalCase → camelCase
- * 
+ *
  * @param data - Object with server field names
  * @param backend - Which backend type
  * @returns Object with internal camelCase field names
@@ -249,7 +261,9 @@ export function normalizeFieldNamesFromServer(
     // Convert snake_case to camelCase
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(data)) {
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
+        letter.toUpperCase()
+      );
       result[camelKey] = value;
     }
     return result;
@@ -266,16 +280,16 @@ export function normalizeFieldNamesFromServer(
 
 /**
  * Formats pagination parameters for backend-specific query strings
- * 
+ *
  * @param page - 1-indexed page number
  * @param pageSize - Number of items per page
  * @param backend - Which backend type
  * @returns Backend-specific query params object
- * 
+ *
  * @example
  * formatPaginationParams(1, 10, "laravel")
  * // → { page: 1, size: 10 }
- * 
+ *
  * formatPaginationParams(1, 10, "aspnet")
  * // → { PageNumber: 1, PageSize: 10 }
  */

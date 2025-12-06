@@ -44,7 +44,7 @@ export default memo(function SettingsMenu() {
 
   const currentUser = user;
   const displayName = currentUser?.name || t("header.user");
-  const displayEmail = currentUser?.email ?? "user@example.com";
+  const displayEmail = currentUser?.email || t("header.user");
   const userImage = currentUser?.image || undefined;
 
   const handleNavigate = useCallback(

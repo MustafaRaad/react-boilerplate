@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { onCLS, onINP, onFCP, onLCP, onTTFB, type Metric } from "web-vitals";
+import { onINP, onFCP, onLCP, onTTFB, type Metric } from "web-vitals";
 import { Workbox } from "workbox-window";
 import App from "@/app/App";
 import "./assets/styles/globals.css";
@@ -35,7 +35,6 @@ function sendToAnalytics(metric: Metric) {
 }
 
 // Track Core Web Vitals
-onCLS(sendToAnalytics); // Cumulative Layout Shift
 onINP(sendToAnalytics); // Interaction to Next Paint (replaces FID)
 onFCP(sendToAnalytics); // First Contentful Paint
 onLCP(sendToAnalytics); // Largest Contentful Paint
