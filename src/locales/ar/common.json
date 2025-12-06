@@ -85,10 +85,15 @@
     "edit": "تعديل",
     "delete": "حذف"
   },
-  "confirmDeleteTitle": "هل أنت متأكد؟",
-  "confirmDeleteDescription": "لا يمكن التراجع عن هذا الإجراء. سيؤدي إلى حذف هذا العنصر نهائياً.",
+  "confirmDeleteTitle": "هل أنت متأكد تماماً؟",
+  "confirmDeleteDescription": "لا يمكن التراجع عن هذا الإجراء. سيؤدي هذا إلى حذف هذا العنصر نهائياً وإزالته من خوادمنا.",
+  "confirmTitle": "تأكيد الإجراء",
+  "confirmDescription": "هل أنت متأكد من أنك تريد المتابعة؟",
   "delete": "حذف",
+  "confirm": "تأكيد",
   "cancel": "إلغاء",
+  "deleting": "جاري الحذف...",
+  "processing": "جاري المعالجة...",
   "toasts": {
     "success": "تم تنفيذ العملية بنجاح",
     "error": "حدث خطأ ما",

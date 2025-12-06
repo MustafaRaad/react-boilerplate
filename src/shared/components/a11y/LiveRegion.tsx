@@ -4,7 +4,7 @@
  * ARIA live region for announcing dynamic content changes to screen readers
  */
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 interface LiveRegionProps {
   children: ReactNode;
@@ -32,28 +32,4 @@ export function LiveRegion({
       {children}
     </div>
   );
-}
-
-/**
- * Hook to announce messages to screen readers
- */
-export function useAnnouncement(politeness: "polite" | "assertive" = "polite") {
-  const [message, setMessage] = useState("");
-
-  const announce = (text: string) => {
-    // Clear first to ensure announcement fires even for repeated messages
-    setMessage("");
-    setTimeout(() => setMessage(text), 10);
-  };
-
-  const AnnouncementRegion = () => (
-    <LiveRegion
-      politeness={politeness}
-      role={politeness === "assertive" ? "alert" : "status"}
-    >
-      {message}
-    </LiveRegion>
-  );
-
-  return { announce, AnnouncementRegion };
 }

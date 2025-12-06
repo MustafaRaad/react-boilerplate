@@ -4,11 +4,11 @@
  * Hides content visually but keeps it accessible to screen readers
  */
 
-import { type ReactNode } from "react";
+import { type ReactNode, type ElementType } from "react";
 
 interface VisuallyHiddenProps {
   children: ReactNode;
-  as?: keyof JSX.IntrinsicElements;
+  as?: ElementType;
 }
 
 export function VisuallyHidden({

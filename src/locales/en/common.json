@@ -86,10 +86,15 @@
     "edit": "Edit",
     "delete": "Delete"
   },
-  "confirmDeleteTitle": "Are you sure?",
-  "confirmDeleteDescription": "This action cannot be undone. This will permanently delete this item.",
+  "confirmDeleteTitle": "Are you absolutely sure?",
+  "confirmDeleteDescription": "This action cannot be undone. This will permanently delete this item and remove it from our servers.",
+  "confirmTitle": "Confirm action",
+  "confirmDescription": "Are you sure you want to proceed?",
   "delete": "Delete",
+  "confirm": "Confirm",
   "cancel": "Cancel",
+  "deleting": "Deleting...",
+  "processing": "Processing...",
   "toasts": {
     "success": "Action completed successfully",
     "error": "Something went wrong",

@@ -44,16 +44,16 @@ export function useRestoreFocus() {
  */
 export function useFocusWithin<T extends HTMLElement>() {
   const ref = useRef<T>(null);
-  const isFocusWithinRef = useRef(false);
+  const [isFocusWithin, setIsFocusWithin] = useState(false);
 
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
 
-    const handleFocusIn = () => (isFocusWithinRef.current = true);
+    const handleFocusIn = () => setIsFocusWithin(true);
     const handleFocusOut = (e: FocusEvent) => {
       if (!element.contains(e.relatedTarget as Node)) {
-        isFocusWithinRef.current = false;
+        setIsFocusWithin(false);
       }
     };
 
@@ -66,7 +66,7 @@ export function useFocusWithin<T extends HTMLElement>() {
     };
   }, []);
 
-  return { ref, isFocusWithin: isFocusWithinRef.current };
+  return { ref, isFocusWithin };
 }
 
 /**

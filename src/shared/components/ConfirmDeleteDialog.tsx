@@ -1,6 +1,6 @@
-"use client";
-
 import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { AlertTriangle, Loader } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,21 +12,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog";
-import { useTranslation } from "react-i18next";
 
-export interface ConfirmDeleteDialogProps {
-  /** React node that opens the dialog (wrapped with asChild to preserve styles) */
+interface ConfirmDeleteDialogProps {
   trigger: React.ReactNode;
-  /** Called when user confirms delete */
   onConfirm: () => Promise<void> | void;
-  /** Optional overrides for dialog copy */
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  confirmLabel?: React.ReactNode;
-  cancelLabel?: React.ReactNode;
-  /** Optional callback after confirm succeeds */
-  onConfirmed?: () => void;
-  /** Disable trigger and actions */
+  title?: string;
+  description?: string;
   disabled?: boolean;
 }
 
@@ -35,76 +26,69 @@ export function ConfirmDeleteDialog({
   onConfirm,
   title,
   description,
-  confirmLabel,
-  cancelLabel,
-  onConfirmed,
   disabled,
 }: ConfirmDeleteDialogProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
   const [open, setOpen] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleConfirm = React.useCallback(async () => {
-    if (isSubmitting || disabled) return;
-    setIsSubmitting(true);
-    try {
-      await onConfirm();
-      onConfirmed?.();
-      setOpen(false);
-    } catch (error) {
-      console.error("ConfirmDeleteDialog onConfirm failed", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [disabled, isSubmitting, onConfirm, onConfirmed]);
-
-  const resolvedTitle = title ?? t("common.confirmDeleteTitle", "Are you sure?");
-  const resolvedDescription =
-    description ??
-    t(
-      "common.confirmDeleteDescription",
-      "This action cannot be undone. This will permanently delete this item."
-    );
-  const resolvedConfirmLabel = confirmLabel ?? t("common.delete", "Delete");
-  const resolvedCancelLabel = cancelLabel ?? t("common.cancel", "Cancel");
+  const handleConfirm = React.useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
+      try {
+        await onConfirm();
+        setOpen(false);
+      } catch (error) {
+        console.error("Delete failed:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [onConfirm]
+  );
 
   return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (isSubmitting || disabled) return;
-        setOpen(nextOpen);
-      }}
-    >
-      <AlertDialogTrigger asChild>
-        <span
-          aria-disabled={disabled || isSubmitting}
-          className={disabled ? "pointer-events-none opacity-60" : undefined}
-          onClick={(event) => {
-            if (disabled || isSubmitting) {
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          }}
-        >
-          {trigger}
-        </span>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild disabled={disabled}>
+        {trigger}
       </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{resolvedTitle}</AlertDialogTitle>
-          <AlertDialogDescription>{resolvedDescription}</AlertDialogDescription>
+      <AlertDialogContent className="max-w-lg">
+        <AlertDialogHeader className="space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle
+                className="size-6 text-destructive"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="flex-1 space-y-2">
+              <AlertDialogTitle className="text-start text-xl">
+                {title || t("confirmDeleteTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-start text-base">
+                {description || t("confirmDeleteDescription")}
+              </AlertDialogDescription>
+            </div>
+          </div>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isSubmitting}>
-            {resolvedCancelLabel}
+        <AlertDialogFooter className="mt-6 gap-3 sm:gap-2">
+          <AlertDialogCancel disabled={isLoading} className="sm:flex-1">
+            {t("cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
-            disabled={isSubmitting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={isLoading}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:flex-1"
           >
-            {resolvedConfirmLabel}
+            {isLoading ? (
+              <>
+                <Loader className="ltr:mr-2 rtl:ml-2 size-4 animate-spin" />
+                {t("deleting")}
+              </>
+            ) : (
+              t("delete")
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

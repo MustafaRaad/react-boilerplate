@@ -50,16 +50,16 @@ export const UsersTable = memo(function UsersTable() {
       {
         icon: Trash2,
         label: tCommon("actions.delete"),
-        onConfirm: (user) => deleteUserMutation.mutateAsync(user.id),
-        confirm: {
-          description: (user) =>
-            t("dialogs.delete.description", {
-              name: user.name ?? user.email ?? `#${user.id}`,
-              defaultValue: `This will permanently delete ${
-                user.name ?? user.email ?? "this user"
-              }.`,
-            }),
+        onConfirm: async (user) => {
+          await deleteUserMutation.mutateAsync(user.id);
         },
+        confirmDescription: (user) =>
+          t("dialogs.delete.description", {
+            name: user.name ?? user.email ?? `#${user.id}`,
+            defaultValue: `This will permanently delete ${
+              user.name ?? user.email ?? "this user"
+            }.`,
+          }),
         variant: "destructive",
       },
     ],
