@@ -1,17 +1,35 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { onCLS, onINP, onFCP, onLCP, onTTFB, type Metric } from 'web-vitals'
-import { Workbox } from 'workbox-window'
-import App from '@/app/App'
-import './assets/styles/globals.css'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { onCLS, onINP, onFCP, onLCP, onTTFB, type Metric } from "web-vitals";
+import { Workbox } from "workbox-window";
+import App from "@/app/App";
+import "./assets/styles/globals.css";
+
+// Axe accessibility auditing in development
+if (import.meta.env.DEV) {
+  import("@axe-core/react").then((axe) => {
+    import("react").then((React) => {
+      import("react-dom/client").then((ReactDOMClient) => {
+        axe.default(React.default, ReactDOMClient, 1000, {
+          rules: [
+            { id: "color-contrast", enabled: true },
+            { id: "label", enabled: true },
+            { id: "button-name", enabled: true },
+            { id: "link-name", enabled: true },
+          ],
+        });
+      });
+    });
+  });
+}
 
 // Web Vitals monitoring
 function sendToAnalytics(metric: Metric) {
   // Log to console in development
   if (import.meta.env.DEV) {
-    console.log('[Web Vitals]', metric.name, metric.value);
+    console.log("[Web Vitals]", metric.name, metric.value);
   }
-  
+
   // In production, send to your analytics service
   // Example: analytics.track('Web Vitals', metric);
 }
@@ -26,49 +44,53 @@ onTTFB(sendToAnalytics); // Time to First Byte
 // Register Service Worker for PWA
 let workbox: Workbox | null = null;
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  workbox = new Workbox('/sw.js', { scope: '/' });
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  workbox = new Workbox("/sw.js", { scope: "/" });
 
   // Listen for waiting event
-  workbox.addEventListener('waiting', () => {
-    console.log('New service worker waiting to activate');
+  workbox.addEventListener("waiting", () => {
+    console.log("New service worker waiting to activate");
   });
 
   // Listen for activated event
-  workbox.addEventListener('activated', (event) => {
-    console.log('Service worker activated', event.isUpdate ? '(update)' : '(first time)');
+  workbox.addEventListener("activated", (event) => {
+    console.log(
+      "Service worker activated",
+      event.isUpdate ? "(update)" : "(first time)"
+    );
   });
 
   // Listen for controlling event
-  workbox.addEventListener('controlling', () => {
-    console.log('Service worker is now controlling the page');
+  workbox.addEventListener("controlling", () => {
+    console.log("Service worker is now controlling the page");
   });
 
   // Register the service worker
-  workbox.register()
+  workbox
+    .register()
     .then(() => {
-      console.log('Service worker registered successfully');
+      console.log("Service worker registered successfully");
     })
     .catch((error) => {
-      console.error('Service worker registration failed:', error);
+      console.error("Service worker registration failed:", error);
     });
-} else if (!('serviceWorker' in navigator)) {
-  console.warn('Service Worker not supported in this browser');
+} else if (!("serviceWorker" in navigator)) {
+  console.warn("Service Worker not supported in this browser");
 } else {
-  console.log('Service Worker disabled in development mode');
+  console.log("Service Worker disabled in development mode");
 }
 
 // Export workbox instance for use in components
 export { workbox };
 
-const container = document.getElementById('root')
+const container = document.getElementById("root");
 
 if (!container) {
-  throw new Error('Root container missing')
+  throw new Error("Root container missing");
 }
 
 createRoot(container).render(
   <StrictMode>
     <App />
-  </StrictMode>,
-)
+  </StrictMode>
+);

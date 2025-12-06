@@ -1,12 +1,14 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Content Security Policy (excluding frame-ancestors which requires HTTP header) -->
-    <meta http-equiv="Content-Security-Policy" content="
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Modern React Dashboard with accessibility, security, and PWA support" />
+
+  <!-- Content Security Policy (excluding frame-ancestors which requires HTTP header) -->
+  <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval';
       style-src 'self' 'unsafe-inline';
@@ -16,14 +18,16 @@
       base-uri 'self';
       form-action 'self';
     ">
-    
-    <!-- Referrer Policy (only this one works via meta) -->
-    <meta name="referrer" content="strict-origin-when-cross-origin" />
-    
-    <title>Mustafa Raad Dashboard</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+  <!-- Referrer Policy (only this one works via meta) -->
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <title>Mustafa Raad Dashboard</title>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

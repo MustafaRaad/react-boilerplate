@@ -7,6 +7,9 @@ import { ErrorBoundary } from "@/shared/components/error/ErrorBoundary";
 import { InstallPrompt } from "@/shared/components/pwa/InstallPrompt";
 import { UpdatePrompt } from "@/shared/components/pwa/UpdatePrompt";
 import { OfflineIndicator } from "@/shared/components/pwa/OfflineIndicator";
+import { SkipToContent } from "@/shared/components/a11y/SkipToContent";
+import { KeyboardShortcuts } from "@/shared/components/a11y/KeyboardShortcuts";
+import { ColorContrastAudit } from "@/shared/components/a11y/ColorContrastAudit";
 import { workbox } from "@/main";
 import { Loader } from "lucide-react";
 
@@ -19,18 +22,24 @@ const LoadingFallback = () => (
 export const DashboardLayout = () => {
   return (
     <SidebarProvider>
+      <SkipToContent />
+      <KeyboardShortcuts />
+      <ColorContrastAudit />
       <AppSidebar />
       <SidebarInset>
         <DashboardHeader />
-        <div className="@container/main flex flex-1 flex-col gap-2 p-2 md:p-6">
+        <main
+          id="main-content"
+          className="@container/main flex flex-1 flex-col gap-2 p-2 md:p-6"
+        >
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Outlet />
             </Suspense>
           </ErrorBoundary>
-        </div>
+        </main>
       </SidebarInset>
-      
+
       {/* PWA Components */}
       <OfflineIndicator />
       <InstallPrompt />
