@@ -9,6 +9,8 @@ import { createRoot } from "react-dom/client";
 import { onINP, onFCP, onLCP, onTTFB, type Metric } from "web-vitals";
 import { Workbox } from "workbox-window";
 import App from "@/app/App";
+import { setupApiConfig } from "@/core/api/client";
+import { refreshAccessToken } from "@/features/auth/hooks/useRefreshToken";
 import "./assets/styles/globals.css";
 
 // Axe accessibility auditing in development
@@ -88,11 +90,23 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 // Export workbox instance for use in components
 export { workbox };
 
+// Initialize application after DOM is ready
 const container = document.getElementById("root");
 
 if (!container) {
   throw new Error("Root container missing");
 }
+
+// Initialize API configuration with auto-refresh on 401
+setupApiConfig({
+  authRefresh: {
+    enabled: true,
+    refreshToken: refreshAccessToken,
+  },
+  logging: {
+    errors: import.meta.env.DEV,
+  },
+});
 
 createRoot(container).render(
   <StrictMode>

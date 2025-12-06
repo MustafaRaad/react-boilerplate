@@ -9,13 +9,13 @@ import { endpoints } from "@/core/api/endpoints";
 import { useApiMutation } from "@/core/api/hooks";
 import { backendKind } from "@/core/config/env";
 import {
-  normalizeLoginResponse,
   normalizeUserProfile,
   buildLoginRequestBody,
 } from "@/core/api/normalizers";
 import {
   type AuthMeResponse,
   type AuthUser,
+  type AuthTokens,
 } from "@/features/auth/types/auth.types";
 import { useAuthStore } from "@/store/auth.store";
 import { type LoginFormValues } from "@/features/auth/types";
@@ -26,7 +26,7 @@ export const useLogin = () => {
       const store = useAuthStore.getState();
       const targetBackend = backendKind;
 
-      // Step 1: Build login request using centraliz normalizer
+      // Step 1: Build login request using centralized normalizer
       const loginPayload = buildLoginRequestBody(
         {
           email: values.email,
@@ -36,23 +36,21 @@ export const useLogin = () => {
       );
 
       // Step 2: Call login endpoint
-      const loginResponse = await apiFetch(endpoints.auth.login, {
+      // NOTE: apiFetch already normalizes the response to AuthTokens
+      const tokens = await apiFetch<AuthTokens>(endpoints.auth.login, {
         body: loginPayload,
         overrideBackendKind: targetBackend,
       });
 
-      // Step 3: Normalize login response to AuthTokens
-      const tokens = normalizeLoginResponse(loginResponse, targetBackend);
-
-      // Step 4: Store tokens FIRST so they're available for the /me request
+      // Step 3: Store tokens FIRST so they're available for the /me request
       store.setAuth({ tokens });
 
-      // Step 5: Fetch user profile
+      // Step 4: Fetch user profile
       const meResponse = await apiFetch<AuthMeResponse>(endpoints.auth.me, {
         overrideBackendKind: targetBackend,
       });
 
-      // Step 6: Normalize user profile using centralized normalizer
+      // Step 5: Normalize user profile using centralized normalizer
       const { user, permissions, pos, fees } = normalizeUserProfile(
         meResponse,
         targetBackend
