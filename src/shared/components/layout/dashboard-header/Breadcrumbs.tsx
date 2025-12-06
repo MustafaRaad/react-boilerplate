@@ -7,6 +7,7 @@
 import { Fragment } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,6 +19,7 @@ import {
 
 export function Breadcrumbs() {
   const { location } = useRouterState();
+  const { t } = useTranslation("common");
 
   // Generate breadcrumb items from current path
   const pathSegments = location.pathname.split("/").filter(Boolean);
@@ -26,11 +28,24 @@ export function Breadcrumbs() {
     const href = "/" + pathSegments.slice(0, index + 1).join("/");
     const isLast = index === pathSegments.length - 1;
 
-    // Capitalize first letter and replace hyphens with spaces
-    const label = segment
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+    // Check if segment is a numeric ID (e.g., "123" or UUID format)
+    const isIdSegment = /^(\d+|[a-f0-9-]{36})$/.test(segment);
+
+    let label: string;
+
+    if (isIdSegment) {
+      // For ID segments, use "Details" as the label
+      label = t("common:details", { defaultValue: "Details" });
+    } else {
+      // Try to get translation key for the segment from navigation namespace
+      const translationKey = `navigation.${segment}`;
+      label = t(translationKey, {
+        defaultValue: segment
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" "),
+      });
+    }
 
     return { href, label, isLast, isDashboard: segment === "dashboard" };
   });
