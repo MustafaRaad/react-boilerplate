@@ -18,6 +18,8 @@ function NotificationCard({
 }: {
   notification: HeaderNotification;
 }) {
+  const { t } = useTranslation("common");
+
   return (
     <div
       className={cn(
@@ -38,14 +40,14 @@ function NotificationCard({
       <div className="flex items-start gap-2">
         <div className="flex flex-1 flex-col gap-1.5">
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-sm text-foreground">{notification.title}</h3>
+            <h3 className="text-sm text-foreground">{t(notification.title)}</h3>
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-light whitespace-nowrap">
               <History className="size-3.5" aria-hidden="true" />
               {notification.timestamp}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            {notification.description}
+            {t(notification.description)}
           </p>
         </div>
       </div>
@@ -61,29 +63,29 @@ export default function Notifications() {
   const items: HeaderNotification[] = [
     {
       id: "1",
-      title: t("notifications.samples.newLogin.title"),
-      description: t("notifications.samples.newLogin.description"),
-      timestamp: t("notifications.samples.newLogin.timestamp"),
+      title: "تسجيل دخول جديد من بغداد",
+      description: "تم اكتشاف جلسة جديدة على كروم · ويندوز 11.",
+      timestamp: "قبل دقيقتين",
       unread: true,
     },
     {
       id: "2",
-      title: t("notifications.samples.portfolioSync.title"),
-      description: t("notifications.samples.portfolioSync.description"),
-      timestamp: t("notifications.samples.portfolioSync.timestamp"),
+      title: "اكتملت مزامنة المحفظة",
+      description: "تمت مطابقة ممتلكاتك مع مصدر بيانات سوق العراق للأوراق المالية.",
+      timestamp: "قبل 18 دقيقة",
       unread: true,
     },
     {
       id: "3",
-      title: t("notifications.samples.kycSoon.title"),
-      description: t("notifications.samples.kycSoon.description"),
-      timestamp: t("notifications.samples.kycSoon.timestamp"),
+      title: "قرب انتهاء مستند اعرف زبونك",
+      description: "قم برفع إثبات سكن جديد لتجنب إيقاف الحساب.",
+      timestamp: "الأمس · 14:22",
     },
     {
       id: "4",
-      title: t("notifications.samples.maintenance.title"),
-      description: t("notifications.samples.maintenance.description"),
-      timestamp: t("notifications.samples.maintenance.timestamp"),
+      title: "صيانة مجدولة",
+      description: "ستكون واجهة برمجة التداول غير متاحة في 22 تشرين الأول من 02:00 إلى 04:00.",
+      timestamp: "قبل يومين",
     },
   ];
 
@@ -110,7 +112,10 @@ export default function Notifications() {
           <span className="hidden md:block">
             {t("notifications.button.label")}
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="rounded-full h-fit px-1.5 py-0 text-xs ms-1.5 font-medium">
+              <Badge
+                variant="secondary"
+                className="rounded-full h-fit px-1.5 py-0 text-xs ms-1.5 font-medium"
+              >
                 {unreadCount}
               </Badge>
             )}
@@ -118,22 +123,30 @@ export default function Notifications() {
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="flex w-full sm:max-w-md flex-col gap-0 p-0">
+      <SheetContent
+        side="right"
+        className="flex w-full sm:max-w-md flex-col gap-0 p-0"
+      >
         <SheetHeader className="border-b border-border/50 px-6 py-4">
-          <SheetTitle className="text-start">{t("notifications.title")}</SheetTitle>
+          <SheetTitle className="text-start">
+            {t("notifications.title")}
+          </SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-3">
             {items.length > 0 ? (
-              items.map((n) => (
-                <NotificationCard key={n.id} notification={n} />
-              ))
+              items.map((n) => <NotificationCard key={n.id} notification={n} />)
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Bell className="size-12 text-muted-foreground/50 mb-3" aria-hidden="true" />
+                <Bell
+                  className="size-12 text-muted-foreground/50 mb-3"
+                  aria-hidden="true"
+                />
                 <p className="text-sm text-muted-foreground">
-                  {t("notifications.empty", { defaultValue: "No notifications" })}
+                  {t("notifications.empty", {
+                    defaultValue: "No notifications",
+                  })}
                 </p>
               </div>
             )}

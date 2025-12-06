@@ -39,7 +39,7 @@ export function DateRangePicker({
   }
   return (
     <Popover>
-      <PopoverTrigger asChild className="bg-input">
+      <PopoverTrigger asChild className="bg-input/30">
         <Button
           variant="outline"
           className={cn(

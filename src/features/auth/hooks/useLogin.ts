@@ -10,7 +10,7 @@ import {
 import {
   type AuthMeResponse,
   type AuthUser,
-} from "@/core/types/auth";
+} from "@/features/auth/types/auth.types";
 import { useAuthStore } from "@/store/auth.store";
 import { type LoginFormValues } from "@/features/auth/types";
 
