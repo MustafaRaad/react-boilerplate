@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
 
 export const NotFoundPage = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
   const router = useRouter();
 
   return (

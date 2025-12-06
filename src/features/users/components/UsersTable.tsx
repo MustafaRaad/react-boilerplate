@@ -27,7 +27,7 @@ export const UsersTable = memo(function UsersTable() {
       toast.success(t("dialogs.edit.success"));
       editDialog.close();
     },
-    onError: () => toast.error("Failed to update user"),
+    onError: () => toast.error(tCommon("toasts.error")),
   });
 
   const deleteUserMutation = useDeleteUser({

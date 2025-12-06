@@ -21,7 +21,7 @@ export const UsersListPage = memo(function UsersListPage() {
       toast.success(t("dialogs.create.success"));
       createDialog.close();
     },
-    onError: () => toast.error("Failed to create user"),
+    onError: () => toast.error(tCommon("toasts.error")),
   });
 
   // Memoize submit handler to prevent child re-renders

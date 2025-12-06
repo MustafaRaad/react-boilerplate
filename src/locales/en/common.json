@@ -100,6 +100,16 @@
     "loginSuccess": "Welcome back! You have successfully logged in",
     "loginError": "Login failed. Please check your credentials"
   },
+  "errors": {
+    "unexpected": "Something went wrong",
+    "notFound": "Page not found",
+    "notFoundDescription": "The page you are looking for does not exist or has moved."
+  },
+  "ui": {
+    "sidebar": "Sidebar",
+    "dismiss": "Dismiss",
+    "toggleColorContrast": "Toggle color contrast audit"
+  },
   "theme": {
     "light": "Light Mode",
     "dark": "Dark Mode"

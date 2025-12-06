@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   meetsContrastRequirement,
   getContrastRatio,
@@ -177,6 +178,7 @@ const auditColorContrast = () => {
  */
 export const ColorContrastAudit = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useTranslation("common");
 
   // Use useMemo to compute results only once, avoiding effects
   const results = useMemo(() => {
@@ -194,7 +196,7 @@ export const ColorContrastAudit = () => {
       <button
         onClick={() => setIsVisible(!isVisible)}
         className="fixed bottom-4 right-4 z-50 rounded-full bg-purple-600 px-4 py-2 text-xs text-white shadow-lg hover:bg-purple-700"
-        aria-label="Toggle color contrast audit"
+        aria-label={t("ui.toggleColorContrast")}
       >
         {isVisible ? "Hide" : "Show"} A11y Audit
       </button>

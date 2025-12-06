@@ -117,7 +117,7 @@ export function InstallPrompt() {
           <button
             onClick={handleDismiss}
             className="rounded-sm opacity-70 transition-opacity hover:opacity-100"
-            aria-label="Dismiss"
+            aria-label={t("ui.dismiss")}
           >
             <X className="h-4 w-4" />
           </button>

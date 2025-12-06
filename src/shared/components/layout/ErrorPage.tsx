@@ -8,7 +8,7 @@ type ErrorPageProps = {
 };
 
 export const ErrorPage = ({ error }: ErrorPageProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
   const router = useRouter();
 
   const message =
