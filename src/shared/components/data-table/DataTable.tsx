@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTranslation } from "react-i18next";
-import { Download, FilterX } from "lucide-react";
+import { Download, FilterX, Loader } from "lucide-react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { backendKind } from "@/core/config/env";
 import { Button } from "@/shared/components/ui/button";
@@ -47,6 +47,7 @@ import {
 import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { DataTableSkeleton } from "@/shared/components/data-table/DataTableSkeleton";
 
 // Extend TanStack Table column meta for filter configuration
 declare module "@tanstack/react-table" {
@@ -91,6 +92,8 @@ type DataTablePropsWithQuery<TData> = Omit<
       items: TData[];
       rowCount?: number;
     };
+    isLoading?: boolean;
+    isFetching?: boolean;
   };
 };
 
@@ -150,6 +153,10 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     "queryResult" in props ? props.queryResult.data?.items ?? [] : props.data;
   const total =
     "queryResult" in props ? props.queryResult.data?.rowCount : props.total;
+  const isLoading =
+    "queryResult" in props ? props.queryResult.isLoading ?? false : false;
+  const isFetching =
+    "queryResult" in props ? props.queryResult.isFetching ?? false : false;
   const { t } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as Record<string, unknown>;
@@ -323,50 +330,76 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start || 0 : 0;
   const paddingBottom = virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0) : 0;
 
+  // Calculate column count including actions
+  const totalColumnCount = actions && actions.length > 0 ? columns.length + 1 : columns.length;
+
+  // Show skeleton loader during initial load
+  if (isLoading) {
+    return (
+      <DataTableSkeleton
+        columnCount={totalColumnCount}
+        rowCount={10}
+        showFilters={enableColumnFilters}
+        showToolbar={showExport || enableColumnFilters}
+        className={className}
+      />
+    );
+  }
+
   return (
     <div className={cn("w-full space-y-4", className)}>
       {/* Table */}
       <div className="bg-card rounded-lg py-4 px-4 border">
         {/* Top toolbar with actions */}
-        {(showExport || enableColumnFilters) && (
-          <div className="flex items-center gap-2 px-1">
-            <TooltipProvider>
-              {showExport && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleExport}
-                      className="bg-card"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("table.exportCsv")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {enableColumnFilters && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleClearFilters}
-                      className="bg-card"
-                      disabled={!hasActiveFilters}
-                    >
-                      <FilterX className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t("table.clearFilters")}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </TooltipProvider>
+        {(showExport || enableColumnFilters || isFetching) && (
+          <div className="flex items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                {showExport && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleExport}
+                        className="bg-card"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("table.exportCsv")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {enableColumnFilters && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleClearFilters}
+                        className="bg-card"
+                        disabled={!hasActiveFilters}
+                      >
+                        <FilterX className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("table.clearFilters")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </TooltipProvider>
+            </div>
+            
+            {/* Refetching indicator */}
+            {isFetching && !isLoading && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader className="h-4 w-4 animate-spin" />
+                <span>{t("table.updating")}</span>
+              </div>
+            )}
           </div>
         )}
         <div

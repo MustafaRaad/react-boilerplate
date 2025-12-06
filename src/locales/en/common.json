@@ -67,6 +67,7 @@
     "filter": "Filter",
     "all": "All",
     "selectDate": "Select date range",
+    "updating": "Updating...",
     "emptyTitle": "No items found",
     "emptyDescription": "Try adjusting your filters or create a new item."
   },

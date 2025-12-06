@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Loader2 } from "lucide-react";
+import { Loader } from "lucide-react";
 import { authLoginFormSchema as loginSchema } from "@/features/auth/schemas/auth.schema";
 import { type LoginFormValues } from "@/features/auth/types";
 import { useLogin } from "@/features/auth/hooks/useLogin";
@@ -152,7 +152,7 @@ export function LoginForm({
                 <Button type="submit" disabled={loginMutation.isPending}>
                   {loginMutation.isPending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader className="mr-2 h-4 w-4 animate-spin" />
                       {t("auth.submit")}
                     </>
                   ) : (
