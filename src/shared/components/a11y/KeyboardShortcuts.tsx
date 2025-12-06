@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useKeyboardShortcut } from "@/shared/hooks/useFocus";
+import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut";
 import { announceToScreenReader } from "@/shared/utils/a11y";
 
 /**
