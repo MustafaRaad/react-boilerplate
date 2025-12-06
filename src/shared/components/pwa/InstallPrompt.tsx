@@ -5,9 +5,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { X, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/shared/components/ui/button";
+import { PwaPromptCard } from "./PwaPromptCard";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -93,36 +93,24 @@ export function InstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 ltr:right-4 rtl:left-4 z-50 max-w-sm animate-in slide-in-from-bottom-4">
-      <div className="rounded-lg border bg-card p-4 shadow-lg">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Download className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-sm">{t("pwa.install.title")}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {t("pwa.install.description")}
-            </p>
-
-            <div className="mt-3 flex gap-2">
-              <Button size="sm" onClick={handleInstallClick} className="flex-1">
-                {t("pwa.install.button")}
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleDismiss}>
-                {t("pwa.install.later")}
-              </Button>
-            </div>
-          </div>{" "}
-          <button
-            onClick={handleDismiss}
-            className="rounded-sm opacity-70 transition-opacity hover:opacity-100"
-            aria-label={t("ui.dismiss")}
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
+    <PwaPromptCard
+      icon={<Download className="h-5 w-5" />}
+      title={t("pwa.install.title")}
+      description={t("pwa.install.description")}
+      actions={[
+        {
+          label: t("pwa.install.button"),
+          onClick: handleInstallClick,
+        },
+        {
+          label: t("pwa.install.later"),
+          onClick: handleDismiss,
+          variant: "outline",
+        },
+      ]}
+      onDismiss={handleDismiss}
+      dismissLabel={t("ui.dismiss")}
+      position="bottom"
+    />
   );
 }
