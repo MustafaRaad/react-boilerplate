@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { onINP, onFCP, onLCP, onTTFB, type Metric } from "web-vitals";

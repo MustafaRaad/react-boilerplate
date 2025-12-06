@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * Input Sanitization Utilities
  * 
  * Provides functions to sanitize user inputs and prevent XSS attacks

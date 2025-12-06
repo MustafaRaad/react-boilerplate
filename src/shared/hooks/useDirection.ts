@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { dirFromLocale, isRtlLocale } from "@/core/i18n/direction";

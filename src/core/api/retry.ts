@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * API Retry Logic with Exponential Backoff
  * Advanced retry mechanism for failed API requests
  */

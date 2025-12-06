@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * FocusTrap Component
  *
  * Traps keyboard focus within a container (for modals, dialogs, etc.)

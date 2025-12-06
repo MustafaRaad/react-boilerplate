@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * CSRF (Cross-Site Request Forgery) Protection
  * 
  * Implements CSRF token handling for API requests

@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * LiveRegion Component
  *
  * ARIA live region for announcing dynamic content changes to screen readers

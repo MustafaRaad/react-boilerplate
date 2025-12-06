@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * API Configuration and Setup Utilities
  * Provides easy setup and configuration for API interceptors and retry behavior
  */

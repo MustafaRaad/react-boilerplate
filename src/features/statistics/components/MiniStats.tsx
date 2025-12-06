@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { TrendingDown, TrendingUp } from "lucide-react";
 import * as React from "react";
 import { Area, AreaChart } from "recharts";

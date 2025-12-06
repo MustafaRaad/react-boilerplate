@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { useApiQuery } from "@/core/api/hooks";
 import { backendKind } from "@/core/config/env";
 import { formatPaginationParams } from "@/core/api/normalizers";

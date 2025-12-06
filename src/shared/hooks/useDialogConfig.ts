@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { useMemo } from "react";
 import type { SchemaFieldConfig } from "@/shared/components/dialogs/SchemaFormFields";
 

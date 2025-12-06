@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/core/api/client";
 import { endpoints } from "@/core/api/endpoints";

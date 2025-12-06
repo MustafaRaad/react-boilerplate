@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * Backend Normalizers - Centralized data transformation layer
  *
  * This module provides unified normalizers for converting backend-specific

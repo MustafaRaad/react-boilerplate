@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 export type SupportedLocale = "en" | "ar";
 
 const RTL_LOCALES = new Set<SupportedLocale | string>(["ar"]);

@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import React, { Component, type ReactNode } from "react";
 import { ErrorFallback } from "./ErrorFallback";
 

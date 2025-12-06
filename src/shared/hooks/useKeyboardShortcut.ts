@@ -1,4 +1,10 @@
 /**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
+/**
  * Keyboard Shortcut Hook
  *
  * Hook for managing keyboard shortcuts with modifier key support

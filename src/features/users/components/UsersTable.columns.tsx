@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import type { ColumnDef, CellContext, FilterFn } from "@tanstack/react-table";
 import type { User } from "@/features/users/types";
 import { dateFilterFn } from "@/shared/components/data-table/filters";

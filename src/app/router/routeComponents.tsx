@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { useEffect } from "react";
 import { Outlet, useRouter } from "@tanstack/react-router";
 import { DashboardLayout } from "@/shared/components/layout/DashboardLayout";

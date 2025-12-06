@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import type { Row } from "@tanstack/react-table";
 import type { DateRange } from "react-day-picker";
 import { isWithinInterval, parseISO, isValid } from "date-fns";

@@ -1,3 +1,9 @@
+/**
+ * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+
 import { i18n } from "@/core/i18n/i18n";
 import { type UnifiedApiError } from "@/core/types/api";
 import { toast } from "sonner";
