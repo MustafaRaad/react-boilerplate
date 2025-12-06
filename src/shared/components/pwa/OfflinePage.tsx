@@ -1,13 +1,15 @@
 /**
  * Offline Fallback Page
- * 
+ *
  * Shown when the user is offline and tries to navigate
  */
 
-import { WifiOff, RefreshCw } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
+import { WifiOff, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/shared/components/ui/button";
 
 export function OfflinePage() {
+  const { t } = useTranslation("common");
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -18,27 +20,23 @@ export function OfflinePage() {
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
           <WifiOff className="h-10 w-10 text-muted-foreground" />
         </div>
-        
-        <h1 className="mb-2 text-2xl font-bold">You're Offline</h1>
-        
+
+        <h1 className="mb-2 text-2xl font-bold">
+          {t("pwa.offline.page.title")}
+        </h1>
+
         <p className="mb-6 text-muted-foreground">
-          It looks like you've lost your internet connection. 
-          Some features may not be available until you're back online.
+          {t("pwa.offline.page.description")}
         </p>
 
         <div className="space-y-3">
-          <Button
-            onClick={handleRefresh}
-            className="w-full"
-            size="lg"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
+          <Button onClick={handleRefresh} className="w-full" size="lg">
+            <RefreshCw className="ltr:mr-2 rtl:ml-2 h-4 w-4" />
+            {t("pwa.offline.page.button")}
           </Button>
-          
+
           <p className="text-xs text-muted-foreground">
-            This app works offline with limited functionality. 
-            Your changes will sync when you're back online.
+            {t("pwa.offline.page.note")}
           </p>
         </div>
       </div>

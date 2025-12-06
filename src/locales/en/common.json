@@ -2,8 +2,7 @@
   "welcome": "Welcome back",
   "app": {
     "title": "Mustafa Dashboard",
-    "description": "Modern React Dashboard",
-    "logoAlt": "Mustafa Logo"
+    "description": "Modern React Dashboard"
   },
   "language": {
     "en": "English",
@@ -101,12 +100,6 @@
     "loginSuccess": "Welcome back! You have successfully logged in",
     "loginError": "Login failed. Please check your credentials"
   },
-  "errors": {
-    "unexpected": "Unexpected error occurred",
-    "unauthorized": "You need to login again",
-    "notFound": "This page could not be found",
-    "notFoundDescription": "The page you are looking for does not exist or has moved."
-  },
   "theme": {
     "light": "Light Mode",
     "dark": "Dark Mode"
@@ -119,27 +112,30 @@
     },
     "actions": {
       "markAllRead": "Mark all as read"
+    }
+  },
+  "pwa": {
+    "install": {
+      "title": "Install App",
+      "description": "Install this app on your device for quick access and offline use.",
+      "button": "Install",
+      "later": "Not now"
     },
-    "samples": {
-      "newLogin": {
-        "title": "New login detected",
-        "description": "Someone logged into your account from a new device.",
-        "timestamp": "2 minutes ago"
-      },
-      "portfolioSync": {
-        "title": "Portfolio synced",
-        "description": "Your portfolio has been successfully synced with the latest data.",
-        "timestamp": "1 hour ago"
-      },
-      "kycSoon": {
-        "title": "KYC verification expiring soon",
-        "description": "Your KYC verification will expire in 7 days. Please renew.",
-        "timestamp": "3 hours ago"
-      },
-      "maintenance": {
-        "title": "Scheduled maintenance",
-        "description": "System will be under maintenance on Sunday from 2 AM to 4 AM.",
-        "timestamp": "1 day ago"
+    "update": {
+      "title": "Update Available",
+      "description": "A new version of the app is available. Update now to get the latest features.",
+      "button": "Update Now",
+      "updating": "Updating...",
+      "later": "Later"
+    },
+    "offline": {
+      "banner": "You're offline - Some features may be limited",
+      "reconnected": "Back online - Data will sync automatically",
+      "page": {
+        "title": "You're Offline",
+        "description": "It looks like you've lost your internet connection. Some features may not be available until you're back online.",
+        "button": "Try Again",
+        "note": "This app works offline with limited functionality. Your changes will sync when you're back online."
       }
     }
   }
