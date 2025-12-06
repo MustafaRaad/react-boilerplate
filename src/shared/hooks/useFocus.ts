@@ -4,7 +4,7 @@
  * Hooks for managing keyboard focus and navigation
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { getFocusableElements } from "@/shared/utils/a11y";
 
 /**
@@ -44,16 +44,16 @@ export function useRestoreFocus() {
  */
 export function useFocusWithin<T extends HTMLElement>() {
   const ref = useRef<T>(null);
-  const [isFocusWithin, setIsFocusWithin] = useRef(false);
+  const isFocusWithinRef = useRef(false);
 
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
 
-    const handleFocusIn = () => (setIsFocusWithin.current = true);
+    const handleFocusIn = () => (isFocusWithinRef.current = true);
     const handleFocusOut = (e: FocusEvent) => {
       if (!element.contains(e.relatedTarget as Node)) {
-        setIsFocusWithin.current = false;
+        isFocusWithinRef.current = false;
       }
     };
 
@@ -66,7 +66,7 @@ export function useFocusWithin<T extends HTMLElement>() {
     };
   }, []);
 
-  return { ref, isFocusWithin: isFocusWithin.current };
+  return { ref, isFocusWithin: isFocusWithinRef.current };
 }
 
 /**

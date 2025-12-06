@@ -50,11 +50,20 @@ export const UsersTable = memo(function UsersTable() {
       {
         icon: Trash2,
         label: tCommon("actions.delete"),
-        onClick: (user) => deleteUserMutation.mutate(user.id),
+        onConfirm: (user) => deleteUserMutation.mutateAsync(user.id),
+        confirm: {
+          description: (user) =>
+            t("dialogs.delete.description", {
+              name: user.name ?? user.email ?? `#${user.id}`,
+              defaultValue: `This will permanently delete ${
+                user.name ?? user.email ?? "this user"
+              }.`,
+            }),
+        },
         variant: "destructive",
       },
     ],
-    [tCommon, editDialog.open, deleteUserMutation]
+    [tCommon, editDialog.open, deleteUserMutation, t]
   );
 
   // Memoize submit handler to prevent child re-renders

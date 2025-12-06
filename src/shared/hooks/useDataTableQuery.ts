@@ -1,5 +1,6 @@
 import { useApiQuery } from "@/core/api/hooks";
 import { backendKind } from "@/core/config/env";
+import { formatPaginationParams } from "@/core/api/normalizers";
 import { type PagedResult } from "@/core/types/api";
 import { useSearch } from "@tanstack/react-router";
 
@@ -37,19 +38,11 @@ export const useDataTableQuery = <TData>({
   const page = Number(searchParams.page ?? 1);
   const pageSize = Number(searchParams.pageSize ?? 10);
 
-  // Format query params based on backend type
-  const formattedQuery =
-    backendKind === "aspnet"
-      ? {
-          PageNumber: page,
-          PageSize: pageSize,
-          ...additionalQuery,
-        }
-      : {
-          page,
-          size: pageSize,
-          ...additionalQuery,
-        };
+  // Format query params based on backend type using centralized normalizer
+  const formattedQuery = {
+    ...formatPaginationParams(page, pageSize, backendKind),
+    ...additionalQuery,
+  };
 
   return useApiQuery<PagedResult<TData>>({
     queryKey: [...queryKey, backendKind, page, pageSize, additionalQuery],

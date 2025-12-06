@@ -39,6 +39,9 @@
       "title": "Edit User",
       "description": "Update user information.",
       "success": "User updated successfully"
+    },
+    "delete": {
+      "description": "This will permanently delete {{name}}."
     }
   },
   "form": {

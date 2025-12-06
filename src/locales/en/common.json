@@ -86,6 +86,10 @@
     "edit": "Edit",
     "delete": "Delete"
   },
+  "confirmDeleteTitle": "Are you sure?",
+  "confirmDeleteDescription": "This action cannot be undone. This will permanently delete this item.",
+  "delete": "Delete",
+  "cancel": "Cancel",
   "toasts": {
     "success": "Action completed successfully",
     "error": "Something went wrong",

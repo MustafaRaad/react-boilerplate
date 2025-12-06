@@ -85,6 +85,10 @@
     "edit": "تعديل",
     "delete": "حذف"
   },
+  "confirmDeleteTitle": "هل أنت متأكد؟",
+  "confirmDeleteDescription": "لا يمكن التراجع عن هذا الإجراء. سيؤدي إلى حذف هذا العنصر نهائياً.",
+  "delete": "حذف",
+  "cancel": "إلغاء",
   "toasts": {
     "success": "تم تنفيذ العملية بنجاح",
     "error": "حدث خطأ ما",

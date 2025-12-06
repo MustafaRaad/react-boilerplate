@@ -41,30 +41,36 @@ This is a **multi-backend React boilerplate** that supports both **Laravel** and
 **DO NOT CHANGE OR ADD TO THIS STACK**
 
 ### Core Framework
+
 - **React 18** - UI library
 - **TypeScript** - Type safety
 - **Vite** - Build tool & dev server
 
 ### Routing & Data
+
 - **TanStack Router** - File-based routing, type-safe navigation
 - **TanStack Query** - Server state management, caching
 - **TanStack Form** - Form state & validation
 - **TanStack Table** - Data tables with sorting, filtering, pagination
 
 ### State Management
+
 - **Zustand** - Client-only state (auth, UI)
 - **Zustand Persist Middleware** - LocalStorage persistence
 
 ### UI & Styling
+
 - **shadcn/ui** - Component library (based on Radix UI)
 - **Tailwind CSS** - Utility-first styling
 - **Lucide React** - Icons
 
 ### i18n
+
 - **react-i18next** - Translation library
 - **Intlayer** - Additional i18n utilities
 
 ### Backend Support
+
 - **Laravel** (current default)
 - **ASP.NET** (fully supported)
 
@@ -169,13 +175,16 @@ src/
 ## Core Principles
 
 ### 1. **DO NOT CHANGE THE TECH STACK**
+
 - No new routers (use TanStack Router)
 - No new state managers (use TanStack Query + Zustand)
 - No new UI libraries (use shadcn/ui + Tailwind)
 - No new form libraries (use TanStack Form + Zod)
 
 ### 2. **USE CENTRALIZED API CLIENT**
+
 ✅ **CORRECT:**
+
 ```typescript
 import { apiFetch } from "@/core/api/client";
 import { endpoints } from "@/core/api/endpoints";
@@ -184,11 +193,13 @@ const users = await apiFetch(endpoints.users.list);
 ```
 
 ❌ **WRONG:**
+
 ```typescript
-const response = await fetch("/api/users");  // ← NEVER DO THIS
+const response = await fetch("/api/users"); // ← NEVER DO THIS
 ```
 
 **WHY:** The central client handles:
+
 - Backend normalization (Laravel vs ASP.NET)
 - Token injection
 - Error handling
@@ -198,18 +209,22 @@ const response = await fetch("/api/users");  // ← NEVER DO THIS
 - Response transformation
 
 ### 3. **SERVER DATA = TANSTACK QUERY, CLIENT STATE = ZUSTAND**
+
 ✅ **Use TanStack Query for:**
+
 - API data (users, products, orders)
 - Server-side pagination
 - Background refetching
 - Cache invalidation
 
 ✅ **Use Zustand for:**
+
 - UI state (sidebar open/closed, theme)
 - Auth tokens & user profile
 - Client-only preferences
 
 ❌ **NEVER:**
+
 - Put server data in Zustand
 - Put UI state in TanStack Query
 
@@ -262,7 +277,10 @@ export const productSchema = z.object({
   createdAt: z.string(),
 });
 
-export const productCreateSchema = productSchema.omit({ id: true, createdAt: true });
+export const productCreateSchema = productSchema.omit({
+  id: true,
+  createdAt: true,
+});
 export const productUpdateSchema = productCreateSchema.partial();
 
 export type Product = z.infer<typeof productSchema>;
@@ -290,29 +308,29 @@ export const endpoints = {
   // ... existing endpoints
   products: {
     list: {
-      path: "Products/List",  // ← NO leading slash
+      path: "Products/List", // ← NO leading slash
       method: "GET",
       requiresAuth: true,
     } as EndpointDef<Record<string, unknown>, PagedResult<Product>>,
-    
+
     get: {
       path: "Products/Get",
       method: "GET",
       requiresAuth: true,
     } as EndpointDef<{ id: number }, Product>,
-    
+
     create: {
       path: "Products/Create",
       method: "POST",
       requiresAuth: true,
     } as EndpointDef<ProductCreate, Product>,
-    
+
     update: {
       path: "Products/Update",
       method: "PUT",
       requiresAuth: true,
     } as EndpointDef<ProductUpdate, Product>,
-    
+
     delete: {
       path: "Products/Delete",
       method: "DELETE",
@@ -329,7 +347,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/core/api/client";
 import { endpoints } from "@/core/api/endpoints";
 import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
-import { type Product, type ProductCreate, type ProductUpdate } from "@/features/products/types";
+import {
+  type Product,
+  type ProductCreate,
+  type ProductUpdate,
+} from "@/features/products/types";
 
 // ✅ List hook using factory
 export const useProducts = createDataTableHook<Product>(
@@ -411,9 +433,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { type TFunction } from "i18next";
 import { type Product } from "@/features/products/types";
 
-export const createProductsColumns = (
-  t: TFunction
-): ColumnDef<Product>[] => [
+export const createProductsColumns = (t: TFunction): ColumnDef<Product>[] => [
   {
     accessorKey: "id",
     header: t("id"),
@@ -462,8 +482,14 @@ import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { DataTable, type DataTableAction } from "@/shared/components/data-table/DataTable";
-import { useProducts, useDeleteProduct } from "@/features/products/api/useProducts";
+import {
+  DataTable,
+  type DataTableAction,
+} from "@/shared/components/data-table/DataTable";
+import {
+  useProducts,
+  useDeleteProduct,
+} from "@/features/products/api/useProducts";
 import { createProductsColumns } from "./ProductsTable.columns";
 import { type Product } from "@/features/products/types";
 
@@ -589,12 +615,13 @@ import { endpoints } from "@/core/api/endpoints";
 import { type Product } from "./types";
 
 export const useProducts = createDataTableHook<Product>(
-  "products",          // ← Query key
+  "products", // ← Query key
   endpoints.products.list
 );
 ```
 
 **That's it!** The factory handles:
+
 - ✅ URL-based pagination (`?page=1&pageSize=10`)
 - ✅ Backend-aware query params (Laravel vs ASP.NET)
 - ✅ Automatic refetching
@@ -603,14 +630,13 @@ export const useProducts = createDataTableHook<Product>(
 ### Pattern B: List with Server-Side Filters (ASP.NET)
 
 ```typescript
-export const useProducts = (filters?: { categoryId?: number; status?: string }) => {
-  return createDataTableHook<Product>(
-    "products",
-    endpoints.products.list,
-    {
-      filters,  // ← Sent to server as query params
-    }
-  )(filters);
+export const useProducts = (filters?: {
+  categoryId?: number;
+  status?: string;
+}) => {
+  return createDataTableHook<Product>("products", endpoints.products.list, {
+    filters, // ← Sent to server as query params
+  })(filters);
 };
 ```
 
@@ -623,7 +649,7 @@ export const useProducts = createDataTableHook<Product>(
   {
     clientFilter: (items, filters) => {
       if (!filters?.search) return items;
-      return items.filter(item =>
+      return items.filter((item) =>
         item.name.toLowerCase().includes(filters.search.toLowerCase())
       );
     },
@@ -646,7 +672,7 @@ import { GenericFormDialog } from "@/shared/components/dialogs/GenericFormDialog
 import { productCreateSchema } from "./schemas/product.schema";
 
 <GenericFormDialog
-  mode="create"  // or "edit"
+  mode="create" // or "edit"
   schema={productCreateSchema}
   initialValues={{}}
   title="Create Product"
@@ -656,7 +682,7 @@ import { productCreateSchema } from "./schemas/product.schema";
   }}
   open={isOpen}
   onOpenChange={setIsOpen}
-/>
+/>;
 ```
 
 #### Option B: `GenericActionDialog` (Simpler)
@@ -667,7 +693,7 @@ import { productCreateSchema } from "./schemas/product.schema";
 import { productFieldsDefinition } from "./config/dialogConfig";
 
 <GenericActionDialog
-  isCreate={true}  // false for edit
+  isCreate={true} // false for edit
   schema={productCreateSchema}
   titleKey="products:dialogs.create.title"
   description={t("dialogs.create.description")}
@@ -679,7 +705,7 @@ import { productFieldsDefinition } from "./config/dialogConfig";
   open={isOpen}
   onOpenChange={setIsOpen}
   initialValues={isCreate ? {} : selectedProduct}
-/>
+/>;
 ```
 
 ### Step 2: Define Field Configuration (`config/dialogConfig.ts`)
@@ -691,8 +717,8 @@ export const productFieldsDefinition: Record<keyof Product, unknown> = {
   name: { type: "text", order: 1 },
   description: { type: "textarea", order: 2 },
   price: { type: "number", order: 3 },
-  categoryId: { 
-    type: "select", 
+  categoryId: {
+    type: "select",
     order: 4,
     options: [
       { id: 1, name: "Electronics" },
@@ -749,14 +775,14 @@ const editDialog = useDialogState<Product>();
 ```typescript
 import { useTranslation } from "react-i18next";
 
-const { t } = useTranslation("products");  // ← Namespace
+const { t } = useTranslation("products"); // ← Namespace
 
 // Use keys
-t("title")                    // → "Products"
-t("messages.deleteSuccess")   // → "Product deleted successfully"
+t("title"); // → "Products"
+t("messages.deleteSuccess"); // → "Product deleted successfully"
 
 // Fallback
-t("unknownKey", "Default text")
+t("unknownKey", "Default text");
 ```
 
 ### Direction Support (RTL/LTR)
@@ -764,11 +790,11 @@ t("unknownKey", "Default text")
 ```typescript
 import { useDirection } from "@/shared/hooks/useDirection";
 
-const { dir } = useDirection();  // ← "rtl" or "ltr"
+const { dir } = useDirection(); // ← "rtl" or "ltr"
 
 <div dir={dir} className={cn(dir === "rtl" && "font-arabic")}>
   {content}
-</div>
+</div>;
 ```
 
 ### Language Switching
@@ -839,7 +865,7 @@ import { useAuthGuard } from "@/features/auth/hooks/useAuthGuard";
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
   beforeLoad: () => {
-    useAuthGuard();  // ← Redirects to /login if not authenticated
+    useAuthGuard(); // ← Redirects to /login if not authenticated
   },
 });
 ```
@@ -851,6 +877,7 @@ export const Route = createFileRoute("/admin")({
 ### 1. **Always Memoize Expensive Computations**
 
 ✅ **DO:**
+
 ```typescript
 const columns = useMemo(() => createColumns(t), [t]);
 const actions = useMemo(() => [...], [dependencies]);
@@ -858,8 +885,9 @@ const handleSubmit = useCallback(async (data) => { ... }, [dependencies]);
 ```
 
 ❌ **DON'T:**
+
 ```typescript
-const columns = createColumns(t);  // ← Recreated every render
+const columns = createColumns(t); // ← Recreated every render
 ```
 
 ### 2. **Use TanStack Query Options Wisely**
@@ -907,7 +935,7 @@ const updateMutation = useMutation({
     // Optimistically update
     queryClient.setQueryData(["products"], (old) => ({
       ...old,
-      items: old.items.map(item => 
+      items: old.items.map(item =>
         item.id === newData.id ? { ...item, ...newData } : item
       ),
     }));
@@ -965,7 +993,7 @@ The DataTable component automatically shows a skeleton loader during `isLoading`
 ```typescript
 <DataTable
   columns={columns}
-  queryResult={productsQuery}  // ← Includes isLoading, isFetching
+  queryResult={productsQuery} // ← Includes isLoading, isFetching
 />
 ```
 
@@ -974,11 +1002,9 @@ For custom components:
 ```typescript
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-{isLoading ? (
-  <Skeleton className="h-10 w-full" />
-) : (
-  <div>{data}</div>
-)}
+{
+  isLoading ? <Skeleton className="h-10 w-full" /> : <div>{data}</div>;
+}
 ```
 
 ---
@@ -989,7 +1015,10 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 
 ```typescript
 // List with pagination
-const useProducts = createDataTableHook<Product>("products", endpoints.products.list);
+const useProducts = createDataTableHook<Product>(
+  "products",
+  endpoints.products.list
+);
 
 // Single item
 const productQuery = useApiQuery({
@@ -1006,10 +1035,11 @@ const categoriesQuery = useApiQuery({
 
 const productsQuery = useApiQuery({
   queryKey: ["products", categoryId],
-  queryFn: async () => apiFetch(endpoints.products.list, { 
-    query: { categoryId } 
-  }),
-  enabled: categoriesQuery.isSuccess,  // ← Wait for categories first
+  queryFn: async () =>
+    apiFetch(endpoints.products.list, {
+      query: { categoryId },
+    }),
+  enabled: categoriesQuery.isSuccess, // ← Wait for categories first
 });
 ```
 
