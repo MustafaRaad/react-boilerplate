@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useKeyboardShortcut } from "@/shared/hooks/useKeyboardShortcut";
+import { useTranslation } from "react-i18next";
 import { announceToScreenReader } from "@/shared/utils/a11y";
 
 /**
@@ -9,15 +10,13 @@ import { announceToScreenReader } from "@/shared/utils/a11y";
  */
 export const KeyboardShortcuts = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation("common");
 
   // Ctrl/Cmd + K: Quick search (if implemented)
   useKeyboardShortcut(
     "k",
     () => {
-      // TODO: Open search modal when implemented
-      announceToScreenReader(
-        "Search shortcut pressed. Search feature coming soon."
-      );
+      announceToScreenReader(t("keyboard.search"));
       console.log("Quick search: Ctrl/Cmd + K");
     },
     { ctrl: true }
@@ -27,15 +26,14 @@ export const KeyboardShortcuts = () => {
   useKeyboardShortcut(
     "/",
     () => {
-      announceToScreenReader("Keyboard shortcuts help");
-      // TODO: Show shortcuts help modal
+      announceToScreenReader(t("keyboard.help"));
       console.log("Available shortcuts:");
-      console.log("- Ctrl/Cmd + K: Quick search");
-      console.log("- Ctrl/Cmd + /: Show help");
-      console.log("- Ctrl/Cmd + H: Go to home");
-      console.log("- Ctrl/Cmd + U: Go to users");
-      console.log("- Ctrl/Cmd + R: Go to roles");
-      console.log("- Escape: Close modals/dialogs");
+      console.log(`- Ctrl/Cmd + K: ${t("keyboard.shortcuts.search")}`);
+      console.log(`- Ctrl/Cmd + /: ${t("keyboard.shortcuts.help")}`);
+      console.log(`- Ctrl/Cmd + H: ${t("keyboard.shortcuts.dashboard")}`);
+      console.log(`- Ctrl/Cmd + U: ${t("keyboard.shortcuts.users")}`);
+      console.log(`- Ctrl/Cmd + R: ${t("keyboard.shortcuts.statistics")}`);
+      console.log(`- Escape: ${t("keyboard.shortcuts.close")}`);
     },
     { ctrl: true }
   );
@@ -45,7 +43,7 @@ export const KeyboardShortcuts = () => {
     "h",
     () => {
       navigate({ to: "/" });
-      announceToScreenReader("Navigated to dashboard");
+      announceToScreenReader(t("keyboard.shortcuts.dashboard"));
     },
     { ctrl: true }
   );
@@ -55,7 +53,7 @@ export const KeyboardShortcuts = () => {
     "u",
     () => {
       navigate({ to: "/dashboard/users" });
-      announceToScreenReader("Navigated to users page");
+      announceToScreenReader(t("keyboard.shortcuts.users"));
     },
     { ctrl: true }
   );
@@ -65,7 +63,7 @@ export const KeyboardShortcuts = () => {
     "r",
     () => {
       navigate({ to: "/dashboard/statistics" });
-      announceToScreenReader("Navigated to statistics page");
+      announceToScreenReader(t("keyboard.shortcuts.statistics"));
     },
     { ctrl: true }
   );

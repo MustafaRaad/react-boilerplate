@@ -148,5 +148,17 @@
         "note": "This app works offline with limited functionality. Your changes will sync when you're back online."
       }
     }
+  },
+  "keyboard": {
+    "search": "Search shortcut pressed. Search feature coming soon.",
+    "help": "Keyboard shortcuts help",
+    "shortcuts": {
+      "search": "Quick search",
+      "help": "Show help",
+      "dashboard": "Go to dashboard",
+      "users": "Go to users",
+      "statistics": "Go to statistics",
+      "close": "Close modals/dialogs"
+    }
   }
 }
