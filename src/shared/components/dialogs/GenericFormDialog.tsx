@@ -8,7 +8,8 @@
 
 import * as React from "react";
 import { z, ZodObject } from "zod";
-import { useForm } from "@tanstack/react-form";
+import { useForm as useReactHookForm, type FieldValues } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
+import { Form } from "@/shared/components/ui/form";
 import { Button } from "@/shared/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { useDirection } from "@/shared/hooks/useDirection";
@@ -79,7 +81,7 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
     [isControlled, onOpenChange]
   );
 
-  // Compute default values with proper schema parsing
+  // Compute default values
   const defaultValues = React.useMemo(() => {
     const baseValues = initialValues ?? {};
     if (schema instanceof ZodObject) {
@@ -92,31 +94,25 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
     return baseValues as z.infer<TSchema>;
   }, [initialValues, schema]);
 
-  const form = useForm({
-    defaultValues,
-    validators: {
-      onChange: ({ value }) => {
-        const result = schema.safeParse(value);
-        if (!result.success) return result.error.format();
-        return undefined;
-      },
-      onSubmit: ({ value }) => {
-        const result = schema.safeParse(value);
-        if (!result.success) return result.error.format();
-        return undefined;
-      },
-    },
-    onSubmit: async ({ value }) => {
-      setIsSubmitting(true);
-      try {
-        await onSubmit(value as z.infer<TSchema>);
-        onSubmitted?.();
-        handleOpenChange(false);
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
+  // Use react-hook-form with zod resolver
+  const form = useReactHookForm<FieldValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema as any),
+    defaultValues: defaultValues as FieldValues,
   });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function handleSubmit(values: any) {
+    setIsSubmitting(true);
+    try {
+      await onSubmit(values);
+      onSubmitted?.();
+      handleOpenChange(false);
+      form.reset();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   // Reset form when dialog closes
   React.useEffect(() => {
@@ -144,35 +140,38 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
           ) : null}
         </DialogHeader>
 
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void form.handleSubmit();
-          }}
-          className="grid grid-cols-2 gap-4"
-        >
-          <SchemaFormFields
-            schema={schema}
-            form={form}
-            fieldConfig={fieldConfig}
-          />
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <SchemaFormFields
+                schema={schema}
+                form={form}
+                fieldConfig={fieldConfig}
+              />
+            </div>
 
-          <DialogFooter className="flex justify-end col-span-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              {resolvedCancelLabel}
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-              {resolvedSubmitLabel}
-            </Button>
-            {footerExtra}
-          </DialogFooter>
-        </form>
+            <DialogFooter className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                {resolvedCancelLabel}
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && (
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {resolvedSubmitLabel}
+              </Button>
+              {footerExtra}
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
