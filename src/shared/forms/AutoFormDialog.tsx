@@ -219,7 +219,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
   const buttonCancelLabel = cancelLabel || tCommon("actions.cancel", "Cancel");
   const loadingLabel = t(
     `actions.${mode}ing`,
-    mode === "create" ? "Creating..." : "Updating..."
+    mode === "create" ? tCommon("Creating...") : tCommon("Updating...")
   );
 
   // Initialize form
