@@ -77,17 +77,11 @@ export const USER_FIELDS = defineFields({
     showInMode: ["create"], // Only show in create mode
   }),
 
-  approved: field.number({
+  approved: field.checkbox({
     label: "users.approved",
-    placeholder: "users.approvedPlaceholder",
-    required: false,
-    defaultValue: 0,
-    validation: {
-      min: 0,
-      max: 1,
-      integer: true,
-    },
-    showInMode: ["edit"], // Only show in edit mode
+    description: "users.approvedDescription",
+    defaultValue: false,
+    // showInMode: ["edit"], // Only show in edit mode
   }),
 });
 

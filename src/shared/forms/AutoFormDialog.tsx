@@ -34,7 +34,7 @@ import * as React from "react";
 import { useForm } from "@tanstack/react-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Loader } from "lucide-react";
+import { Loader, Plus, Pencil } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -289,10 +289,25 @@ export function AutoFormDialog<T extends FieldsConfig>({
     <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
-      <DialogContent >
+      <DialogContent className="md:min-w-2xl lg:min-w-4xl">
         <DialogHeader>
-          <DialogTitle>{dialogTitle}</DialogTitle>
-          <DialogDescription>{dialogDescription}</DialogDescription>
+          <div className="flex items-center gap-3 pb-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary/60 border border-secondary/40 ">
+              {mode === "create" ? (
+                <Plus className="h-5 w-5" />
+              ) : (
+                <Pencil className="h-5 w-5" />
+              )}
+            </div>
+            <div>
+              <DialogTitle className="text-base font-bold">
+                {dialogTitle}
+              </DialogTitle>
+              <DialogDescription className="mt-0.5 text-xs text-muted-foreground">
+                {dialogDescription}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <form
@@ -331,8 +346,8 @@ export function AutoFormDialog<T extends FieldsConfig>({
                   // Render checkbox field
                   if (fieldConfig.type === "checkbox") {
                     return (
-                      <Field data-invalid={isInvalid}>
-                        <div className="flex items-center space-x-2">
+                      <Field data-invalid={isInvalid} className="col-span-2">
+                        <div className="flex items-center space-x-2 border border-primary/50 rounded-lg p-4 bg-primary/5">
                           <Checkbox
                             id={fieldApi.name}
                             checked={fieldApi.state.value as boolean}
@@ -435,6 +450,10 @@ export function AutoFormDialog<T extends FieldsConfig>({
                           fieldApi.handleChange(value as never);
                         }}
                         placeholder={placeholder}
+                        dir={fieldConfig.type === "tel" ? "rtl" : undefined}
+                        className={
+                          fieldConfig.type === "tel" ? "text-right" : undefined
+                        }
                         disabled={isSubmitting || fieldConfig.disabled}
                         aria-invalid={isInvalid}
                         autoComplete="off"
