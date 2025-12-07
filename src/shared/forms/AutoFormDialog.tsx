@@ -215,7 +215,10 @@ export function AutoFormDialog<T extends FieldsConfig>({
     );
   const buttonSubmitLabel =
     submitLabel ||
-    t("actions." + mode, mode === "create" ? "Create" : "Update");
+    t(
+      "actions." + mode,
+      mode === "create" ? tCommon("actions.create") : tCommon("actions.update")
+    );
   const buttonCancelLabel = cancelLabel || tCommon("actions.cancel", "Cancel");
   const loadingLabel = t(
     `actions.${mode}ing`,

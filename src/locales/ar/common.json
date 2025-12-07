@@ -74,6 +74,7 @@
     "export": "تصدير CSV",
     "exportCsv": "تصدير CSV",
     "clearFilters": "مسح جميع الفلاتر",
+    "refresh": "تحديث الجدول",
     "filter": "بحث",
     "all": "الكل",
     "selectDate": "اختر نطاق التاريخ",
@@ -116,7 +117,9 @@
   },
   "messages": {
     "deleteSuccess": "تم الحذف بنجاح",
-    "deleteError": "فشل الحذف"
+    "deleteError": "فشل الحذف",
+    "createSuccess": "تم الإنشاء بنجاح",
+    "updateSuccess": "تم التحديث بنجاح"
   },
   "validation": {
     "email": {

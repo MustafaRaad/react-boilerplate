@@ -17,7 +17,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTranslation } from "react-i18next";
-import { Download, FilterX, Loader } from "lucide-react";
+import { Download, FilterX, Loader, RotateCw } from "lucide-react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { backendKind } from "@/core/config/env";
 import { Button } from "@/shared/components/ui/button";
@@ -85,6 +85,7 @@ type DataTableProps<TData> = {
   actions?: DataTableAction<TData>[];
   enableVirtualization?: boolean; // Enable virtual scrolling for large datasets
   estimateRowHeight?: number; // Estimated row height in pixels (default: 53)
+  onRefresh?: () => void; // Callback to refresh table data
 };
 
 // Overload for query result (recommended)
@@ -99,6 +100,7 @@ type DataTablePropsWithQuery<TData> = Omit<
     };
     isLoading?: boolean;
     isFetching?: boolean;
+    refetch?: () => void; // Refetch function from React Query
   };
 };
 
@@ -148,6 +150,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     actions,
     enableVirtualization = false,
     estimateRowHeight = 53,
+    onRefresh,
   } = props;
 
   // Automatically determine mode based on backend
@@ -162,6 +165,8 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     "queryResult" in props ? props.queryResult.isLoading ?? false : false;
   const isFetching =
     "queryResult" in props ? props.queryResult.isFetching ?? false : false;
+  const refetch =
+    "queryResult" in props ? props.queryResult.refetch : undefined;
   const { t } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as Record<string, unknown>;
@@ -295,11 +300,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     // Use debounced input for text filters
     // Key prop resets state when filters are cleared
     return (
-      <DebouncedInput
-        key={String(filterValue ?? "")}
-        column={column}
-        t={t}
-      />
+      <DebouncedInput key={String(filterValue ?? "")} column={column} t={t} />
     );
   };
 
@@ -318,6 +319,15 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     table.resetColumnFilters();
   };
 
+  // Refresh table data handler
+  const handleRefresh = () => {
+    if (refetch) {
+      refetch();
+    } else if (onRefresh) {
+      onRefresh();
+    }
+  };
+
   const hasActiveFilters = columnFilters.length > 0;
 
   // Virtual scrolling setup for large datasets
@@ -330,13 +340,23 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     enabled: enableVirtualization && mode === "client",
   });
 
-  const virtualRows = enableVirtualization && mode === "client" ? rowVirtualizer.getVirtualItems() : [];
-  const totalSize = enableVirtualization && mode === "client" ? rowVirtualizer.getTotalSize() : 0;
+  const virtualRows =
+    enableVirtualization && mode === "client"
+      ? rowVirtualizer.getVirtualItems()
+      : [];
+  const totalSize =
+    enableVirtualization && mode === "client"
+      ? rowVirtualizer.getTotalSize()
+      : 0;
   const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start || 0 : 0;
-  const paddingBottom = virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0) : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0)
+      : 0;
 
   // Calculate column count including actions
-  const totalColumnCount = actions && actions.length > 0 ? columns.length + 1 : columns.length;
+  const totalColumnCount =
+    actions && actions.length > 0 ? columns.length + 1 : columns.length;
 
   // Show skeleton loader during initial load
   if (isLoading) {
@@ -356,7 +376,11 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
       {/* Table */}
       <div className="bg-card rounded-lg py-4 px-4 border">
         {/* Top toolbar with actions */}
-        {(showExport || enableColumnFilters || isFetching) && (
+        {(showExport ||
+          enableColumnFilters ||
+          isFetching ||
+          refetch ||
+          onRefresh) && (
           <div className="flex items-center justify-between gap-2 px-1">
             <div className="flex items-center gap-2">
               <TooltipProvider>
@@ -374,6 +398,29 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>{t("table.exportCsv")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {(refetch || onRefresh) && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleRefresh}
+                        className="bg-card"
+                        disabled={isFetching}
+                      >
+                        <RotateCw
+                          className={cn(
+                            "h-4 w-4",
+                            isFetching && "animate-spin"
+                          )}
+                        />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t("table.refresh")}</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -397,7 +444,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                 )}
               </TooltipProvider>
             </div>
-            
+
             {/* Refetching indicator */}
             {isFetching && !isLoading && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -411,7 +458,9 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
           ref={tableContainerRef}
           className={cn(
             "border shadow rounded-lg my-4 overflow-x-auto",
-            enableVirtualization && mode === "client" && "max-h-[600px] overflow-y-auto"
+            enableVirtualization &&
+              mode === "client" &&
+              "max-h-[600px] overflow-y-auto"
           )}
         >
           <Table className="min-w-[800px]">

@@ -74,6 +74,7 @@
     "export": "Export CSV",
     "exportCsv": "Export CSV",
     "clearFilters": "Clear all filters",
+    "refresh": "Refresh table",
     "filter": "Filter",
     "all": "All",
     "selectDate": "Select date range",
@@ -99,6 +100,16 @@
     "edit": "Edit",
     "delete": "Delete"
   },
+  "dialogs": {
+    "create": {
+      "title": "Create New",
+      "description": "Add a new item"
+    },
+    "update": {
+      "title": "Edit",
+      "description": "Update item information"
+    }
+  },
   "confirmDeleteTitle": "Are you absolutely sure?",
   "confirmDeleteDescription": "This action cannot be undone. This will permanently delete this item and remove it from our servers.",
   "confirmTitle": "Confirm action",
@@ -116,7 +127,9 @@
   },
   "messages": {
     "deleteSuccess": "Deleted successfully",
-    "deleteError": "Failed to delete"
+    "deleteError": "Failed to delete",
+    "createSuccess": "Created successfully",
+    "updateSuccess": "Updated successfully"
   },
   "validation": {
     "email": {
