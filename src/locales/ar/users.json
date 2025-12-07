@@ -22,12 +22,17 @@
     }
   },
   "validation": {
-    "nameMinLength": "يجب أن يكون الاسم حرفين على الأقل",
+    "nameMinLength": "يجب أن يكون الاسم 2 حرف على الأقل",
+    "nameRequired": "الاسم مطلوب",
     "invalidEmail": "عنوان البريد الإلكتروني غير صالح",
+    "emailRequired": "البريد الإلكتروني مطلوب",
     "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    "passwordRequired": "كلمة المرور مطلوبة",
     "phoneMinLength": "يجب أن يكون رقم الهاتف 10 أرقام على الأقل",
-    "phoneMaxLength": "يجب أن لا يزيد رقم الهاتف عن 15 رقماً",
-    "roleRequired": "الدور مطلوب"
+    "phoneMaxLength": "يجب ألا يزيد رقم الهاتف عن 15 رقماً",
+    "phoneRequired": "رقم الهاتف مطلوب",
+    "roleRequired": "الدور مطلوب",
+    "fieldRequired": "هذا الحقل مطلوب"
   },
   "dialogs": {
     "create": {

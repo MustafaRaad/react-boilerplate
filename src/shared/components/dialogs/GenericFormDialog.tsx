@@ -4,12 +4,9 @@
  * @contact mustf.raad@gmail.com
  */
 
-"use client";
-
 import * as React from "react";
-import { z, ZodObject } from "zod";
-import { useForm as useReactHookForm, type FieldValues } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useForm } from "@tanstack/react-form";
 import {
   Dialog,
   DialogContent,
@@ -19,13 +16,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
-import { Form } from "@/shared/components/ui/form";
 import { Button } from "@/shared/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { useDirection } from "@/shared/hooks/useDirection";
 import { SchemaFormFields } from "./SchemaFormFields";
 import type { SchemaFieldConfig } from "./SchemaFormFields";
 import { Loader } from "lucide-react";
+import { FieldGroup } from "@/shared/components/ui/field";
 
 export type DialogMode = "create" | "edit";
 
@@ -81,38 +78,42 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
     [isControlled, onOpenChange]
   );
 
-  // Compute default values
-  const defaultValues = React.useMemo(() => {
-    const baseValues = initialValues ?? {};
-    if (schema instanceof ZodObject) {
+  // Use TanStack Form with zod validator
+  const form = useForm({
+    defaultValues: initialValues ?? ({} as z.infer<TSchema>),
+    validators: {
+      onSubmit: async ({ value }) => {
+        try {
+          schema.parse(value);
+          return undefined;
+        } catch (error) {
+          if (error instanceof z.ZodError) {
+            const fieldErrors: Record<string, string[]> = {};
+            error.issues.forEach((issue) => {
+              const path = issue.path.join(".");
+              if (!fieldErrors[path]) {
+                fieldErrors[path] = [];
+              }
+              fieldErrors[path].push(issue.message);
+            });
+            return fieldErrors;
+          }
+          return { _form: ["Validation failed"] };
+        }
+      },
+    },
+    onSubmit: async ({ value }) => {
+      setIsSubmitting(true);
       try {
-        return schema.partial().parse(baseValues) as z.infer<TSchema>;
-      } catch {
-        return baseValues as z.infer<TSchema>;
+        await onSubmit(value as z.infer<TSchema>);
+        onSubmitted?.();
+        handleOpenChange(false);
+        form.reset();
+      } finally {
+        setIsSubmitting(false);
       }
-    }
-    return baseValues as z.infer<TSchema>;
-  }, [initialValues, schema]);
-
-  // Use react-hook-form with zod resolver
-  const form = useReactHookForm<FieldValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(schema as any),
-    defaultValues: defaultValues as FieldValues,
+    },
   });
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function handleSubmit(values: any) {
-    setIsSubmitting(true);
-    try {
-      await onSubmit(values);
-      onSubmitted?.();
-      handleOpenChange(false);
-      form.reset();
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   // Reset form when dialog closes
   React.useEffect(() => {
@@ -140,38 +141,38 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
           ) : null}
         </DialogHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-4"
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <SchemaFormFields
-                schema={schema}
-                form={form}
-                fieldConfig={fieldConfig}
-              />
-            </div>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
+          <FieldGroup className="grid grid-cols-2 gap-4">
+            <SchemaFormFields
+              schema={schema}
+              form={form}
+              fieldConfig={fieldConfig}
+            />
+          </FieldGroup>
 
-            <DialogFooter className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                {resolvedCancelLabel}
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && (
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {resolvedSubmitLabel}
-              </Button>
-              {footerExtra}
-            </DialogFooter>
-          </form>
-        </Form>
+          <DialogFooter className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              {resolvedCancelLabel}
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+              {resolvedSubmitLabel}
+            </Button>
+            {footerExtra}
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

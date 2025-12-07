@@ -100,6 +100,15 @@
     "loginSuccess": "Welcome back! You have successfully logged in",
     "loginError": "Login failed. Please check your credentials"
   },
+  "validation": {
+    "email": {
+      "required": "Email is required",
+      "invalid": "Invalid email address"
+    },
+    "password": {
+      "min": "Password must be at least 6 characters"
+    }
+  },
   "errors": {
     "unexpected": "Something went wrong",
     "notFound": "Page not found",

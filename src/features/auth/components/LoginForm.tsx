@@ -49,7 +49,18 @@ export function LoginForm({
       onSubmit: ({ value }) => {
         const result = loginSchema.safeParse(value);
         if (!result.success) {
-          return result.error.format();
+          const formatted = result.error.format();
+          // Translate validation message keys
+          return Object.fromEntries(
+            Object.entries(formatted).map(([key, errors]) => [
+              key,
+              Array.isArray(errors) && errors.length > 0
+                ? errors.map((msg: string) =>
+                    typeof msg === "string" ? t(msg) : msg
+                  )
+                : errors,
+            ])
+          );
         }
         return undefined;
       },
@@ -86,7 +97,7 @@ export function LoginForm({
                     const result = loginSchema.shape.email.safeParse(value);
                     return result.success
                       ? undefined
-                      : result.error.issues[0]?.message;
+                      : t(result.error.issues[0]?.message || "");
                   },
                 }}
               >
@@ -120,7 +131,7 @@ export function LoginForm({
                     const result = loginSchema.shape.password.safeParse(value);
                     return result.success
                       ? undefined
-                      : result.error.issues[0]?.message;
+                      : t(result.error.issues[0]?.message || "");
                   },
                 }}
               >

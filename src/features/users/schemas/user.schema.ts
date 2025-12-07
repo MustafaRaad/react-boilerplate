@@ -26,14 +26,22 @@ export const userSchema = z.object({
  * Used in both create and update schemas to avoid duplication
  */
 const userFieldValidation = (t: (key: string) => string) => ({
-  name: z.string().min(2, t("validation.nameMinLength")),
-  email: z.string().email(t("validation.invalidEmail")),
+  name: z
+    .string({ message: t("validation.nameRequired") })
+    .min(2, t("validation.nameMinLength")),
+  email: z
+    .string({ message: t("validation.emailRequired") })
+    .email(t("validation.invalidEmail")),
   phone_no: z
-    .string()
+    .string({ message: t("validation.phoneRequired") })
     .min(10, t("validation.phoneMinLength"))
     .max(15, t("validation.phoneMaxLength")),
-  role: z.string().min(1, t("validation.roleRequired")),
-  password: z.string().min(6, t("validation.passwordMinLength")),
+  role: z
+    .string({ message: t("validation.roleRequired") })
+    .min(1, t("validation.roleRequired")),
+  password: z
+    .string({ message: t("validation.passwordRequired") })
+    .min(6, t("validation.passwordMinLength")),
   approved: z.number().int().min(0).max(1),
 });
 

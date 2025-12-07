@@ -7,9 +7,7 @@
 "use client";
 
 import { z, ZodObject } from "zod";
-import type { UseFormReturn } from "react-hook-form";
 import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import {
   Select,
@@ -20,12 +18,10 @@ import {
 } from "@/shared/components/ui/select";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/shared/components/ui/form";
+  Field,
+  FieldError,
+  FieldLabel,
+} from "@/shared/components/ui/field";
 
 export type BaseFieldType =
   | "text"
@@ -51,7 +47,7 @@ export type SchemaFieldConfig<TValues> = {
 interface SchemaFormFieldsProps<TSchema extends z.ZodTypeAny> {
   schema: TSchema;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: UseFormReturn<any>;
+  form: any;
   fieldConfig?: SchemaFieldConfig<z.infer<TSchema>>;
 }
 
@@ -136,38 +132,82 @@ export function SchemaFormFields<TSchema extends z.ZodTypeAny>({
     const isCheckbox = inferredType === "checkbox";
 
     return (
-      <FormField
-        key={fieldKey}
-        control={form.control}
-        name={fieldKey}
-        render={({ field }) => (
-          <FormItem className={isCheckbox ? "col-span-2" : ""}>
-            {!isCheckbox && label ? <FormLabel>{label}</FormLabel> : null}
-            <FormControl>
+      <form.Field key={fieldKey} name={fieldKey}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {(field: any) => {
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
+
+          return isCheckbox ? (
+            <Field orientation="horizontal" data-invalid={isInvalid}>
+              <Checkbox
+                id={field.name}
+                checked={Boolean(field.state.value)}
+                onCheckedChange={(checked) => field.handleChange(checked)}
+                aria-invalid={isInvalid}
+              />
+              <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+            </Field>
+          ) : (
+            <Field data-invalid={isInvalid}>
+              {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
               {inferredType === "textarea" ? (
-                <Textarea placeholder={placeholder} {...field} />
+                <Textarea
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder={placeholder}
+                  aria-invalid={isInvalid}
+                />
               ) : inferredType === "number" ? (
                 <Input
+                  id={field.name}
+                  name={field.name}
                   type="number"
-                  placeholder={placeholder}
-                  {...field}
-                  value={field.value ?? ""}
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
                   onChange={(e) =>
-                    field.onChange(
+                    field.handleChange(
                       e.target.value === "" ? undefined : Number(e.target.value)
                     )
                   }
+                  placeholder={placeholder}
+                  aria-invalid={isInvalid}
                 />
               ) : inferredType === "email" ? (
-                <Input type="email" placeholder={placeholder} {...field} />
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  type="email"
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder={placeholder}
+                  aria-invalid={isInvalid}
+                />
               ) : inferredType === "password" ? (
-                <Input type="password" placeholder={placeholder} {...field} />
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  type="password"
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder={placeholder}
+                  aria-invalid={isInvalid}
+                />
               ) : inferredType === "select" ? (
                 <Select
-                  value={String(field.value ?? "")}
-                  onValueChange={field.onChange}
+                  value={String(field.state.value ?? "")}
+                  onValueChange={(value) => field.handleChange(value)}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger
+                    id={field.name}
+                    aria-invalid={isInvalid}
+                    className="w-full"
+                  >
                     <SelectValue placeholder={placeholder} />
                   </SelectTrigger>
                   <SelectContent>
@@ -182,24 +222,33 @@ export function SchemaFormFields<TSchema extends z.ZodTypeAny>({
                   </SelectContent>
                 </Select>
               ) : inferredType === "date" ? (
-                <Input type="date" {...field} />
-              ) : inferredType === "checkbox" ? (
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    checked={Boolean(field.value)}
-                    onCheckedChange={field.onChange}
-                    className="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                  />
-                  <Label className="font-normal cursor-pointer">{label}</Label>
-                </div>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  type="date"
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  aria-invalid={isInvalid}
+                />
               ) : (
-                <Input placeholder={placeholder} {...field} />
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value ?? ""}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder={placeholder}
+                  aria-invalid={isInvalid}
+                />
               )}
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              {isInvalid && field.state.meta.errors.length > 0 && (
+                <FieldError errors={field.state.meta.errors} />
+              )}
+            </Field>
+          );
+        }}
+      </form.Field>
     );
   });
 }

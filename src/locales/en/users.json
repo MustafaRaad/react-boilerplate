@@ -23,11 +23,16 @@
   },
   "validation": {
     "nameMinLength": "Name must be at least 2 characters",
+    "nameRequired": "Name is required",
     "invalidEmail": "Invalid email address",
+    "emailRequired": "Email is required",
     "passwordMinLength": "Password must be at least 6 characters",
+    "passwordRequired": "Password is required",
     "phoneMinLength": "Phone number must be at least 10 digits",
     "phoneMaxLength": "Phone number must be at most 15 digits",
-    "roleRequired": "Role is required"
+    "phoneRequired": "Phone number is required",
+    "roleRequired": "Role is required",
+    "fieldRequired": "This field is required"
   },
   "dialogs": {
     "create": {
