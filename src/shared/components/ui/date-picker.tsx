@@ -64,7 +64,7 @@ export function DateRangePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[110%] p-0" align="end">
-        <div className="flex items-center justify-between px-2 py-1 border-b bg-muted/40">
+        <div className="flex items-center justify-between px-2 py-1 border-b bg-muted/20">
           <span className="text-xs font-medium select-none">{placeholder}</span>
           {dateRange?.from && (
             <Button

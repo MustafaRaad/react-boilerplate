@@ -15,6 +15,7 @@ import type { User } from "@/features/users/types";
 import { createAutoColumns } from "@/shared/components/data-table/autoColumns";
 import { USER_FIELDS } from "../config/users.config";
 import { useDateFmt } from "@/lib/formatters";
+import { dateFilterFn } from "@/shared/components/data-table/filters";
 
 type TFn = (key: string) => string;
 
@@ -36,6 +37,10 @@ export const useUsersColumns = (t: TFn): ColumnDef<User, unknown>[] => {
       const date = row.getValue("created_at");
       if (!date) return "-";
       return formatDate(new Date(date as string));
+    },
+    filterFn: dateFilterFn,
+    meta: {
+      filterVariant: "date",
     },
   };
 
