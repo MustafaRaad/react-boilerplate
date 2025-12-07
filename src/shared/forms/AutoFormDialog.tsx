@@ -45,7 +45,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
-import { FieldGroup, Field, FieldLabel, /* FieldDescription, */ FieldError } from "@/shared/components/ui/field";
+import {
+  FieldGroup,
+  Field,
+  FieldLabel,
+  /* FieldDescription, */ FieldError,
+} from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -284,7 +289,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
     <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
-      <DialogContent>
+      <DialogContent >
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
@@ -297,7 +302,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
           }}
           className="space-y-4"
         >
-          <FieldGroup>
+          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {visibleFields.map(([fieldName, fieldConfig]) => (
               <form.Field
                 key={fieldName}
@@ -314,11 +319,14 @@ export function AutoFormDialog<T extends FieldsConfig>({
                   // const fieldDescription = fieldConfig.description
                   //   ? t(fieldConfig.description, fieldConfig.description)
                   //   : undefined;
-                  
-                  const isInvalid = fieldApi.state.meta.isTouched && !fieldApi.state.meta.isValid;
-                  const errorMessage = isInvalid && fieldApi.state.meta.errors?.length 
-                    ? fieldApi.state.meta.errors[0] 
-                    : null;
+
+                  const isInvalid =
+                    fieldApi.state.meta.isTouched &&
+                    !fieldApi.state.meta.isValid;
+                  const errorMessage =
+                    isInvalid && fieldApi.state.meta.errors?.length
+                      ? fieldApi.state.meta.errors[0]
+                      : null;
 
                   // Render checkbox field
                   if (fieldConfig.type === "checkbox") {
@@ -328,13 +336,19 @@ export function AutoFormDialog<T extends FieldsConfig>({
                           <Checkbox
                             id={fieldApi.name}
                             checked={fieldApi.state.value as boolean}
-                            onCheckedChange={(checked: boolean) => fieldApi.handleChange(checked as never)}
+                            onCheckedChange={(checked: boolean) =>
+                              fieldApi.handleChange(checked as never)
+                            }
                             disabled={isSubmitting || fieldConfig.disabled}
                           />
-                          <FieldLabel htmlFor={fieldApi.name}>{label}</FieldLabel>
+                          <FieldLabel htmlFor={fieldApi.name}>
+                            {label}
+                          </FieldLabel>
                         </div>
                         {/* {fieldDescription && <FieldDescription>{fieldDescription}</FieldDescription>} */}
-                        {errorMessage && <FieldError>{errorMessage}</FieldError>}
+                        {errorMessage && (
+                          <FieldError>{errorMessage}</FieldError>
+                        )}
                       </Field>
                     );
                   }
@@ -351,7 +365,9 @@ export function AutoFormDialog<T extends FieldsConfig>({
                         <FieldLabel htmlFor={fieldApi.name}>{label}</FieldLabel>
                         <Select
                           value={fieldApi.state.value as string}
-                          onValueChange={(value) => fieldApi.handleChange(value as never)}
+                          onValueChange={(value) =>
+                            fieldApi.handleChange(value as never)
+                          }
                           disabled={isSubmitting || fieldConfig.disabled}
                         >
                           <SelectTrigger id={fieldApi.name}>
@@ -359,14 +375,19 @@ export function AutoFormDialog<T extends FieldsConfig>({
                           </SelectTrigger>
                           <SelectContent>
                             {options.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
                                 {option.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         {/* {fieldDescription && <FieldDescription>{fieldDescription}</FieldDescription>} */}
-                        {errorMessage && <FieldError>{errorMessage}</FieldError>}
+                        {errorMessage && (
+                          <FieldError>{errorMessage}</FieldError>
+                        )}
                       </Field>
                     );
                   }
@@ -381,13 +402,17 @@ export function AutoFormDialog<T extends FieldsConfig>({
                           name={fieldApi.name}
                           value={(fieldApi.state.value as string) || ""}
                           onBlur={fieldApi.handleBlur}
-                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => fieldApi.handleChange(e.target.value as never)}
+                          onChange={(
+                            e: React.ChangeEvent<HTMLTextAreaElement>
+                          ) => fieldApi.handleChange(e.target.value as never)}
                           placeholder={placeholder}
                           disabled={isSubmitting || fieldConfig.disabled}
                           aria-invalid={isInvalid}
                         />
                         {/* {fieldDescription && <FieldDescription>{fieldDescription}</FieldDescription>} */}
-                        {errorMessage && <FieldError>{errorMessage}</FieldError>}
+                        {errorMessage && (
+                          <FieldError>{errorMessage}</FieldError>
+                        )}
                       </Field>
                     );
                   }
@@ -403,9 +428,10 @@ export function AutoFormDialog<T extends FieldsConfig>({
                         value={(fieldApi.state.value as string | number) || ""}
                         onBlur={fieldApi.handleBlur}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const value = fieldConfig.type === "number" 
-                            ? e.target.valueAsNumber 
-                            : e.target.value;
+                          const value =
+                            fieldConfig.type === "number"
+                              ? e.target.valueAsNumber
+                              : e.target.value;
                           fieldApi.handleChange(value as never);
                         }}
                         placeholder={placeholder}

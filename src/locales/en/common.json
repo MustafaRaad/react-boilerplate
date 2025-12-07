@@ -111,6 +111,10 @@
     "loginSuccess": "Welcome back! You have successfully logged in",
     "loginError": "Login failed. Please check your credentials"
   },
+  "messages": {
+    "deleteSuccess": "Deleted successfully",
+    "deleteError": "Failed to delete"
+  },
   "validation": {
     "email": {
       "required": "Email is required",

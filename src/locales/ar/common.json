@@ -111,6 +111,10 @@
     "loginSuccess": "مرحباً بعودتك! تم تسجيل الدخول بنجاح",
     "loginError": "فشل تسجيل الدخول. يرجى التحقق من بيانات الدخول"
   },
+  "messages": {
+    "deleteSuccess": "تم الحذف بنجاح",
+    "deleteError": "فشل الحذف"
+  },
   "validation": {
     "email": {
       "required": "البريد الإلكتروني مطلوب",
