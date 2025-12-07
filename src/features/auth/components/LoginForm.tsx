@@ -21,6 +21,7 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/shared/components/ui/field";
@@ -118,9 +119,7 @@ export function LoginForm({
                       autoComplete="email"
                     />
                     {field.state.meta.errors?.length ? (
-                      <FieldDescription className="text-destructive">
-                        {field.state.meta.errors[0]}
-                      </FieldDescription>
+                      <FieldError>{field.state.meta.errors[0]}</FieldError>
                     ) : null}
                   </Field>
                 )}
@@ -163,9 +162,7 @@ export function LoginForm({
                       autoComplete="current-password"
                     />
                     {field.state.meta.errors?.length ? (
-                      <FieldDescription className="text-destructive">
-                        {field.state.meta.errors[0]}
-                      </FieldDescription>
+                      <FieldError>{field.state.meta.errors[0]}</FieldError>
                     ) : null}
                   </Field>
                 )}
