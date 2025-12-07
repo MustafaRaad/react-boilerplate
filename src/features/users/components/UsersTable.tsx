@@ -14,10 +14,9 @@ import {
 } from "@/shared/components/data-table/DataTable.tsx";
 import { useUsers } from "@/features/users/api/useUsers";
 import { createUsersColumns } from "./UsersTable.columns.tsx";
-import { GenericActionDialog } from "@/shared/components/dialogs/GenericActionDialog";
+import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
+import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
-import { userUpdateFormSchema } from "../schemas/user.schema";
-import { userEditFieldsDefinition } from "../config/dialogConfig";
 import { useUpdateUser, useDeleteUser } from "../api/useUsers";
 import type { User, UserUpdateData } from "@/features/users/types";
 
@@ -74,8 +73,8 @@ export const UsersTable = memo(function UsersTable() {
 
   // Memoize submit handler to prevent child re-renders
   const handleUpdateSubmit = useCallback(
-    async (values: UserUpdateData) => {
-      await updateUserMutation.mutateAsync(values);
+    async (values: Record<string, unknown>) => {
+      await updateUserMutation.mutateAsync(values as UserUpdateData);
     },
     [updateUserMutation]
   );
@@ -91,17 +90,23 @@ export const UsersTable = memo(function UsersTable() {
       />
 
       {editDialog.data && (
-        <GenericActionDialog
-          isCreate={false}
-          schema={userUpdateFormSchema(t)}
+        <AutoFormDialog
+          fields={USER_FIELDS}
+          namespace="users"
+          mode="edit"
           initialValues={editDialog.data}
           open={editDialog.isOpen}
           onOpenChange={editDialog.setOpen}
           onSubmit={handleUpdateSubmit}
-          titleKey="users:dialogs.edit.title"
-          description={t("dialogs.edit.description")}
-          namespace="users"
-          fieldsDefinition={userEditFieldsDefinition}
+          onSuccess={() => {
+            toast.success(t("dialogs.edit.success"));
+            editDialog.close();
+          }}
+          onError={(error: unknown) => {
+            toast.error(
+              error instanceof Error ? error.message : tCommon("toasts.error")
+            );
+          }}
         />
       )}
     </>

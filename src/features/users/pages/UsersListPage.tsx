@@ -4,10 +4,9 @@ import { Button } from "@/shared/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { GenericActionDialog } from "@/shared/components/dialogs/GenericActionDialog";
+import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
+import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
-import { userFormSchema } from "../schemas/user.schema";
-import { userFieldsDefinition } from "../config/dialogConfig";
 import { useCreateUser } from "../api/useUsers";
 import type { UserFormData } from "../types";
 
@@ -26,8 +25,8 @@ export const UsersListPage = memo(function UsersListPage() {
 
   // Memoize submit handler to prevent child re-renders
   const handleCreateSubmit = useCallback(
-    async (values: UserFormData) => {
-      await createUserMutation.mutateAsync(values);
+    async (values: Record<string, unknown>) => {
+      await createUserMutation.mutateAsync(values as UserFormData);
     },
     [createUserMutation]
   );
@@ -53,15 +52,22 @@ export const UsersListPage = memo(function UsersListPage() {
 
       <UsersTable />
 
-      <GenericActionDialog
-        schema={userFormSchema(t)}
+      <AutoFormDialog
+        fields={USER_FIELDS}
+        namespace="users"
+        mode="create"
         open={createDialog.isOpen}
         onOpenChange={createDialog.setOpen}
         onSubmit={handleCreateSubmit}
-        titleKey="users:dialogs.create.title"
-        description={t("dialogs.create.description")}
-        namespace="users"
-        fieldsDefinition={userFieldsDefinition}
+        onSuccess={() => {
+          toast.success(t("dialogs.create.success"));
+          createDialog.close();
+        }}
+        onError={(error: unknown) => {
+          toast.error(
+            error instanceof Error ? error.message : tCommon("toasts.error")
+          );
+        }}
       />
     </div>
   );

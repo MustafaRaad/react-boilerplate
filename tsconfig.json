@@ -1,4 +1,4 @@
-{
+﻿{
   "files": [],
   "references": [
     {
@@ -9,6 +9,7 @@
     }
   ],
   "compilerOptions": {
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
     "paths": {
       "@/*": [
