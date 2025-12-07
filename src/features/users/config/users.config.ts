@@ -27,9 +27,9 @@ import { defineFields, field } from "@/shared/forms/autoForm";
  */
 export const USER_FIELDS = defineFields({
   name: field.text({
-    label: "users.fields.name",
-    placeholder: "users.placeholders.name",
-    description: "users.descriptions.name",
+    label: "fields.name",
+    placeholder: "placeholders.name",
+    description: "descriptions.name",
     required: true,
     validation: {
       minLength: 2,
@@ -37,16 +37,16 @@ export const USER_FIELDS = defineFields({
   }),
 
   email: field.email({
-    label: "users.fields.email",
-    placeholder: "users.placeholders.email",
-    description: "users.descriptions.email",
+    label: "fields.email",
+    placeholder: "placeholders.email",
+    description: "descriptions.email",
     required: true,
   }),
 
   phone_no: field.tel({
-    label: "users.fields.phone_no",
-    placeholder: "users.placeholders.phone_no",
-    description: "users.descriptions.phone_no",
+    label: "fields.phone_no",
+    placeholder: "placeholders.phone_no",
+    description: "descriptions.phone_no",
     required: true,
     validation: {
       minLength: 10,
@@ -55,21 +55,21 @@ export const USER_FIELDS = defineFields({
   }),
 
   role: field.select({
-    label: "users.fields.role",
-    placeholder: "users.placeholders.role",
-    description: "users.descriptions.role",
+    label: "fields.role",
+    placeholder: "placeholders.role",
+    description: "descriptions.role",
     required: true,
     options: [
-      { value: "admin", label: "users.options.role.admin" },
-      { value: "staff", label: "users.options.role.staff" },
-      { value: "user", label: "users.options.role.user" },
+      { value: "admin", label: "options.role.admin" },
+      { value: "staff", label: "options.role.staff" },
+      { value: "user", label: "options.role.user" },
     ],
   }),
 
   password: field.password({
-    label: "users.fields.password",
-    placeholder: "users.placeholders.password",
-    description: "users.descriptions.password",
+    label: "fields.password",
+    placeholder: "placeholders.password",
+    description: "descriptions.password",
     required: true,
     validation: {
       minLength: 6,
@@ -78,8 +78,8 @@ export const USER_FIELDS = defineFields({
   }),
 
   approved: field.checkbox({
-    label: "users.fields.approved",
-    description: "users.descriptions.approved",
+    label: "fields.approved",
+    description: "descriptions.approved",
     defaultValue: false,
     // showInMode: ["edit"], // Only show in edit mode
   }),

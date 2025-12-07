@@ -300,12 +300,8 @@ export function AutoFormDialog<T extends FieldsConfig>({
               )}
             </div>
             <div>
-              <DialogTitle className="text-base font-bold">
-                {dialogTitle}
-              </DialogTitle>
-              <DialogDescription className="mt-0.5 text-xs text-muted-foreground">
-                {dialogDescription}
-              </DialogDescription>
+              <DialogTitle>{dialogTitle}</DialogTitle>
+              <DialogDescription>{dialogDescription}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
