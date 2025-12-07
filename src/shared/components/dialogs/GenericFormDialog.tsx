@@ -82,24 +82,19 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
   const form = useForm({
     defaultValues: initialValues ?? ({} as z.infer<TSchema>),
     validators: {
-      onSubmit: async ({ value }) => {
-        try {
-          schema.parse(value);
-          return undefined;
-        } catch (error) {
-          if (error instanceof z.ZodError) {
-            const fieldErrors: Record<string, string[]> = {};
-            error.issues.forEach((issue) => {
-              const path = issue.path.join(".");
-              if (!fieldErrors[path]) {
-                fieldErrors[path] = [];
-              }
-              fieldErrors[path].push(issue.message);
-            });
-            return fieldErrors;
-          }
-          return { _form: ["Validation failed"] };
+      onChange: ({ value }) => {
+        const result = schema.safeParse(value);
+        if (!result.success) {
+          return result.error.format();
         }
+        return undefined;
+      },
+      onSubmit: ({ value }) => {
+        const result = schema.safeParse(value);
+        if (!result.success) {
+          return result.error.format();
+        }
+        return undefined;
       },
     },
     onSubmit: async ({ value }) => {
@@ -146,7 +141,7 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
           onSubmit={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
         >
           <FieldGroup className="grid grid-cols-2 gap-4">
