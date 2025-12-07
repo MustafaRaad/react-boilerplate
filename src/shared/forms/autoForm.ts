@@ -40,6 +40,7 @@
  * That's it! No schema files, no manual validation, no field rendering code needed.
  */
 
+import type { TFunction } from "i18next";
 import * as z from "zod";
 
 // ============================================================================
@@ -234,7 +235,7 @@ export const field = {
 export function generateSchema<T extends FieldsConfig>(
   fields: T,
   mode: FormMode,
-  t: (key: string, defaultValue?: string) => string
+  t: TFunction<"common">
 ): z.ZodObject<Record<keyof T, z.ZodTypeAny>> {
   const schemaShape: Record<string, z.ZodTypeAny> = {};
 
@@ -251,7 +252,9 @@ export function generateSchema<T extends FieldsConfig>(
       case "email":
         fieldSchema = z
           .string()
-          .email(t("validation.invalidEmail", "Invalid email"));
+          .email(
+            t("validation.invalidEmail", { defaultValue: "Invalid email" })
+          );
         break;
 
       case "tel":
@@ -259,19 +262,19 @@ export function generateSchema<T extends FieldsConfig>(
         if (fieldConfig.validation?.minLength) {
           fieldSchema = (fieldSchema as z.ZodString).min(
             fieldConfig.validation.minLength,
-            t(
-              "validation.minLength",
-              `Minimum ${fieldConfig.validation.minLength} characters`
-            )
+            t("validation.minLength", {
+              count: fieldConfig.validation.minLength,
+              defaultValue: `Minimum ${fieldConfig.validation.minLength} characters`,
+            })
           );
         }
         if (fieldConfig.validation?.maxLength) {
           fieldSchema = (fieldSchema as z.ZodString).max(
             fieldConfig.validation.maxLength,
-            t(
-              "validation.maxLength",
-              `Maximum ${fieldConfig.validation.maxLength} characters`
-            )
+            t("validation.maxLength", {
+              count: fieldConfig.validation.maxLength,
+              defaultValue: `Maximum ${fieldConfig.validation.maxLength} characters`,
+            })
           );
         }
         break;
@@ -281,29 +284,29 @@ export function generateSchema<T extends FieldsConfig>(
         if (fieldConfig.validation?.min !== undefined) {
           fieldSchema = (fieldSchema as z.ZodNumber).min(
             fieldConfig.validation.min,
-            t(
-              "validation.min",
-              `Minimum value is ${fieldConfig.validation.min}`
-            )
+            t("validation.min", {
+              value: fieldConfig.validation.min,
+              defaultValue: `Minimum value is ${fieldConfig.validation.min}`,
+            })
           );
         }
         if (fieldConfig.validation?.max !== undefined) {
           fieldSchema = (fieldSchema as z.ZodNumber).max(
             fieldConfig.validation.max,
-            t(
-              "validation.max",
-              `Maximum value is ${fieldConfig.validation.max}`
-            )
+            t("validation.max", {
+              value: fieldConfig.validation.max,
+              defaultValue: `Maximum value is ${fieldConfig.validation.max}`,
+            })
           );
         }
         if (fieldConfig.validation?.integer) {
           fieldSchema = (fieldSchema as z.ZodNumber).int(
-            t("validation.integer", "Must be an integer")
+            t("validation.integer", { defaultValue: "Must be an integer" })
           );
         }
         if (fieldConfig.validation?.positive) {
           fieldSchema = (fieldSchema as z.ZodNumber).positive(
-            t("validation.positive", "Must be positive")
+            t("validation.positive", { defaultValue: "Must be positive" })
           );
         }
         break;
@@ -321,7 +324,7 @@ export function generateSchema<T extends FieldsConfig>(
         if (fieldConfig.required) {
           fieldSchema = (fieldSchema as z.ZodString).min(
             1,
-            t("validation.required", "This field is required")
+            t("validation.required", { defaultValue: "This field is required" })
           );
         }
         break;
@@ -331,10 +334,10 @@ export function generateSchema<T extends FieldsConfig>(
         if (fieldConfig.validation?.minLength) {
           fieldSchema = (fieldSchema as z.ZodString).min(
             fieldConfig.validation.minLength,
-            t(
-              "validation.minLength",
-              `Minimum ${fieldConfig.validation.minLength} characters`
-            )
+            t("validation.minLength", {
+              count: fieldConfig.validation.minLength,
+              defaultValue: `Minimum ${fieldConfig.validation.minLength} characters`,
+            })
           );
         }
         break;
@@ -346,19 +349,19 @@ export function generateSchema<T extends FieldsConfig>(
         if (fieldConfig.validation?.minLength) {
           fieldSchema = (fieldSchema as z.ZodString).min(
             fieldConfig.validation.minLength,
-            t(
-              "validation.minLength",
-              `Minimum ${fieldConfig.validation.minLength} characters`
-            )
+            t("validation.minLength", {
+              count: fieldConfig.validation.minLength,
+              defaultValue: `Minimum ${fieldConfig.validation.minLength} characters`,
+            })
           );
         }
         if (fieldConfig.validation?.maxLength) {
           fieldSchema = (fieldSchema as z.ZodString).max(
             fieldConfig.validation.maxLength,
-            t(
-              "validation.maxLength",
-              `Maximum ${fieldConfig.validation.maxLength} characters`
-            )
+            t("validation.maxLength", {
+              count: fieldConfig.validation.maxLength,
+              defaultValue: `Maximum ${fieldConfig.validation.maxLength} characters`,
+            })
           );
         }
         break;
@@ -372,7 +375,11 @@ export function generateSchema<T extends FieldsConfig>(
       fieldConfig.type !== "checkbox"
     ) {
       fieldSchema = z
-        .string({ message: t("validation.required", "This field is required") })
+        .string({
+          message: t("validation.required", {
+            defaultValue: "This field is required",
+          }),
+        })
         .pipe(fieldSchema as z.ZodString);
     }
 

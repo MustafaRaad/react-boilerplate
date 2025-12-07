@@ -8,11 +8,20 @@ Modern admin starter built with React 19, Vite, and TypeScript. Ships with TanSt
 
 - **[AI Agent Implementation Guide](./docs/AI_AGENT_IMPLEMENTATION_GUIDE.md)** - Complete guide for adding new features
 - **[Backend Switching Guide](./docs/BACKEND_SWITCHING_GUIDE.md)** - Laravel ↔ ASP.NET switching instructions
+- **[Feature Creation Flow](./docs/FEATURE_CREATION_FLOW.md)** - Concise, step-by-step flow to add a new feature
 
 ## Requirements
 
 - Node 18+ and pnpm (`corepack enable` or `npm i -g pnpm`)
 - API reachable at `VITE_API_BASE_URL`
+
+## Quick setup
+
+1. `pnpm install` (or `corepack enable pnpm` first) using Node 18+.
+2. Copy `.env.example` to `.env` and set `VITE_API_BASE_URL` + `VITE_BACKEND_KIND` (`aspnet` or `laravel`, trailing slash required on the URL).
+3. Start dev server: `pnpm dev` (http://localhost:5018). Stop/restart after changing `.env`.
+4. Optional: clear `localStorage` when switching backends (auth tokens differ).
+5. Run checks: `pnpm lint`; build for release with `pnpm build` then `pnpm preview`.
 
 ## Scripts
 
@@ -30,6 +39,9 @@ Create `.env` (or copy `.env.example`):
 VITE_API_BASE_URL=https://your-api/
 VITE_BACKEND_KIND=aspnet   # or laravel
 ```
+
+- ASP.NET requires `https://.../api/`; Laravel typically `http://localhost:8000/api/`.
+- Keep `VITE_API_BASE_URL` ending with `/` and endpoint paths without leading `/` (see `src/core/api/endpoints.ts`).
 
 ## Project structure
 

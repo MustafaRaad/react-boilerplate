@@ -55,11 +55,12 @@ VITE_BACKEND_KIND=aspnet
 VITE_API_BASE_URL=https://localhost:7000/api/
 ```
 
-**Important:**
+**Important Rules:**
 
 - `VITE_API_BASE_URL` **MUST end with `/`**
-- Endpoint paths **MUST NOT start with `/`**
+- Endpoint paths in `src/core/api/endpoints.ts` **MUST NOT start with `/`**
 - Backend kind is case-insensitive (`laravel`, `Laravel`, `LARAVEL` all work)
+- Example: `https://api.example.com/api/` + `Users/ListUsers` = `https://api.example.com/api/Users/ListUsers`
 
 ### 2. Verify Configuration Loading
 
@@ -78,20 +79,56 @@ export const backendKind: BackendKind = normalizeBackendKind(
 );
 
 export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string) ?? "";
+
+export const envConfig = {
+  backendKind,
+  apiBaseUrl,
+};
 ```
 
-### 3. Restart Development Server
+**Testing Configuration:**
+
+```typescript
+// In browser console after starting dev server
+console.log(import.meta.env.VITE_BACKEND_KIND); // Should show "laravel" or "aspnet"
+console.log(import.meta.env.VITE_API_BASE_URL); // Should show your API URL
+```
+
+### 3. System Files Affected by Backend Switch
+
+**These files automatically adapt:**
+
+- `src/core/api/client.ts`: Response normalization logic
+- `src/core/api/normalizers.ts`: Data transformation based on `backendKind`
+- `src/shared/hooks/createDataTableHook.ts`: Pagination param formatting
+- `src/features/auth/hooks/useLogin.ts`: Login flow (reads `backendKind`)
+
+**These files remain unchanged:**
+
+- All components and UI code
+- Route definitions
+- Translation files
+- Zustand stores (auth tokens are normalized)
+
+### 4. Restart Development Server
 
 After changing `.env`:
 
 ```bash
 # Stop current server (Ctrl+C)
 
+# Optional: Clear Vite cache (recommended when switching backends)
+rm -rf node_modules/.vite  # Linux/Mac
+Remove-Item -Recurse -Force node_modules\.vite  # Windows PowerShell
+
 # Restart
-npm run dev
-# or
 pnpm dev
 ```
+
+**Why restart is required:**
+- Vite env variables are loaded at build time
+- Changes to `.env` don't hot-reload
+- Cache may contain backend-specific responses
 
 ---
 
@@ -418,6 +455,40 @@ Both are normalized to:
 }
 ```
 
+### Normalization Flow
+
+**File:** `src/core/api/normalizers.ts`
+
+Provides these key functions:
+
+1. **`formatPaginationParams(params, backend)`**
+   - Input: `{ page: 1, pageSize: 10 }`
+   - Laravel Output: `{ page: 1, size: 10 }`
+   - ASP.NET Output: `{ PageNumber: 1, PageSize: 10 }`
+
+2. **`normalizeLoginResponse(raw, backend)`**
+   - Extracts tokens from backend-specific format
+   - Calculates expiration timestamps
+   - Returns unified `AuthTokens` object
+
+3. **`normalizeUserProfile(raw, backend)`**
+   - Extracts user data, permissions, POS, fees
+   - Converts field names (camelCase, snake_case, PascalCase)
+   - Returns unified `{ user, permissions, pos, fees }`
+
+4. **`normalizePagedResponse(raw, backend)`**
+   - Used internally by `apiFetch`
+   - Converts DataTables or Envelope to `PagedResult<T>`
+   - Handles both full datasets and paginated responses
+
+**Architecture:**
+```
+Backend Response → normalizers.ts → Unified Format → Components
+                       ↓
+                 Zod Validation
+                 (schemas/*.ts)
+```
+
 ---
 
 ## Switching Procedure
@@ -582,6 +653,7 @@ After switching backends, test these features:
 1. Wrong `VITE_API_BASE_URL`
 2. Backend server not running
 3. CORS not configured on server
+4. Incorrect endpoint path format
 
 **Solutions:**
 
@@ -590,11 +662,239 @@ After switching backends, test these features:
 curl http://localhost:8000/api/auth/login  # Laravel
 curl https://localhost:7000/api/auth/login # ASP.NET
 
-# Verify env variable loaded
+# Verify env variable loaded (browser console)
 console.log(import.meta.env.VITE_API_BASE_URL)
+console.log(import.meta.env.VITE_BACKEND_KIND)
 
 # Check CORS headers in DevTools Network tab
+# Should see:
+# Access-Control-Allow-Origin: http://localhost:5018
+# Access-Control-Allow-Credentials: true
 ```
+
+**Check endpoint path construction:**
+
+```typescript
+// Correct: apiBaseUrl ends with /, path has no leading /
+const url = "https://api.example.com/api/" + "Users/ListUsers";
+// Result: "https://api.example.com/api/Users/ListUsers" ✅
+
+// Wrong: Double slash
+const url = "https://api.example.com/api/" + "/Users/ListUsers";
+// Result: "https://api.example.com/api//Users/ListUsers" ❌
+
+// Wrong: Missing trailing slash
+const url = "https://api.example.com/api" + "Users/ListUsers";
+// Result: "https://api.example.com/apiUsers/ListUsers" ❌
+```
+
+### Problem: Environment Variables Not Updating
+
+**Symptoms:**
+- Changed `.env` but still seeing old backend behavior
+- Console shows old `VITE_BACKEND_KIND` value
+
+**Solutions:**
+
+1. **Restart dev server** (Vite env vars don't hot-reload):
+   ```bash
+   # Stop: Ctrl+C
+   # Start: pnpm dev
+   ```
+
+2. **Clear Vite cache**:
+   ```bash
+   rm -rf node_modules/.vite
+   pnpm dev
+   ```
+
+3. **Check `.env` file location**:
+   - Must be in project root (same level as `vite.config.ts`)
+   - Not in `src/` or other subdirectories
+
+4. **Verify no typos**:
+   ```env
+   # Wrong:
+   VITE_BACKEND_TYPE=laravel  # ❌ Should be BACKEND_KIND
+   VITE_API_URL=...           # ❌ Should be API_BASE_URL
+   
+   # Correct:
+   VITE_BACKEND_KIND=laravel  # ✅
+   VITE_API_BASE_URL=...      # ✅
+   ```
+
+### Problem: Config Files Not Recognized
+
+**Symptoms:**
+- TypeScript errors: "Cannot find module '@/...'"  
+- Import errors for `@/core/api/client`
+
+**Solutions:**
+
+1. **Check `tsconfig.json` paths**:
+   ```json
+   {
+     "compilerOptions": {
+       "baseUrl": ".",
+       "paths": {
+         "@/*": ["./src/*"]
+       }
+     }
+   }
+   ```
+
+2. **Check `vite.config.ts` alias**:
+   ```typescript
+   export default defineConfig({
+     resolve: {
+       alias: {
+         "@": path.resolve(__dirname, "./src"),
+       },
+     },
+   });
+   ```
+
+3. **Restart TypeScript server**:
+   - VS Code: `Ctrl+Shift+P` → "TypeScript: Restart TS Server"
+
+### Problem: Linting Errors After Setup
+
+**Symptoms:**
+- ESLint errors about accessibility
+- React Hooks warnings
+
+**Solutions:**
+
+1. **Run linter**:
+   ```bash
+   pnpm lint
+   ```
+
+2. **Fix auto-fixable issues**:
+   ```bash
+   pnpm lint --fix
+   ```
+
+3. **Check ESLint config** (`eslint.config.js`):
+   - Should have `jsx-a11y` plugin
+   - Should have `react-hooks` plugin
+
+### Problem: Tailwind Styles Not Working
+
+**Symptoms:**
+- No styling applied
+- Tailwind classes not recognized
+
+**Solutions:**
+
+1. **Check `postcss.config.js`**:
+   ```javascript
+   export default {
+     plugins: {
+       '@tailwindcss/postcss': {},
+     },
+   }
+   ```
+
+2. **Check `tailwind.config.ts` content paths**:
+   ```typescript
+   export default {
+     content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+   };
+   ```
+
+3. **Check `src/assets/styles/globals.css` imports**:
+   ```css
+   @import "tailwindcss";
+   ```
+
+4. **Restart dev server**:
+   ```bash
+   pnpm dev
+   ```
+
+### Problem: shadcn/ui Components Not Found
+
+**Symptoms:**
+- Import errors for `@/shared/components/ui/*`
+- Components not styled correctly
+
+**Solutions:**
+
+1. **Check `components.json` exists** (should be in project root)
+
+2. **Verify aliases in `components.json`**:
+   ```json
+   {
+     "aliases": {
+       "components": "@/shared/components",
+       "ui": "@/shared/components/ui",
+       "lib": "@/lib",
+       "hooks": "@/shared/hooks"
+     }
+   }
+   ```
+
+3. **Install missing components**:
+   ```bash
+   pnpm dlx shadcn@latest add button
+   pnpm dlx shadcn@latest add input
+   # etc.
+   ```
+
+### Problem: i18n Translations Not Loading
+
+**Symptoms:**
+- Keys displayed instead of translations
+- "translation missing" errors
+
+**Solutions:**
+
+1. **Check translation files exist**:
+   - `src/locales/en/common.json`
+   - `src/locales/ar/common.json`
+   - `src/locales/en/{namespace}.json`
+
+2. **Register namespace in `src/core/i18n/i18n.ts`**:
+   ```typescript
+   import enUsers from "@/locales/en/users.json";
+   import arUsers from "@/locales/ar/users.json";
+   
+   export const resources = {
+     en: {
+       common: enCommon,
+       users: enUsers, // ← Add new namespace
+     },
+     ar: {
+       common: arCommon,
+       users: arUsers, // ← Add new namespace
+     },
+   };
+   ```
+
+3. **Restart dev server** (i18n config changes require restart)
+
+### Configuration Validation Checklist
+
+Run through this checklist when switching backends or encountering issues:
+
+- [ ] `.env` file exists in project root
+- [ ] `VITE_BACKEND_KIND` is set (`aspnet` or `laravel`)
+- [ ] `VITE_API_BASE_URL` ends with `/`
+- [ ] Endpoint paths in `endpoints.ts` don't start with `/`
+- [ ] Dev server restarted after `.env` changes
+- [ ] Browser `localStorage` cleared (if switching backends)
+- [ ] Backend API server is running and accessible
+- [ ] CORS configured on backend for `http://localhost:5018`
+- [ ] Network tab shows correct URL construction
+- [ ] No TypeScript errors (`pnpm build` succeeds)
+- [ ] No ESLint errors (`pnpm lint` succeeds)
+- [ ] Tailwind styles loading (inspect element shows Tailwind classes)
+- [ ] Translation files registered and loading
+
+---
+
+## Troubleshooting
 
 ---
 

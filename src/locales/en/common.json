@@ -132,6 +132,14 @@
     "updateSuccess": "Updated successfully"
   },
   "validation": {
+    "invalidEmail": "Invalid email address",
+    "minLength": "Minimum {{count}} characters",
+    "maxLength": "Maximum {{count}} characters",
+    "min": "Minimum value is {{value}}",
+    "max": "Maximum value is {{value}}",
+    "integer": "Must be an integer",
+    "positive": "Must be positive",
+    "required": "This field is required",
     "email": {
       "required": "Email is required",
       "invalid": "Invalid email address"

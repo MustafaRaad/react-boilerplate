@@ -36,15 +36,121 @@ This is a **multi-backend React boilerplate** that supports both **Laravel** and
 
 ---
 
+## System Setup and Prerequisites
+
+### Required Tools
+
+- **Node.js**: Version 18 or higher
+- **pnpm**: Package manager (install via `corepack enable` or `npm i -g pnpm`)
+- **Backend Server**: Either Laravel or ASP.NET API running and accessible
+
+### Initial Setup Steps
+
+1. **Install dependencies:**
+
+   ```bash
+   pnpm install
+   ```
+
+2. **Configure environment:**
+
+   - Copy `.env.example` to `.env`
+   - Set `VITE_API_BASE_URL` (must end with `/`)
+   - Set `VITE_BACKEND_KIND` (`aspnet` or `laravel`)
+   - Optional: Set `OPENAI_API_KEY` for Intlayer translation filling
+
+3. **Start development server:**
+
+   ```bash
+   pnpm dev
+   ```
+
+   - Server runs at `http://localhost:5018`
+   - **Important**: Restart server after changing `.env`
+
+4. **Clear browser storage when switching backends:**
+   - Open DevTools → Application → Storage
+   - Clear `localStorage` (auth tokens differ between backends)
+   - Or run: `localStorage.clear()`
+
+### Configuration Files Overview
+
+#### `vite.config.ts`
+
+- **Purpose**: Vite build configuration
+- **Key Features**:
+  - React plugin with fast refresh
+  - Tailwind CSS integration
+  - Security headers middleware (HSTS, CSP, X-Frame-Options)
+  - PWA support with Workbox
+  - Bundle visualizer (production builds)
+  - Path alias: `@/` → `./src/`
+
+#### `tsconfig.json` + `tsconfig.app.json` + `tsconfig.node.json`
+
+- **Purpose**: TypeScript compiler configuration
+- **Key Settings**:
+  - Path alias: `@/*` → `./src/*`
+  - Strict mode enabled
+  - React 19 JSX transform
+  - ES2020 target
+
+#### `tailwind.config.ts`
+
+- **Purpose**: Tailwind CSS configuration
+- **Key Features**:
+  - Dark mode support (class-based)
+  - Custom color system with CSS variables
+  - Tajawal font as default sans-serif (for Arabic support)
+  - shadcn/ui compatible design tokens
+  - Custom animations (accordion, etc.)
+
+#### `eslint.config.js`
+
+- **Purpose**: Code quality and accessibility linting
+- **Key Features**:
+  - TypeScript ESLint rules
+  - React Hooks rules enforcement
+  - React Refresh for HMR
+  - **jsx-a11y** plugin for WCAG 2.1 AA compliance
+  - Checks: alt text, ARIA props, keyboard navigation, focus management
+
+#### `intlayer.config.ts`
+
+- **Purpose**: Intlayer i18n configuration
+- **Key Features**:
+  - Locales: English, Arabic
+  - Default: English
+  - OpenAI integration for auto-translation (`pnpm intlayer:fill`)
+  - JSON sync plugin: reads/writes `src/locales/{locale}/{namespace}.json`
+
+#### `components.json`
+
+- **Purpose**: shadcn/ui configuration
+- **Key Settings**:
+  - Style: new-york
+  - TypeScript + RSC disabled
+  - Tailwind CSS variables enabled
+  - Base color: slate
+  - Custom aliases for components/utils/hooks
+  - Registry support for custom component libraries
+
+#### `postcss.config.js`
+
+- **Purpose**: PostCSS configuration
+- **Plugins**: `@tailwindcss/postcss` (Tailwind v4)
+
+---
+
 ## Tech Stack
 
 **DO NOT CHANGE OR ADD TO THIS STACK**
 
 ### Core Framework
 
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool & dev server
+- **React 19.2.0** - UI library (latest with optimized rendering)
+- **TypeScript 5.9** - Type safety with strict mode
+- **Vite 7.2** - Build tool & dev server with HMR
 
 ### Routing & Data
 
@@ -66,8 +172,49 @@ This is a **multi-backend React boilerplate** that supports both **Laravel** and
 
 ### i18n
 
-- **react-i18next** - Translation library
-- **Intlayer** - Additional i18n utilities
+- **react-i18next 16.3** - Translation library (React bindings for i18next)
+- **i18next-browser-languagedetector** - Auto-detect user language
+- **Intlayer 7.3** - AI-powered translation management
+- **@intlayer/sync-json-plugin** - Syncs translations to JSON files
+
+**Setup Location**: `src/core/i18n/i18n.ts`
+
+**Configuration**:
+
+```typescript
+import i18n from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import { initReactI18next } from "react-i18next";
+
+i18n
+  .use(initReactI18next)
+  .use(LanguageDetector)
+  .init({
+    resources: { en: {...}, ar: {...} },
+    defaultNS: "common",
+    fallbackLng: "ar", // Default to Arabic
+    lng: "ar",
+    supportedLngs: ["en", "ar"],
+    interpolation: { escapeValue: false },
+    detection: {
+      order: ["localStorage", "cookie", "navigator"],
+      caches: ["localStorage"],
+    },
+  });
+```
+
+**Translation Files**: `src/locales/{en|ar}/{namespace}.json`
+
+- `common.json`: Shared translations (actions, validation, errors)
+- `users.json`: Users feature translations
+- `statistics.json`: Statistics feature translations
+- Add new namespaces as needed per feature
+
+**Intlayer Commands**:
+
+- `pnpm intlayer:fill`: AI-fill missing translations (requires `OPENAI_API_KEY`)
+- `pnpm intlayer:build`: Build Intlayer dictionaries
+- `pnpm intlayer:push`: Push translations to remote (if configured)
 
 ### Backend Support
 
@@ -198,15 +345,48 @@ const users = await apiFetch(endpoints.users.list);
 const response = await fetch("/api/users"); // ← NEVER DO THIS
 ```
 
-**WHY:** The central client handles:
+**WHY:** The central client (`src/core/api/client.ts`) provides:
 
-- Backend normalization (Laravel vs ASP.NET)
-- Token injection
-- Error handling
-- CSRF protection
-- Rate limiting
-- Retry logic
-- Response transformation
+#### Authentication & Security
+
+- **Automatic token injection**: Reads from Zustand auth store
+- **Token refresh on 401**: Attempts refresh before failing
+- **CSRF protection**: Laravel CSRF token handling
+- **Rate limiting**: Per-endpoint throttling (configurable)
+- **XSS prevention**: Input sanitization via `sanitizeObject`
+
+#### Backend Normalization
+
+- **Laravel**: DataTables format (`data`, `recordsTotal`)
+- **ASP.NET**: Envelope format (`result`, `code`, `message`, `error`)
+- **Unified Output**: Both normalized to `PagedResult<T>`
+- **Pagination params**: Auto-converted (Laravel: `page`/`size`, ASP.NET: `PageNumber`/`PageSize`)
+
+#### Error Handling
+
+- **HTTP errors**: Unified error format with status codes
+- **Network errors**: Retry with exponential backoff
+- **Validation errors**: Extracted from backend response
+- **Type-safe errors**: `UnifiedApiError` interface
+
+#### Advanced Features
+
+- **Request/Response interceptors**: Modify requests/responses globally
+- **Retry logic**: Configurable retry strategy with backoff
+- **Request cancellation**: AbortSignal support
+- **Performance tracking**: Optional performance interceptor
+- **Logging**: Development-mode request/response logging
+
+#### Architecture Files
+
+- `client.ts`: Core fetch wrapper
+- `normalizers.ts`: Backend-specific data transformations
+- `endpoints.ts`: Type-safe endpoint definitions
+- `hooks.ts`: TanStack Query wrappers (`useApiQuery`, `useApiMutation`)
+- `interceptors.ts`: Request/response/error interceptors
+- `retry.ts`: Exponential backoff retry logic
+- `config.ts`: Global API configuration and presets
+- `queryClient.ts`: TanStack Query client factory
 
 ### 3. **SERVER DATA = TANSTACK QUERY, CLIENT STATE = ZUSTAND**
 
@@ -300,44 +480,149 @@ export type {
 
 ### Step 4: Add Endpoints (`src/core/api/endpoints.ts`)
 
-```typescript
-import { type EndpointDef } from "@/core/api/endpoints";
-import { type Product } from "@/features/products/types";
+**Location:** `src/core/api/endpoints.ts`
 
+**Instructions:**
+
+1. Import your feature types and API response types
+2. Add endpoint definitions to the `endpoints` object
+3. Use correct type parameters for request/response
+4. Follow path and authentication rules
+
+**Complete Example:**
+
+```typescript
+// 1. Import your types at the top
+import {
+  type Product,
+  type ProductCreate,
+  type ProductUpdate,
+} from "@/features/products/types";
+import {
+  type AspNetEnvelope,
+  type AspNetPagedResult,
+  type LaravelDataTableResponse,
+} from "@/core/types/api";
+
+// 2. Add to endpoints object (before `} as const;`)
 export const endpoints = {
-  // ... existing endpoints
+  auth: authEndpoints,
+  users: {
+    /* existing */
+  },
+
+  // 3. Add your feature endpoints
   products: {
+    // List endpoint (paginated)
     list: {
       path: "Products/List", // ← NO leading slash
       method: "GET",
       requiresAuth: true,
-    } as EndpointDef<Record<string, unknown>, PagedResult<Product>>,
+      description: "Get paginated list of products", // Optional
+      tags: ["products"], // Optional
+    } as EndpointDef<
+      Record<string, unknown> | undefined, // Request (query params)
+      // Response (both backend formats)
+      | AspNetEnvelope<AspNetPagedResult<Product>>
+      | LaravelDataTableResponse<Product>
+    >,
 
+    // Get single item
     get: {
       path: "Products/Get",
       method: "GET",
       requiresAuth: true,
-    } as EndpointDef<{ id: number }, Product>,
+    } as EndpointDef<
+      { id: number }, // Request
+      AspNetEnvelope<Product> | Product // Response
+    >,
 
+    // Create
     create: {
       path: "Products/Create",
       method: "POST",
       requiresAuth: true,
-    } as EndpointDef<ProductCreate, Product>,
+    } as EndpointDef<
+      ProductCreate, // Request body
+      AspNetEnvelope<Product> | Product // Response
+    >,
 
+    // Update
     update: {
       path: "Products/Update",
       method: "PUT",
       requiresAuth: true,
-    } as EndpointDef<ProductUpdate, Product>,
+    } as EndpointDef<
+      ProductUpdate, // Request body
+      AspNetEnvelope<Product> | Product // Response
+    >,
 
+    // Delete
     delete: {
       path: "Products/Delete",
       method: "DELETE",
       requiresAuth: true,
-    } as EndpointDef<{ id: number }, null>,
+    } as EndpointDef<
+      { id: number }, // Request (query param)
+      AspNetEnvelope<null> | null // Response
+    >,
   },
 } as const;
+```
+
+**Critical Rules:**
+
+✅ **Path Format:**
+
+- Use `"Products/List"` (no leading `/`)
+- `VITE_API_BASE_URL` must end with `/`
+- Result: `https://api.example.com/api/` + `Products/List`
+
+❌ **Common Mistakes:**
+
+```typescript
+// Wrong: leading slash
+path: "/Products/List" // Creates https://api.example.com/api//Products/List
+
+// Wrong: base URL without trailing slash
+VITE_API_BASE_URL=https://api.example.com/api // Creates https://api.example.com/apiProducts/List
+```
+
+**Response Type Patterns:**
+
+```typescript
+// For LIST endpoints (paginated)
+AspNetEnvelope<AspNetPagedResult<T>> | LaravelDataTableResponse<T>;
+
+// For GET/CREATE/UPDATE endpoints (single item)
+AspNetEnvelope<T> | T;
+
+// For DELETE endpoints
+AspNetEnvelope<null> | null;
+
+// For public endpoints (no auth)
+requiresAuth: false; // or omit (defaults to false)
+```
+
+**EndpointDef Type Parameters:**
+
+```typescript
+EndpointDef<TRequest, TResponse>;
+```
+
+- **TRequest**: What you send (query params, body, URL params)
+- **TResponse**: What backend returns (before normalization)
+
+**Optional Fields:**
+
+```typescript
+{
+  path: "Products/List",
+  method: "GET",
+  requiresAuth: true,
+  description: "Human-readable description", // For documentation
+  tags: ["products", "catalog"], // For grouping
+}
 ```
 
 ### Step 5: Create API Hooks (`api/useProducts.ts`)

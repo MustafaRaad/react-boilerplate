@@ -184,11 +184,8 @@ export function AutoFormDialog<T extends FieldsConfig>({
 
   // Auto-generate schema from field configuration
   const schema = React.useMemo(
-    () =>
-      generateSchema(fields, mode, (key, defaultValue) =>
-        t(key, { defaultValue })
-      ),
-    [fields, mode, t]
+    () => generateSchema(fields, mode, tCommon),
+    [fields, mode, tCommon]
   );
 
   // Auto-generate default values
