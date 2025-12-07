@@ -1,3 +1,12 @@
+<!--
+  /**
+ * @copyright Copyright (c) 2025 Developed By: Mustafa Raad Mutashar
+ * @license MIT
+ * @contact mustf.raad@gmail.com
+ */
+  All rights reserved.
+-->
+
 # React Boilerplate
 
 Modern, production-ready admin dashboard built with React 19, Vite, and TypeScript. Ships with TanStack Router + Query + Form, shadcn UI (dashboard-01), i18n (English/Arabic with RTL), Zustand stores, and complete CRUD workflows that support both **ASP.NET** and **Laravel** backends with automatic normalization.
