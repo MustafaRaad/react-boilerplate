@@ -217,5 +217,10 @@
       "close": "Close modals/dialogs"
     }
   },
+  "datePicker": {
+    "lastDay": "Last Day",
+    "lastWeek": "Last Week",
+    "lastMonth": "Last Month"
+  },
   "details": "Details"
 }

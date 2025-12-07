@@ -1,7 +1,8 @@
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { type DateRange } from "react-day-picker";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
@@ -27,6 +28,8 @@ export function DateRangePicker({
   className,
   clearLabel,
 }: DateRangePickerProps) {
+  const { t } = useTranslation("common");
+
   // derive clear label (Arabic vs default) if not provided
   const computedClearLabel = React.useMemo(
     () => clearLabel ?? (/[ -~]/.test(placeholder) ? "حذف" : "Clear"),
@@ -37,6 +40,13 @@ export function DateRangePicker({
     e.preventDefault();
     onDateRangeChange?.(undefined);
   }
+
+  function handleQuickSelect(days: number) {
+    const today = endOfDay(new Date());
+    const from = startOfDay(subDays(today, days));
+    onDateRangeChange?.({ from, to: today });
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild className="bg-input dark:bg-input/30">
@@ -76,6 +86,32 @@ export function DateRangePicker({
               {computedClearLabel}
             </Button>
           )}
+        </div>
+        <div className="flex gap-1 p-2 border-b">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs flex-1"
+            onClick={() => handleQuickSelect(1)}
+          >
+            {t("datePicker.lastDay")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs flex-1"
+            onClick={() => handleQuickSelect(7)}
+          >
+            {t("datePicker.lastWeek")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs flex-1"
+            onClick={() => handleQuickSelect(30)}
+          >
+            {t("datePicker.lastMonth")}
+          </Button>
         </div>
         <Calendar
           dir="ltr"
