@@ -1,181 +1,493 @@
 # React Boilerplate
 
-Modern admin starter built with React 19, Vite, and TypeScript. Ships with TanStack Router + Query + Form, shadcn UI (dashboard-01), i18n (English/Arabic with RTL), Zustand stores, and an auth/dashboard/users/roles flow that can talk to either an ASP.NET or Laravel backend.
+Modern, production-ready admin dashboard built with React 19, Vite, and TypeScript. Ships with TanStack Router + Query + Form, shadcn UI (dashboard-01), i18n (English/Arabic with RTL), Zustand stores, and complete CRUD workflows that support both **ASP.NET** and **Laravel** backends with automatic normalization.
 
 ## 📚 Documentation
 
 **For AI Agents & Developers:**
 
-- **[AI Agent Implementation Guide](./docs/AI_AGENT_IMPLEMENTATION_GUIDE.md)** - Complete guide for adding new features
-- **[Backend Switching Guide](./docs/BACKEND_SWITCHING_GUIDE.md)** - Laravel ↔ ASP.NET switching instructions
-- **[Feature Creation Flow](./docs/FEATURE_CREATION_FLOW.md)** - Concise, step-by-step flow to add a new feature
+- **[AI Agent Implementation Guide](./docs/AI_AGENT_IMPLEMENTATION_GUIDE.md)** — Comprehensive guide covering architecture, setup, patterns, and step-by-step feature implementation
+- **[Backend Switching Guide](./docs/BACKEND_SWITCHING_GUIDE.md)** — Laravel ↔ ASP.NET switching with endpoint contracts and testing procedures
+- **[Feature Creation Flow](./docs/FEATURE_CREATION_FLOW.md)** — Practical, end-to-end checklist for adding new features
 
 ## Requirements
 
 - Node 18+ and pnpm (`corepack enable` or `npm i -g pnpm`)
 - API reachable at `VITE_API_BASE_URL`
 
-## Quick setup
+## ⚡ Quick Start
 
-1. `pnpm install` (or `corepack enable pnpm` first) using Node 18+.
-2. Copy `.env.example` to `.env` and set `VITE_API_BASE_URL` + `VITE_BACKEND_KIND` (`aspnet` or `laravel`, trailing slash required on the URL).
-3. Start dev server: `pnpm dev` (http://localhost:5018). Stop/restart after changing `.env`.
-4. Optional: clear `localStorage` when switching backends (auth tokens differ).
-5. Run checks: `pnpm lint`; build for release with `pnpm build` then `pnpm preview`.
+### 1. Install & Configure
 
-## Scripts
+```bash
+# Install dependencies (Node 18+ required)
+pnpm install
 
-- `pnpm install` — install deps
-- `pnpm dev` — start dev server (http://localhost:5018)
-- `pnpm build` — type-check + Vite build to `dist/`
-- `pnpm preview` — preview production build
-- `pnpm lint` — run ESLint
-
-## Environment
-
-Create `.env` (or copy `.env.example`):
-
-```
-VITE_API_BASE_URL=https://your-api/
-VITE_BACKEND_KIND=aspnet   # or laravel
+# Copy environment template
+cp .env.example .env
 ```
 
-- ASP.NET requires `https://.../api/`; Laravel typically `http://localhost:8000/api/`.
-- Keep `VITE_API_BASE_URL` ending with `/` and endpoint paths without leading `/` (see `src/core/api/endpoints.ts`).
+### 2. Set Environment Variables
 
-## Project structure
+Edit `.env`:
+
+```env
+# API endpoint (MUST end with /)
+VITE_API_BASE_URL=http://localhost:5000/api/
+
+# Backend type: 'aspnet' or 'laravel'
+VITE_BACKEND_KIND=aspnet
+
+# Optional: OpenAI API key for auto-translation filling
+# OPENAI_API_KEY=sk-your-api-key-here
+```
+
+**Important:**
+
+- `VITE_API_BASE_URL` must end with `/` (e.g., `https://api.example.com/api/`)
+- `VITE_BACKEND_KIND` can be `aspnet` or `laravel` (case-insensitive)
+- Default fallback: `aspnet`
+
+### 3. Start Development
+
+```bash
+# Start dev server on http://localhost:5018
+pnpm dev
+
+# In another terminal, start your backend:
+# Laravel: php artisan serve --port=8000
+# ASP.NET: dotnet run --configuration Debug
+```
+
+**Note:** Restart the dev server after changing `.env` (Vite caches env at build time)
+
+### 4. Verify Setup
+
+- Open http://localhost:5018 in your browser
+- You should see the login page
+- Backend should be reachable and returning data
+
+## 📋 Available Scripts
+
+| Command               | Purpose                                                                 |
+| --------------------- | ----------------------------------------------------------------------- |
+| `pnpm dev`            | Start development server at http://localhost:5018 with hot reload       |
+| `pnpm build`          | Type-check with TypeScript, then build production bundle to `dist/`     |
+| `pnpm preview`        | Serve the production build locally for testing                          |
+| `pnpm lint`           | Run ESLint with TypeScript and accessibility checks                     |
+| `pnpm intlayer:build` | Build Intlayer i18n dictionaries                                        |
+| `pnpm intlayer:fill`  | Auto-fill missing translations using OpenAI (requires `OPENAI_API_KEY`) |
+| `pnpm intlayer:push`  | Push translations to remote Intlayer service (if configured)            |
+
+## 🔧 Environment Configuration
+
+### Required Variables
+
+```env
+VITE_API_BASE_URL=<your-api-url>
+VITE_BACKEND_KIND=<aspnet|laravel>
+```
+
+### URL Format Rules
+
+- **Base URL must end with `/`**: `https://api.example.com/api/` ✅ vs `https://api.example.com/api` ❌
+- **Endpoints have no leading `/`**: `Users/List` ✅ vs `/Users/List` ❌
+- **Final URL**: `VITE_API_BASE_URL` + endpoint path = `https://api.example.com/api/Users/List`
+
+### Backend-Specific URLs
+
+**ASP.NET**
+
+```env
+VITE_API_BASE_URL=https://localhost:7000/api/
+VITE_BACKEND_KIND=aspnet
+```
+
+**Laravel**
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/
+VITE_BACKEND_KIND=laravel
+```
+
+### Optional: AI-Powered Translations
+
+```env
+# Enable automatic translation filling with OpenAI
+OPENAI_API_KEY=sk-your-api-key-here
+```
+
+Then run: `pnpm intlayer:fill`
+
+### Switching Backends
+
+When switching from one backend to another:
+
+1. Update `.env` with new `VITE_API_BASE_URL` and `VITE_BACKEND_KIND`
+2. Stop dev server (Ctrl+C)
+3. Restart dev server: `pnpm dev`
+4. Clear browser `localStorage` if login fails (tokens may be incompatible)
+
+**Why restart?** Vite loads env variables at build time, not runtime.
+
+## 🏗️ Project Structure
 
 ```
 src/
-  main.tsx                     Entry; renders <App />
-  app/                         App shell
-    App.tsx                    Root component
-    providers/AppProviders.tsx Router, QueryClient, i18n, toasts, dir observer
+  main.tsx                          Entry point; renders <App />
+
+  app/                              Application shell
+    App.tsx                         Root component with theme/layout setup
+    providers/AppProviders.tsx      Combines Router, QueryClient, i18n, toasts
     router/
-      routeTree.ts             TanStack Router tree and guards
-      routeComponents.tsx      Route components (protected wrapper, redirects)
-  assets/                      Static assets and styling
-    fonts/                     Tajawal font files
-    styles/                    fonts.css + globals.css (imports Tailwind layers)
-  core/                        Cross-cutting concerns
-    api/                       API client + helpers
-      client.ts                Fetch wrapper with backend normalization & token refresh
-      endpoints.ts             Typed endpoint definitions
-      hooks.ts                 useApiQuery/useApiMutation with toast handling
-      notifications.ts         Toast helpers
-      queryClient.ts           React Query client factory
-    config/env.ts              Reads Vite env and exposes backendKind/apiBaseUrl
-    i18n/                      i18next setup + resource registration
-    types/                     Shared types re-exporting feature auth types
-  features/                    Vertical slices
-    auth/                      Pages, components, schemas, types, endpoints, hooks
-    dashboard/                 Overview cards
-    users/                     Users table + data hooks
-    roles/                     Roles table + data hooks
-  lib/                         Generic utilities (e.g., class helpers)
-  locales/                     Translation resources (en, ar) + JSON (Intlayer sync)
-  shared/                      Reusable building blocks
+      routeTree.ts                  TanStack Router tree with auth guards
+      routeComponents.tsx           Protected wrapper, redirects
+
+  assets/
+    fonts/                          Tajawal font files (Arabic support)
+    styles/globals.css              Tailwind + custom globals
+
+  core/                             🔒 Infrastructure (don't modify without reason)
+    api/
+      client.ts                     Central API client; handles all requests
+      endpoints.ts                  Typed endpoint definitions
+      hooks.ts                      useApiQuery/useApiMutation wrappers
+      normalizers.ts                Backend-specific response normalization
+      interceptors.ts               Request/response interceptors
+      retry.ts                      Exponential backoff logic
+      queryClient.ts                TanStack Query configuration
+    config/env.ts                   Reads VITE_* environment variables
+    i18n/
+      i18n.ts                       i18next initialization
+      direction.ts                  RTL/LTR helpers
+    schemas/
+      endpoints.schema.ts           Shared Zod schemas
+    security/
+      csrf.ts, rateLimit.ts, ...    Security utilities
+    types/api.ts                    API-related types
+
+  features/                         Feature modules (vertical slices)
+    auth/
+      api/auth.endpoints.ts         Auth-specific endpoints
+      components/LoginForm.tsx      Login UI
+      hooks/useLogin.ts             Auth mutations
+      pages/LoginPage.tsx           Login page component
+      schemas/auth.schema.ts        Zod schemas for auth
+      types/auth.types.ts           TypeScript types
+
+    users/
+      api/useUsers.ts               Data fetching hooks
+      components/
+        UsersTable.tsx              Table component
+        UsersTable.columns.tsx      Column definitions
+      schemas/user.schema.ts        Zod schemas
+      types/index.ts                TypeScript types
+
+    dashboard/                      Dashboard overview
+    statistics/                     Statistics feature
+    [feature]/                      Add new features following this pattern
+
+  lib/
+    formatters.ts                   Date, number, text formatters
+    utils.ts                        Generic utility functions
+
+  locales/                          i18n translation files
+    en/common.json                  English: shared strings
+    en/users.json                   English: feature-specific strings
+    ar/common.json                  Arabic: shared strings
+    ar/users.json                   Arabic: feature-specific strings
+
+  shared/                           Reusable code (components, hooks, utilities)
     components/
-      data/                    DataTable (server/client pagination)
-      dialogs/                 GenericFormDialog with TanStack Form + Field components
-      layout/                  DashboardLayout, AppSidebar, SiteHeader, error/not-found
-      ui/                      shadcn UI primitives (button, card, input, sidebar, etc.; includes calendar for date picker)
+      ui/                           shadcn/ui components (button, card, input, etc.)
+      layout/                       DashboardLayout, Sidebar, Header, NotFound
+      data-table/                   DataTable with pagination, sorting, filtering
+      form/                         Form field components
+      dialogs/                      GenericFormDialog for CRUD
     config/
-      navigation.ts            Centralized nav config (mainNavItems)
-    hooks/                     Generic hooks (locale direction, pagination)
+      navigation.ts                 Navigation menu configuration
+    hooks/
+      useDataTableQuery.ts          Server-side table data fetching
+      useDirection.ts               RTL/LTR direction hook
+      useDebounce.ts                Debounce utility
+      useMobile.ts                  Mobile breakpoint detection
+    utils/
+      a11y.ts                       Accessibility utilities
 ```
 
-## Routing
+## 🔐 Architecture Principles
 
-- `/` redirects to `/dashboard` if authenticated, otherwise `/login`.
-- `/login` shows the login form.
-- `/dashboard` (protected) uses `DashboardLayout` (shadcn dashboard-01) with:
-  - `/dashboard/` overview cards
-  - `/dashboard/users` users table
-  - `/dashboard/roles` roles table
-- `*` renders a not-found page.
-  Protection is handled by `useAuthGuard`, which redirects unauthenticated users to `/login`.
+### 1. Backend Agnostic
 
-## Dashboard layout & navigation
+- Both ASP.NET and Laravel backends are fully supported
+- Endpoint definitions centralized in `src/core/api/endpoints.ts`
+- Response normalization handled in `src/core/api/normalizers.ts`
+- Feature code never knows which backend is running
 
-- Layout: `DashboardLayout` wraps all dashboard routes with `SidebarProvider`, collapsible sidebar, responsive header.
-- Navigation: All nav items live in `src/shared/config/navigation.ts` as `mainNavItems`.
-- Sidebar: `AppSidebar` reads `mainNavItems` and highlights active routes.
-- Adding pages: create the page + route + nav item; sidebar updates automatically.
+### 2. Type Safety Everywhere
 
-## Authentication flow
+- Zod schemas for runtime validation
+- TypeScript strict mode enabled
+- Endpoint requests/responses fully typed
+- TanStack Form for type-safe forms
 
-- Login (`useLogin`) posts credentials to backend-specific login endpoint.
-- On success, tokens + user are stored in `auth.store` (persisted to localStorage).
-- Protected routes rely on `useAuthGuard`; `AppProviders` adds Query + Router devtools in dev.
-- `apiFetch` attaches `Authorization` when required and attempts a refresh on 401 using the configured backend; failure clears auth and surfaces a toast.
+### 3. API Layer Contract
 
-## API layer contract
+- **Single entry point**: `src/core/api/client.ts`
+- **All requests** must go through `apiFetch` helper
+- **Token management** (add/refresh) handled automatically
+- **Error handling** with translated messages
 
-- ASP.NET:
-  - `POST /auth/login` -> `{ result: { accessToken, refreshToken, ... } }`
-  - `POST /auth/refresh` -> `{ result: { accessToken, refreshToken, ... } }`
-  - `GET /me` (auth) -> `{ result: user }`
-  - `GET /users` (auth, paged envelope)
-  - `GET /roles` (auth, paged envelope)
-- Laravel (base URL e.g. https://api.qasitha.com/api):
-  - `POST /auth/login` -> `{ access_token, refresh_token?, token_type, expires_in }`
-  - `POST /auth/refresh` -> `{ access_token, refresh_token?, token_type, expires_in }`
-  - `GET /me` (auth) -> user
-  - `GET /users` (auth, DataTables payload)
-  - `GET /roles` (auth, DataTables payload)
-    `apiFetch` normalizes both backends into a unified `PagedResult<T>` where applicable.
+### 4. Data Fetching Patterns
 
-## Data tables
+- **Lists**: `createDataTableHook` factory for paginated queries
+- **Mutations**: `useApiMutation` with auto-toast notifications
+- **Caching**: TanStack Query manages all caching and invalidation
 
-- `DataTable` supports `mode="server"` (uses total/page/pageSize props) or `mode="client"` (local pagination).
-- Users/Roles switch to client mode automatically when `backendKind` is `laravel` so search happens locally.
+### 5. UI Consistency
 
-## Forms
+- **shadcn/ui** components for consistency
+- **Field components** for form building (not raw inputs)
+- **DataTable** for all tabular data
+- **GenericFormDialog** for CRUD operations
 
-**Form Architecture:**
+## 📍 Routing
 
-- **TanStack Form** (`@tanstack/react-form`) for form state management
-- **Zod** schemas for validation with translated error messages
-- **Shadcn Field components** (Field, FieldLabel, FieldError) for consistent UI/UX
-- **GenericFormDialog** component for CRUD operations with automatic field generation
+The app uses **TanStack Router** with file-based routing and type-safe navigation.
 
-**Benefits:**
+```
+/ (root)
+├── / (index) → redirects to /dashboard or /login based on auth
+├── /login (public)
+└── /dashboard (protected by useAuthGuard)
+    ├── / (overview with cards)
+    ├── /users (users table)
+    ├── /roles (roles table)
+    └── ... (add feature routes here)
+```
 
-- Type-safe form state with full TypeScript support
-- Automatic validation with translated error messages
-- Consistent Field components across all forms
-- No form library lock-in (headless form state)
+**Protection Mechanism:**
 
-## Localization & Intlayer
+- `useAuthGuard()` hook redirects unauthenticated users to `/login`
+- Auth state comes from `auth.store` (Zustand with localStorage persistence)
+- Protected wrapper in `routeComponents.tsx` enforces guards
 
-- Locale sources: `src/locales/en/*.json`, `src/locales/ar/*.json` (synced via Intlayer).
-- Intlayer config: `intlayer.config.ts` with sync-json plugin targeting `src/locales/{locale}/{namespace}.json`.
-- Commands:
-  - `pnpm intlayer:fill` (uses `OPENAI_API_KEY` in `.env` to auto-fill missing translations)
-  - `pnpm intlayer:build`, `pnpm intlayer:push` as needed
-- Runtime i18n remains i18next (see `src/core/i18n/i18n.ts`).
+## 🔑 Authentication
 
-## Adding a new feature (pattern)
+### Login Flow
 
-1. Declare endpoints in `src/core/api/endpoints.ts` (or feature-specific if applicable).
-2. Add data hooks:
-   - For queries: use `createDataTableHook<T>()` factory for paginated data
-   - For mutations: use `createMutationHook<TVariables>()` factory (see `useUsers.ts` example)
-   - Factory pattern eliminates boilerplate and ensures consistency
-3. Build UI under `src/features/foo/components` or `src/features/foo/pages`; reuse shared UI/DataTable/GenericFormDialog with Field components.
-4. For dialogs: pass `namespace` and `fieldsDefinition` to `GenericActionDialog` (config generated internally)
-5. Register a route in `routeTree.ts` under `dashboardRoute` for protected pages.
-6. Add navigation item to `src/shared/config/navigation.ts` in `mainNavItems`.
-7. Add translations to `src/locales/en/*.ts` / `src/locales/ar/*.ts` (and JSON if syncing via Intlayer).
+1. User enters credentials on `/login`
+2. `useLogin()` hook sends credentials to backend-specific endpoint
+3. Backend returns tokens (access + optional refresh token)
+4. Tokens are stored in `auth.store` and persisted to localStorage
+5. User redirected to `/dashboard`
 
-## Optimized patterns
+### Token Refresh
 
-- **Generic mutation factory**: Single `createMutationHook` eliminates create/update/delete duplication
-- **Simplified dialogs**: Pass `namespace` + `fieldsDefinition`; field config generated automatically
-- **Auto-refresh**: TanStack Query's `invalidateQueries` handles table updates after mutations
-- **Performance**: Uses `useCallback` and optimized form lifecycle (single useEffect for reset)
+- `apiFetch` automatically handles token refresh on `401` errors
+- Uses configured backend's refresh endpoint
+- On failure, clears auth and shows error toast
 
-## Docs
+### Protected Routes
 
-- AI agent playbook: `docs/ai-agent-playbook.md`
+All dashboard routes are protected with `useAuthGuard()`:
+
+```tsx
+export const dashboardRoute = createFileRoute("/dashboard")({
+  beforeLoad: ({ context }) => {
+    context.auth.validateAuth(); // ← Validates token exists
+  },
+  // ...
+});
+```
+
+## 🌐 Internationalization (i18n)
+
+- **Library**: i18next with React bindings
+- **Locales**: English (`en`) and Arabic (`ar`)
+- **Direction**: Automatic RTL/LTR based on locale
+- **Translation Files**: `src/locales/{locale}/{namespace}.json`
+
+### Namespaces
+
+| Namespace    | Purpose                                    |
+| ------------ | ------------------------------------------ |
+| `common`     | Shared labels, actions, validation, errors |
+| `users`      | Users feature specific strings             |
+| `statistics` | Statistics feature strings                 |
+| `[feature]`  | Add new namespace for each feature         |
+
+### Using Translations
+
+```tsx
+import { useTranslation } from "react-i18next";
+
+export function MyComponent() {
+  const { t } = useTranslation(["common", "users"]); // ← Specify namespaces
+
+  return <h1>{t("users:list.title")}</h1>; // ← Namespace prefix
+}
+```
+
+### Adding AI Translations
+
+Auto-fill missing translations using OpenAI:
+
+```bash
+# Set OPENAI_API_KEY in .env, then:
+pnpm intlayer:fill
+```
+
+## 💾 Data Fetching & State Management
+
+### TanStack Query (Server State)
+
+- Centralized in `src/core/api/hooks.ts`
+- All queries use `useApiQuery()` wrapper
+- All mutations use `useApiMutation()` wrapper with toast notifications
+- Automatic refetching and stale-while-revalidate behavior
+
+### Zustand (Client State)
+
+- Auth store: `src/store/auth.store.ts` (tokens, user, permissions)
+- UI store: `src/store/ui.store.ts` (theme, sidebar, etc.)
+- Persisted to localStorage with Zustand middleware
+
+### Data Table Hook Factory
+
+For paginated lists, use the factory pattern:
+
+```tsx
+// src/features/users/api/useUsers.ts
+import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
+import { endpoints } from "@/core/api/endpoints";
+
+export const useUsersQuery = createDataTableHook("users", endpoints.users.list);
+```
+
+## 📝 Forms
+
+### Architecture
+
+- **State**: TanStack Form (headless, framework-agnostic)
+- **Validation**: Zod schemas with translated messages
+- **UI**: shadcn Field components (FieldLabel, FieldError, etc.)
+
+### Pattern
+
+```tsx
+import { useForm } from "@tanstack/react-form";
+import { userSchema } from "@/features/users/schemas/user.schema";
+
+export function UserForm() {
+  const form = useForm({
+    defaultValues: { name: "", email: "" },
+    onSubmit: async (data) => { /* submit */ },
+    validatorAdapter: zodValidator(),
+  });
+
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      form.handleSubmit();
+    }}>
+      <form.Field name="name" children={(field) => (
+        <FieldLabel htmlFor="name">Name</FieldLabel>
+        <Input value={field.state.value} onChange={(e) => field.handleChange(e.target.value)} />
+        {field.state.meta.errors && <FieldError>{field.state.meta.errors[0]}</FieldError>}
+      )} />
+    </form>
+  );
+}
+```
+
+### Prefilled Dialogs
+
+Use `GenericFormDialog` for common CRUD patterns:
+
+```tsx
+<GenericFormDialog
+  namespace="users"
+  fieldsDefinition={userFieldsConfig}
+  onSubmit={handleSubmit}
+  initialValues={editingUser}
+/>
+```
+
+## 🚀 Best Practices
+
+### 1. Use the API Layer Exclusively
+
+```tsx
+// ✅ Correct
+import { apiFetch } from "@/core/api/client";
+const data = await apiFetch(endpoints.users.list, {});
+
+// ❌ Wrong - never fetch directly
+const data = await fetch(`${apiUrl}/users`);
+```
+
+### 2. Normalize Backend Responses Centrally
+
+```tsx
+// ✅ In src/core/api/normalizers.ts
+export function normalizeUserResponse(user, backendKind) {
+  if (backendKind === "laravel") {
+    return { id: user.id, name: user.name };
+  }
+  // handle aspnet
+}
+
+// Components use the already-normalized data from hooks
+```
+
+### 3. Type Your Endpoints
+
+```tsx
+// ✅ Always define request/response types
+endpoints.users.list: {
+  path: "Users/List",
+  method: "GET",
+  requiresAuth: true,
+} as EndpointDef<
+  UserListRequest,  // Request type
+  UserListResponse  // Response type (normalized)
+>
+```
+
+### 4. Invalidate Query Keys on Mutations
+
+```tsx
+// ✅ Automatically re-fetch after create/update/delete
+const createUserMutation = useApiMutation(endpoints.users.create, {
+  onSuccess: (queryClient) => {
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+  },
+});
+```
+
+### 5. Feature-Level Translations
+
+```tsx
+// ✅ Use namespaced translations
+const { t } = useTranslation(["users", "common"]);
+<p>{t("users:form.nameLabel")}</p>  // Feature namespace
+<p>{t("common:actions.save")}</p>   // Common namespace
+```
+
+## 📚 Adding a New Feature (10-Step Checklist)
+
+See [FEATURE_CREATION_FLOW.md](./docs/FEATURE_CREATION_FLOW.md) for detailed step-by-step instructions.
+
+Quick summary:
+
+1. **Plan**: Decide CRUD operations, list views, translations
+2. **Schemas**: Define Zod schemas in `src/features/<feature>/schemas/`
+3. **Types**: Export inferred types in `src/features/<feature>/types/index.ts`
+4. **Endpoints**: Register in `src/core/api/endpoints.ts`
+5. **Data Hooks**: Create in `src/features/<feature>/api/use<Feature>.ts`
+6. **UI Components**: Build in `src/features/<feature>/components/`
+7. **Routes**: Add to `routeTree.ts` and protect if needed
+8. **Navigation**: Add item to `src/shared/config/navigation.ts`
+9. **Translations**: Add keys to `src/locales/{en,ar}/<feature>.json`
+10. **Test**: Run `pnpm lint` and `pnpm build` to verify

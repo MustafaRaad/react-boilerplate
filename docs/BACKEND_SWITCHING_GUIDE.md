@@ -1,7 +1,8 @@
 # Backend Switching Guide (Laravel / ASP.NET)
 
-**Last Updated:** December 6, 2025  
-**Purpose:** Step-by-step instructions for switching between Laravel and ASP.NET backend servers
+**Last Updated:** December 7, 2025  
+**Purpose:** Step-by-step instructions for switching between Laravel and ASP.NET backends  
+**Scope:** Environment configuration, endpoint contracts, testing procedures
 
 ---
 
@@ -1111,6 +1112,221 @@ DEFAULT_RATE_LIMITS = {
 
 ---
 
+## Backend-Specific Debugging
+
+### Testing Current Configuration
+
+**In browser console:**
+
+```javascript
+// Check what backend is detected
+console.log("Backend Kind:", import.meta.env.VITE_BACKEND_KIND);
+console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+
+// Check auth store
+import { useAuthStore } from "@/store/auth.store";
+const auth = useAuthStore.getState();
+console.log("Current user:", auth.user);
+console.log("Tokens:", auth.tokens);
+```
+
+### Network Tab Analysis
+
+**Steps:**
+
+1. Open DevTools (F12) → Network tab
+2. Login and make an API request
+3. Click on the request to see details
+
+**What to look for:**
+
+**ASP.NET Response:**
+```json
+{
+  "code": 200,
+  "message": "Success",
+  "result": {
+    "id": 1,
+    "name": "John"
+  }
+}
+```
+
+**Laravel Response:**
+```json
+{
+  "id": 1,
+  "name": "John"
+}
+// or for lists:
+{
+  "data": [...],
+  "recordsTotal": 100
+}
+```
+
+### Common Debugging Scenarios
+
+#### Scenario 1: Login Works, But API Fails
+
+**Possible Causes:**
+
+1. **Token Format Issue**
+   - Laravel: Single access token
+   - ASP.NET: Access + refresh tokens
+   - Solution: Check `auth.store.ts` for token storage
+
+2. **Authorization Header Format**
+   - ASP.NET: `Authorization: Bearer <token>`
+   - Laravel: `Authorization: Bearer <token>`
+   - Both same, so header is not the issue
+
+3. **Token Expiration**
+   - Check: `console.log(auth.tokens?.accessTokenExpiresAt)`
+   - If expired, login again to refresh
+
+#### Scenario 2: Pagination Doesn't Work
+
+**ASP.NET:**
+- Query params: `pageNumber=1&pageSize=10`
+- Response includes: `totalPages`, `hasNextPage`
+
+**Laravel:**
+- Query params: `page=1&size=10` (or `per_page=10`)
+- Response includes: `total`, `recordsTotal`
+
+**Solution:**
+- Check `src/shared/hooks/createDataTableHook.ts` for param conversion
+- Verify backend accepts the format being sent
+
+#### Scenario 3: Permissions/Roles Not Working
+
+**Laravel:**
+```typescript
+// Check permissions
+const { hasPermission } = useAuthStore();
+hasPermission("users.view"); // ✅ Works
+
+// Check roles
+console.log(user.roles); // Array of role names
+```
+
+**ASP.NET:**
+```typescript
+// Check role
+const { user } = useAuthStore();
+user.role === "Admin"; // ✅ Works
+
+// Or check multiple roles
+user.roles?.includes("Admin"); // If array exists
+```
+
+#### Scenario 4: Date/Time Format Issues
+
+**Common Problem:** Backend sends dates in different formats
+
+**Solution:** Use normalizers to convert
+
+```typescript
+// In src/core/api/normalizers.ts
+if (backendKind === "laravel") {
+  // Laravel: "2025-12-07 10:30:00"
+  item.createdAt = new Date(item.created_at).toISOString();
+} else if (backendKind === "aspnet") {
+  // ASP.NET: "2025-12-07T10:30:00Z"
+  item.createdAt = item.CreatedAt;
+}
+```
+
+#### Scenario 5: Enum/Select Value Mismatches
+
+**Common Problem:** Backend uses different enum values
+
+**ASP.NET:**
+```json
+{
+  "status": "Active",
+  "type": 1
+}
+```
+
+**Laravel:**
+```json
+{
+  "status": "active",
+  "type": "user"
+}
+```
+
+**Solution:** Normalize in endpoint hooks
+
+```typescript
+export const useUsersQuery = createDataTableHook<User>("users", endpoints.users.list, {
+  clientFilter: (items) =>
+    items.map((item) => ({
+      ...item,
+      status: item.status?.toLowerCase(),
+    })),
+});
+```
+
+### Rate Limiting Issues
+
+If you get `429 Too Many Requests`:
+
+1. **Reduce request frequency:**
+   ```typescript
+   staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+   ```
+
+2. **Check rate limit configuration:**
+   ```typescript
+   import { DEFAULT_RATE_LIMITS } from "@/core/security/rateLimit";
+   console.log("Rate limits:", DEFAULT_RATE_LIMITS);
+   ```
+
+3. **Disable rate limiting in development (if needed):**
+   ```typescript
+   // In src/core/security/rateLimit.ts
+   const RATE_LIMITING_ENABLED = process.env.NODE_ENV === "production";
+   ```
+
+### CORS Issues
+
+**Error in Console:** "No 'Access-Control-Allow-Origin' header"
+
+**Solution:**
+
+**Laravel (.env):**
+```env
+FRONTEND_URL=http://localhost:5018
+SESSION_DOMAIN=localhost
+```
+
+**In `config/cors.php`:**
+```php
+'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5018')],
+'allowed_methods' => ['*'],
+'allowed_headers' => ['*'],
+'exposed_headers' => ['Authorization'],
+```
+
+**ASP.NET (Program.cs):**
+```csharp
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins("http://localhost:5018")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials());
+});
+
+app.UseCors("AllowFrontend");
+```
+
+---
+
 ## Backend-Specific Notes
 
 ### Laravel Specifics
@@ -1164,6 +1380,30 @@ DEFAULT_RATE_LIMITS = {
 
 - PascalCase: `FirstName`, `PhoneNumber`, `IsDeleted`
 - Auto-converted to camelCase by normalizers
+
+---
+
+## Testing Checklist
+
+After switching backends, verify:
+
+| Item | Laravel | ASP.NET | Notes |
+|------|---------|---------|-------|
+| Environment variables set | ✓ | ✓ | Check `.env` file |
+| Dev server restarted | ✓ | ✓ | Required after env changes |
+| Login successful | ✓ | ✓ | Should see dashboard |
+| Tokens in localStorage | ✓ | ✓ | Check DevTools → Storage |
+| List page loads | ✓ | ✓ | No 404 or 401 errors |
+| Pagination works | ✓ | ✓ | Try page 2, different sizes |
+| Create dialog opens | ✓ | ✓ | Test form interaction |
+| Create succeeds | ✓ | ✓ | Item appears in list |
+| Update works | ✓ | ✓ | Changes persist |
+| Delete works | ✓ | ✓ | Item removed from list |
+| Translations work | ✓ | ✓ | Switch to Arabic, verify RTL |
+| Permissions/roles show | ✓ | ✓ | Based on logged-in user |
+| Refresh token works | ✗ | ✓ | ASP.NET only |
+| Lint passes | ✓ | ✓ | Run `pnpm lint` |
+| Build succeeds | ✓ | ✓ | Run `pnpm build` |
 
 ---
 

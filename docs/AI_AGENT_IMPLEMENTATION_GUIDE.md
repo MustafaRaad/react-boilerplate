@@ -1,9 +1,8 @@
 # AI Agent Implementation Guide
 
-**Last Updated:** December 6, 2025  
-**Target Audience:** AI Assistants, Developers, Code Generators
-
-This document provides exact, step-by-step instructions for implementing new features in this React + TypeScript + Vite boilerplate project. Follow these patterns precisely to maintain consistency and quality.
+**Last Updated:** December 7, 2025  
+**Target Audience:** AI Assistants, Developers, Code Generators  
+**Purpose:** Exact, step-by-step instructions for implementing features in this multi-backend React boilerplate
 
 ---
 
@@ -907,7 +906,8 @@ return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-1">
         <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-          <Users className="h-6 w-6 text-secondary" /> {/* ← Icon before title */}
+          <Users className="h-6 w-6 text-secondary" />{" "}
+          {/* ← Icon before title */}
           {t("list.title")}
         </h1>
         <p className="text-muted-foreground">{t("list.description")}</p>
@@ -923,6 +923,7 @@ return (
 ```
 
 **Icon Guidelines:**
+
 - Use icon from `src/shared/config/navigation.ts` for the feature
 - Size: `h-6 w-6` for page titles
 - Color: `text-secondary` for consistency
@@ -1445,6 +1446,381 @@ toast.success("Product deleted", {
     onClick: () => restoreProduct(),
   },
 });
+```
+
+---
+
+## Debugging & Troubleshooting
+
+### Common Issues & Solutions
+
+#### 1. **404 Error: API Endpoint Not Found**
+
+**Symptom:** `GET /api/Products/List 404 Not Found`
+
+**Checklist:**
+
+- [ ] Endpoint path doesn't have leading `/`: Use `"Products/List"` not `"/Products/List"`
+- [ ] `VITE_API_BASE_URL` ends with `/`: `https://api.example.com/api/` ✅
+- [ ] Combined URL is correct: `https://api.example.com/api/Products/List`
+- [ ] Backend API is actually running
+- [ ] CORS headers are set correctly on backend
+
+**Debug:**
+
+```typescript
+// In browser console
+console.log(import.meta.env.VITE_API_BASE_URL); // Should show full URL with trailing /
+console.log(import.meta.env.VITE_BACKEND_KIND); // Should show "aspnet" or "laravel"
+
+// Check actual request URL in Network tab of DevTools
+```
+
+#### 2. **401 Unauthorized: Token Issues**
+
+**Symptom:** Login successful but API calls fail with 401
+
+**Checklist:**
+
+- [ ] Token stored in localStorage: `localStorage.getItem("auth-store")`
+- [ ] Token is not expired
+- [ ] Authorization header sent: Check Network tab in DevTools
+- [ ] Backend accepts Authorization header format: `Authorization: Bearer <token>`
+- [ ] Token format matches backend expectations
+
+**Debug:**
+
+```typescript
+// In browser console
+import { useAuthStore } from "@/store/auth.store";
+const store = useAuthStore.getState();
+console.log("User:", store.user);
+console.log("Tokens:", store.tokens);
+console.log(
+  "Expired?",
+  new Date(store.tokens?.accessTokenExpiresAt) < new Date()
+);
+```
+
+#### 3. **CORS Error: "Access-Control-Allow-Origin"**
+
+**Symptom:** Browser console shows CORS error
+
+**Solution:** Backend needs to allow your frontend origin
+
+**Laravel (.env):**
+
+```env
+FRONTEND_URL=http://localhost:5018
+SESSION_DOMAIN=localhost
+```
+
+**ASP.NET (Program.cs):**
+
+```csharp
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins("http://localhost:5018")
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
+```
+
+#### 4. **Data Not Loading: Query Doesn't Fetch**
+
+**Symptom:** Component mounts but no API call happens
+
+**Checklist:**
+
+- [ ] Component is mounted and visible
+- [ ] Query is enabled (check `enabled` option)
+- [ ] API endpoint exists and is registered
+- [ ] `queryKey` is consistent between queries (use `useApiQuery` wrapper)
+- [ ] No console errors blocking execution
+
+**Debug:**
+
+```typescript
+// Add to component
+const query = useApiQuery({
+  queryKey: ["products"],
+  queryFn: async () => apiFetch(endpoints.products.list),
+});
+
+console.log("Query state:", {
+  isLoading: query.isLoading,
+  isError: query.isError,
+  error: query.error,
+  data: query.data,
+});
+
+// Check TanStack Query DevTools in browser (if installed)
+```
+
+#### 5. **Backend Doesn't Recognize Backend Kind**
+
+**Symptom:** Using ASP.NET format with Laravel backend (or vice versa)
+
+**Checklist:**
+
+- [ ] `VITE_BACKEND_KIND` is correctly set in `.env`
+- [ ] Dev server restarted after changing `.env`
+- [ ] Endpoint response format matches backend (see Backend Switching Guide)
+- [ ] Normalization layer (`src/core/api/normalizers.ts`) handles the format
+
+**Debug:**
+
+```typescript
+// In browser console at page load
+console.log("Backend kind:", import.meta.env.VITE_BACKEND_KIND);
+
+// Check network response format in DevTools
+// ASP.NET: { code: 200, message: "...", result: {...} }
+// Laravel: { data: [...], recordsTotal: 100, ... }
+```
+
+#### 6. **Validation Errors Not Showing**
+
+**Symptom:** Form submitted but no error messages appear
+
+**Checklist:**
+
+- [ ] `FieldError` component rendered in form
+- [ ] Zod schema has validation rules
+- [ ] Error message keys are in translation files
+- [ ] `validatorAdapter` is set in useForm
+- [ ] Field value actually triggers validation
+
+**Debug:**
+
+```typescript
+// In form component
+const form = useForm({
+  defaultValues: { name: "" },
+  validatorAdapter: zodValidator(),
+});
+
+// Manually trigger validation
+await form.validateSync();
+console.log("Form errors:", form.state.errors);
+```
+
+#### 7. **Translations Not Appearing (Showing Keys Instead)**
+
+**Symptom:** Page shows `"products:title"` instead of "Products"
+
+**Checklist:**
+
+- [ ] Translation namespace exists: `src/locales/en/products.json`
+- [ ] Translation key is in file: `"title": "Products"`
+- [ ] Correct namespace specified: `useTranslation("products")`
+- [ ] i18n initialized properly in `src/core/i18n/i18n.ts`
+- [ ] Intlayer build completed: `pnpm intlayer:build`
+
+**Debug:**
+
+```typescript
+// In browser console
+import i18n from "i18next";
+console.log("Available resources:", i18n.getResourceBundle("en", "products"));
+console.log("Current language:", i18n.language);
+console.log("Namespaces:", i18n.options.ns);
+```
+
+#### 8. **RTL Not Working (Arabic Layout Issues)**
+
+**Symptom:** Arabic text but layout is still LTR, or vice versa
+
+**Checklist:**
+
+- [ ] `useDirection()` hook used to get `dir` prop
+- [ ] `dir={dir}` attribute set on root container
+- [ ] Tailwind CSS config supports RTL (check `tailwind.config.ts`)
+- [ ] Language changed successfully
+- [ ] CSS uses logical properties (e.g., `start`/`end` instead of `left`/`right`)
+
+**Debug:**
+
+```typescript
+// In component
+const { dir } = useDirection();
+console.log("Current direction:", dir); // Should show "rtl" or "ltr"
+
+// Check DOM
+console.log("Root dir attribute:", document.documentElement.dir);
+
+// Switch language and check
+import i18n from "i18next";
+i18n.changeLanguage("ar");
+```
+
+#### 9. **Mutations Not Invalidating Queries**
+
+**Symptom:** After creating/updating item, list doesn't refresh
+
+**Checklist:**
+
+- [ ] `onSuccess` callback in mutation includes `invalidateQueries`
+- [ ] Query key matches between list hook and mutation invalidation
+- [ ] `queryClient` is obtained from `useQueryClient()`
+- [ ] Component remounted after mutation (not just local state update)
+
+**Debug:**
+
+```typescript
+// In mutation
+const createMutation = useMutation({
+  mutationFn: async (data) => { ... },
+  onSuccess: () => {
+    console.log("About to invalidate queries");
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+    console.log("Queries invalidated");
+  },
+});
+
+// Check if list query refetches in Network tab
+```
+
+#### 10. **Performance Issues: Slow Renders**
+
+**Symptom:** Page laggy or slow to interact with
+
+**Checklist:**
+
+- [ ] Components wrapped with `memo()`
+- [ ] Callbacks wrapped with `useCallback()`
+- [ ] Expensive computations wrapped with `useMemo()`
+- [ ] DataTable `enableRowSelection` or `enableColumnVisibility` disabled if not needed
+- [ ] Virtual scrolling enabled for large lists (`DataTable` supports this)
+- [ ] Too many subscriptions to query/store state
+
+**Solutions:**
+
+```typescript
+// ✅ Use selective subscriptions
+const user = useAuthUser(); // Only rerender when user changes
+const permissions = useAuthPermissions(); // Only rerender when permissions change
+
+// ✅ Memoize expensive renders
+const columns = useMemo(() => createColumns(t), [t]);
+
+// ✅ Wrap callbacks
+const handleDelete = useCallback(
+  (id: number) => {
+    deleteMutation.mutate(id);
+  },
+  [deleteMutation]
+);
+
+// ✅ Use React DevTools Profiler to find bottlenecks
+// In DevTools → Profiler tab → Start recording → Interact → Stop
+```
+
+---
+
+## Debugging Tools
+
+### 1. React DevTools
+
+```
+Chrome Web Store: Search "React Developer Tools"
+- Components tree inspection
+- Props/State tracking
+- Profiler for performance analysis
+```
+
+### 2. TanStack Query DevTools
+
+```typescript
+// Already imported in AppProviders.tsx
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+// Shows in bottom-right corner (dev only)
+// Click to see:
+// - Active queries and their states
+// - Query keys
+// - Data/errors
+// - Refetch history
+```
+
+### 3. TanStack Router DevTools
+
+```typescript
+// Already imported in AppProviders.tsx
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+
+// Shows route tree and navigation history
+```
+
+### 4. Browser DevTools Network Tab
+
+```
+Steps:
+1. Open DevTools (F12)
+2. Go to Network tab
+3. Reload page
+4. Click on API request to see:
+   - Request headers (Authorization, etc.)
+   - Request body
+   - Response format
+   - Status codes
+   - Timing
+```
+
+### 5. Browser Console
+
+```typescript
+// Quick debugging
+console.log("Debug:", variableName);
+console.table(arrayOfObjects);
+console.time("operation");
+// ... code to measure ...
+console.timeEnd("operation");
+
+// Breakpoints
+debugger; // Pauses execution here when DevTools open
+```
+
+---
+
+## Performance Monitoring
+
+### Lighthouse Audit
+
+```bash
+# Built-in to Chrome DevTools
+1. Open DevTools (F12)
+2. Click Lighthouse tab
+3. Select "Desktop" or "Mobile"
+4. Click "Analyze page load"
+5. Review metrics:
+   - First Contentful Paint (FCP)
+   - Largest Contentful Paint (LCP)
+   - Cumulative Layout Shift (CLS)
+   - Time to Interactive (TTI)
+```
+
+### Web Vitals
+
+```typescript
+// Already tracked in src/main.tsx
+import { onCLS, onFCP, onLCP, onTTFB } from "web-vitals";
+
+onCLS(console.log); // Cumulative Layout Shift
+onFCP(console.log); // First Contentful Paint
+onLCP(console.log); // Largest Contentful Paint
+onTTFB(console.log); // Time to First Byte
+```
+
+### Query Performance
+
+```typescript
+// TanStack Query DevTools shows:
+// - Query duration
+// - Cache hit/miss
+// - Refetch frequency
+// - Stale time effectiveness
 ```
 
 ---
