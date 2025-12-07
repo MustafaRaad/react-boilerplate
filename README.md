@@ -1,11 +1,8 @@
-<!--
-  /**
- * @copyright Copyright (c) 2025 Developed By: Mustafa Raad Mutashar
- * @license MIT
- * @contact mustf.raad@gmail.com
- */
-  All rights reserved.
--->
+@copyright Copyright (c) 2025 Developed By: Mustafa Raad Mutashar
+@license MIT
+@contact mustf.raad@gmail.com
+
+All rights reserved.
 
 # React Boilerplate
 
