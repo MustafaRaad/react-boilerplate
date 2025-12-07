@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface DataTableSkeletonProps {
   /** Number of columns to render */
@@ -28,13 +29,13 @@ interface DataTableSkeletonProps {
   className?: string;
 }
 
-export function DataTableSkeleton({
+const DataTableSkeletonComponent = ({
   columnCount,
   rowCount = 10,
   showFilters = false,
   showToolbar = false,
   className,
-}: DataTableSkeletonProps) {
+}: DataTableSkeletonProps) => {
   return (
     <div className={cn("w-full space-y-4", className)}>
       <div className="bg-card rounded-lg py-4 px-4 border">
@@ -113,4 +114,6 @@ export function DataTableSkeleton({
       </div>
     </div>
   );
-}
+};
+
+export const DataTableSkeleton = React.memo(DataTableSkeletonComponent);

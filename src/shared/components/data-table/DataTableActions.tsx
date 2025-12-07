@@ -13,6 +13,7 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/shared/components/ConfirmDeleteDialog";
 import { Eye, Pencil, Trash2, type LucideIcon } from "lucide-react";
+import React from "react";
 
 /**
  * Configuration for a table action button
@@ -34,10 +35,10 @@ interface DataTableActionsProps<TData> {
   actions: DataTableAction<TData>[];
 }
 
-export function DataTableActions<TData>({
+const DataTableActionsComponent = <TData,>({
   row,
   actions,
-}: DataTableActionsProps<TData>) {
+}: DataTableActionsProps<TData>) => {
   return (
     <TooltipProvider>
       <div className="flex items-center gap-1">
@@ -111,6 +112,10 @@ export function DataTableActions<TData>({
       </div>
     </TooltipProvider>
   );
-}
+};
+
+export const DataTableActions = React.memo(
+  DataTableActionsComponent
+) as typeof DataTableActionsComponent;
 
 export { Eye, Pencil, Trash2 };

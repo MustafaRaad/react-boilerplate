@@ -1,3 +1,4 @@
+/* react-compiler-disable */
 /**
  * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
  * @license MIT
@@ -57,6 +58,7 @@ import { DataTableSkeleton } from "@/shared/components/data-table/DataTableSkele
 
 // Extend TanStack Table column meta for filter configuration
 declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
     filterVariant?: "select" | "input" | "date";
     filterOptions?: Array<{ id: string | number; name: string }>;
@@ -138,6 +140,58 @@ function DebouncedInput({
   );
 }
 
+// Memoized TableRow for performance
+import type { Row } from "@tanstack/react-table";
+
+type MemoizedTableRowProps<TData> = {
+  row: Row<TData>;
+  onRowClick?: (row: TData) => void;
+};
+
+function TableRowComponent<TData>({
+  row,
+  onRowClick,
+}: MemoizedTableRowProps<TData>) {
+  return (
+    <TableRow
+      key={row.id}
+      data-state={row.getIsSelected() && "selected"}
+      onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+      className={cn(
+        "transition-colors",
+        onRowClick && "cursor-pointer hover:bg-muted/60"
+      )}
+    >
+      {row.getVisibleCells().map((cell) => (
+        <MemoizedTableCell key={cell.id} cell={cell} />
+      ))}
+    </TableRow>
+  );
+}
+
+const MemoizedTableRow = React.memo(
+  TableRowComponent
+) as typeof TableRowComponent;
+
+type MemoizedTableCellProps<TData> = {
+  cell: ReturnType<Row<TData>["getVisibleCells"]>[number];
+};
+
+function TableCellComponent<TData>({ cell }: MemoizedTableCellProps<TData>) {
+  return (
+    <TableCell
+      className={cn(
+        "px-4",
+        cell.column.id === "actions" ? "py-0 w-[1%] whitespace-nowrap" : "py-3"
+      )}
+    >
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </TableCell>
+  );
+}
+
+const MemoizedTableCell = React.memo(TableCellComponent) as typeof TableCellComponent;
+
 const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   const {
     columns,
@@ -153,12 +207,19 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     onRefresh,
   } = props;
 
+  // Memoize columns, actions, and data for performance
+  const memoizedColumns = React.useMemo(() => columns, [columns]);
+  const memoizedActions = React.useMemo(() => actions, [actions]);
+  const memoizedData = React.useMemo(() => {
+    return "queryResult" in props
+      ? props.queryResult.data?.items ?? []
+      : props.data;
+  }, [props]);
+
   // Automatically determine mode based on backend
   const mode = backendKind === "laravel" ? "client" : "server";
 
-  // Extract data and total from either direct props or queryResult
-  const data =
-    "queryResult" in props ? props.queryResult.data?.items ?? [] : props.data;
+  // Extract total from either direct props or queryResult
   const total =
     "queryResult" in props ? props.queryResult.data?.rowCount : props.total;
   const isLoading =
@@ -200,22 +261,23 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
 
   // Add actions column if actions are provided
   const columnsWithActions = React.useMemo(() => {
-    if (!actions || actions.length === 0) return columns;
+    if (!memoizedActions || memoizedActions.length === 0)
+      return memoizedColumns;
 
     const actionsColumn: ColumnDef<TData> = {
       id: "actions",
       header: () => t("actions.title", { ns: "common" }),
       cell: ({ row }) => (
-        <DataTableActions row={row.original} actions={actions} />
+        <DataTableActions row={row.original} actions={memoizedActions} />
       ),
       enableColumnFilter: false,
     };
 
-    return [...columns, actionsColumn];
-  }, [columns, actions, t]);
+    return [...memoizedColumns, actionsColumn];
+  }, [memoizedColumns, memoizedActions, t]);
 
   const table = useReactTable({
-    data,
+    data: memoizedData,
     columns: columnsWithActions,
     state: {
       pagination,
@@ -252,9 +314,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   const canNext = table.getCanNextPage();
 
   // Render filter component based on column configuration
-  const renderColumnFilter = (
-    column: ReturnType<typeof table.getAllColumns>[0]
-  ) => {
+  function renderColumnFilter(column: ReturnType<typeof table.getAllColumns>[0]) {
     const columnDef = column.columnDef as ColumnDefWithFilter;
     const shouldShowFilter = columnDef.enableColumnFilter !== false;
     const filterVariant = columnDef.meta?.filterVariant;
@@ -302,7 +362,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     return (
       <DebouncedInput key={String(filterValue ?? "")} column={column} t={t} />
     );
-  };
+  }
 
   // CSV Export handler
   const handleExport = () => {
@@ -356,7 +416,9 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
 
   // Calculate column count including actions
   const totalColumnCount =
-    actions && actions.length > 0 ? columns.length + 1 : columns.length;
+    memoizedActions && memoizedActions.length > 0
+      ? memoizedColumns.length + 1
+      : memoizedColumns.length;
 
   // Show skeleton loader during initial load
   if (isLoading) {
@@ -516,32 +578,11 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                     {virtualRows.map((virtualRow) => {
                       const row = rows[virtualRow.index];
                       return (
-                        <TableRow
+                        <MemoizedTableRow
                           key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                          onClick={() => onRowClick?.(row.original)}
-                          className={cn(
-                            "transition-colors",
-                            onRowClick && "cursor-pointer hover:bg-muted/60"
-                          )}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell
-                              key={cell.id}
-                              className={cn(
-                                "px-4",
-                                cell.column.id === "actions"
-                                  ? "py-0 w-[1%] whitespace-nowrap"
-                                  : "py-3"
-                              )}
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
+                          row={row}
+                          onRowClick={onRowClick}
+                        />
                       );
                     })}
                     {paddingBottom > 0 && (
@@ -553,38 +594,17 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                 ) : (
                   // Normal rendering mode
                   rows.map((row) => (
-                    <TableRow
+                    <MemoizedTableRow
                       key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                      onClick={() => onRowClick?.(row.original)}
-                      className={cn(
-                        "transition-colors",
-                        onRowClick && "cursor-pointer hover:bg-muted/60"
-                      )}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className={cn(
-                            "px-4",
-                            cell.column.id === "actions"
-                              ? "py-0 w-[1%] whitespace-nowrap"
-                              : "py-3"
-                          )}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
+                      row={row}
+                      onRowClick={onRowClick}
+                    />
                   ))
                 )
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
+                    colSpan={memoizedColumns.length}
                     className="h-32 text-center text-muted-foreground"
                   >
                     {emptyMessage || t("table.empty")}

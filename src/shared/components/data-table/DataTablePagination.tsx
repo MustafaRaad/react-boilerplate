@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import React from "react";
 
 interface DataTablePaginationProps {
   pageIndex: number;
@@ -27,7 +28,7 @@ interface DataTablePaginationProps {
   pageSizeOptions?: number[];
 }
 
-export function DataTablePagination({
+const DataTablePaginationComponent = ({
   pageIndex,
   pageSize,
   pageCount,
@@ -37,7 +38,7 @@ export function DataTablePagination({
   onNextPage,
   onPageSizeChange,
   pageSizeOptions = [5, 10, 20, 30, 50, 100],
-}: DataTablePaginationProps) {
+}: DataTablePaginationProps) => {
   const { t } = useTranslation();
 
   return (
@@ -91,4 +92,6 @@ export function DataTablePagination({
       </div>
     </div>
   );
-}
+};
+
+export const DataTablePagination = React.memo(DataTablePaginationComponent);
