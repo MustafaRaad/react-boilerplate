@@ -98,31 +98,40 @@ export function LoginForm({
                 validators={{
                   onChange: ({ value }) => {
                     const result = loginSchema.shape.email.safeParse(value);
-                    return result.success
-                      ? undefined
-                      : t(result.error.issues[0]?.message || "");
+                    if (!result.success) {
+                      return result.error.issues[0]?.message
+                        ? t(result.error.issues[0].message)
+                        : undefined;
+                    }
+                    return undefined;
                   },
                 }}
               >
-                {(field) => (
-                  <Field>
-                    <FieldLabel htmlFor={field.name}>
-                      {t("auth.email")}
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      autoComplete="email"
-                    />
-                    {field.state.meta.errors?.length ? (
-                      <FieldError>{field.state.meta.errors[0]}</FieldError>
-                    ) : null}
-                  </Field>
-                )}
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        {t("auth.email")}
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        type="email"
+                        placeholder="m@example.com"
+                        required
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        autoComplete="email"
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && field.state.meta.errors?.length ? (
+                        <FieldError>{field.state.meta.errors[0]}</FieldError>
+                      ) : null}
+                    </Field>
+                  );
+                }}
               </form.Field>
 
               <form.Field
@@ -130,42 +139,54 @@ export function LoginForm({
                 validators={{
                   onChange: ({ value }) => {
                     const result = loginSchema.shape.password.safeParse(value);
-                    return result.success
-                      ? undefined
-                      : t(result.error.issues[0]?.message || "");
+                    if (!result.success) {
+                      return result.error.issues[0]?.message
+                        ? t(result.error.issues[0].message)
+                        : undefined;
+                    }
+                    return undefined;
                   },
                 }}
               >
-                {(field) => (
-                  <Field>
-                    <div className="flex items-center">
-                      <FieldLabel htmlFor={field.name}>
-                        {t("auth.password")}
-                      </FieldLabel>
-                      <PasswordResetDialog
-                        trigger={
-                          <button
-                            type="button"
-                            className="ms-auto text-sm underline-offset-2 hover:underline"
-                          >
-                            {t("auth.forgotPassword", "Forgot your password?")}
-                          </button>
-                        }
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <div className="flex items-center">
+                        <FieldLabel htmlFor={field.name}>
+                          {t("auth.password")}
+                        </FieldLabel>
+                        <PasswordResetDialog
+                          trigger={
+                            <button
+                              type="button"
+                              className="ms-auto text-sm underline-offset-2 hover:underline"
+                            >
+                              {t(
+                                "auth.forgotPassword",
+                                "Forgot your password?"
+                              )}
+                            </button>
+                          }
+                        />
+                      </div>
+                      <Input
+                        id={field.name}
+                        type="password"
+                        required
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        autoComplete="current-password"
+                        aria-invalid={isInvalid}
                       />
-                    </div>
-                    <Input
-                      id={field.name}
-                      type="password"
-                      required
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      autoComplete="current-password"
-                    />
-                    {field.state.meta.errors?.length ? (
-                      <FieldError>{field.state.meta.errors[0]}</FieldError>
-                    ) : null}
-                  </Field>
-                )}
+                      {isInvalid && field.state.meta.errors?.length ? (
+                        <FieldError>{field.state.meta.errors[0]}</FieldError>
+                      ) : null}
+                    </Field>
+                  );
+                }}
               </form.Field>
 
               <Field>

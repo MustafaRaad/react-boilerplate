@@ -140,30 +140,41 @@ export function PasswordResetDialog({
             validators={{
               onChange: ({ value }) => {
                 const result = resetSchema.shape.email.safeParse(value);
-                return result.success
-                  ? undefined
-                  : t(result.error.issues[0]?.message || "");
+                if (!result.success) {
+                  return result.error.issues[0]?.message
+                    ? t(result.error.issues[0].message)
+                    : undefined;
+                }
+                return undefined;
               },
             }}
           >
-            {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>{t("auth.email")}</FieldLabel>
-                <Input
-                  id={field.name}
-                  type="email"
-                  placeholder={t("auth.emailPlaceholder", "your@example.com")}
-                  required
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  autoComplete="email"
-                  disabled={isSubmitting}
-                />
-                {field.state.meta.errors?.length ? (
-                  <FieldError>{field.state.meta.errors[0]}</FieldError>
-                ) : null}
-              </Field>
-            )}
+            {(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel htmlFor={field.name}>
+                    {t("auth.email")}
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    type="email"
+                    placeholder={t("auth.emailPlaceholder", "your@example.com")}
+                    required
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={field.handleBlur}
+                    autoComplete="email"
+                    disabled={isSubmitting}
+                    aria-invalid={isInvalid}
+                  />
+                  {isInvalid && field.state.meta.errors?.length ? (
+                    <FieldError>{field.state.meta.errors[0]}</FieldError>
+                  ) : null}
+                </Field>
+              );
+            }}
           </form.Field>
 
           <DialogFooter className="gap-2">
