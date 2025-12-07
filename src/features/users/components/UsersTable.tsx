@@ -16,7 +16,7 @@ import { useUsers } from "@/features/users/api/useUsers";
 import { createUsersColumns } from "./UsersTable.columns.tsx";
 import { GenericActionDialog } from "@/shared/components/dialogs/GenericActionDialog";
 import { useDialogState } from "@/shared/hooks/useDialogState";
-import { createUserUpdateSchema } from "../schemas/user.schema";
+import { userUpdateFormSchema } from "../schemas/user.schema";
 import { userEditFieldsDefinition } from "../config/dialogConfig";
 import { useUpdateUser, useDeleteUser } from "../api/useUsers";
 import type { User, UserUpdateData } from "@/features/users/types";
@@ -93,7 +93,7 @@ export const UsersTable = memo(function UsersTable() {
       {editDialog.data && (
         <GenericActionDialog
           isCreate={false}
-          schema={createUserUpdateSchema(t)}
+          schema={userUpdateFormSchema(t)}
           initialValues={editDialog.data}
           open={editDialog.isOpen}
           onOpenChange={editDialog.setOpen}

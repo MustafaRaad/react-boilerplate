@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { GenericActionDialog } from "@/shared/components/dialogs/GenericActionDialog";
 import { useDialogState } from "@/shared/hooks/useDialogState";
-import { createUserFormSchema } from "../schemas/user.schema";
+import { userFormSchema } from "../schemas/user.schema";
 import { userFieldsDefinition } from "../config/dialogConfig";
 import { useCreateUser } from "../api/useUsers";
 import type { UserFormData } from "../types";
@@ -54,7 +54,7 @@ export const UsersListPage = memo(function UsersListPage() {
       <UsersTable />
 
       <GenericActionDialog
-        schema={createUserFormSchema(t)}
+        schema={userFormSchema(t)}
         open={createDialog.isOpen}
         onOpenChange={createDialog.setOpen}
         onSubmit={handleCreateSubmit}
