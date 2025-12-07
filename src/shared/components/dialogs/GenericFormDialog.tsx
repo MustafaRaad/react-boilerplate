@@ -136,7 +136,7 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
     <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
-      <DialogContent dir={dir} className="sm:max-w-lg">
+      <DialogContent dir={dir} className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? (
@@ -149,7 +149,7 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
             event.preventDefault();
             void form.handleSubmit();
           }}
-          className="space-y-4"
+          className="grid grid-cols-2 gap-4"
         >
           <SchemaFormFields
             schema={schema}
@@ -157,7 +157,7 @@ export function GenericFormDialog<TSchema extends z.ZodTypeAny>({
             fieldConfig={fieldConfig}
           />
 
-          <DialogFooter className="flex justify-end">
+          <DialogFooter className="flex justify-end col-span-2">
             <Button
               type="button"
               variant="outline"

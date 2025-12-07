@@ -39,11 +39,11 @@ export function DateRangePicker({
   }
   return (
     <Popover>
-      <PopoverTrigger asChild className="bg-input/30">
+      <PopoverTrigger asChild className="bg-input dark:bg-input/30">
         <Button
           variant="outline"
           className={cn(
-              "w-full justify-start text-left h-8",
+            "w-full justify-start text-left h-8",
             !dateRange && "text-muted-foreground",
             className
           )}

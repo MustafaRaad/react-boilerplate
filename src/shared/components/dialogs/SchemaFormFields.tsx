@@ -87,7 +87,7 @@ const resolveZodType = (zodType?: z.ZodTypeAny): BaseFieldType => {
     }
     default:
       return "text";
-  };
+  }
 };
 
 export function SchemaFormFields<TSchema extends z.ZodTypeAny>({
@@ -243,20 +243,21 @@ export function SchemaFormFields<TSchema extends z.ZodTypeAny>({
                     );
                   case "checkbox":
                     return (
-                      <div className="flex items-center gap-2">
+                      <Label className="hover:bg-accent/50 flex items-start gap-3 rounded-lg border p-3 has-[[aria-checked=true]]:border-primary has-[[aria-checked=true]]:bg-primary/5 dark:has-[[aria-checked=true]]:border-primary dark:has-[[aria-checked=true]]:bg-primary/10 cursor-pointer">
                         <Checkbox
                           id={fieldKey}
                           checked={Boolean(field.state.value)}
                           onCheckedChange={(checked) =>
                             field.handleChange(Boolean(checked))
                           }
+                          className="data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary mt-0.5"
                         />
-                        {label ? (
-                          <Label htmlFor={fieldKey} className="font-normal">
+                        <div className="grid gap-1.5 font-normal">
+                          <p className="text-sm leading-none font-medium">
                             {label}
-                          </Label>
-                        ) : null}
-                      </div>
+                          </p>
+                        </div>
+                      </Label>
                     );
                   case "date":
                     return (
@@ -292,12 +293,12 @@ export function SchemaFormFields<TSchema extends z.ZodTypeAny>({
               };
 
               return (
-                <div className="space-y-1.5">
+                <div className={`${isCheckbox ? "col-span-2" : "space-y-1.5"}`}>
                   {!isCheckbox && label ? (
                     <Label htmlFor={fieldKey}>{label}</Label>
                   ) : null}
                   {renderControl()}
-                  {showError ? (
+                  {showError && !isCheckbox ? (
                     <p className="text-xs text-destructive">{errorMessage}</p>
                   ) : null}
                 </div>
