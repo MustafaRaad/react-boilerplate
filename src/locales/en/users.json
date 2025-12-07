@@ -10,7 +10,7 @@
       "roles": "Roles",
       "role": "Role",
       "approved": "Approved",
-      "createdAt": "Created at",
+      "created_at": "Created at",
       "actions": "Actions"
     },
     "filters": {

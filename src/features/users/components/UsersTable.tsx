@@ -13,7 +13,7 @@ import {
   type DataTableAction,
 } from "@/shared/components/data-table/DataTable.tsx";
 import { useUsers } from "@/features/users/api/useUsers";
-import { createUsersColumns } from "./UsersTable.columns.tsx";
+import { useUsersColumns } from "./UsersTable.columns.tsx";
 import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
 import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
@@ -24,7 +24,7 @@ export const UsersTable = memo(function UsersTable() {
   const { t } = useTranslation("users");
   const { t: tCommon } = useTranslation("common");
   const usersQuery = useUsers();
-  const columns = useMemo(() => createUsersColumns(t), [t]);
+  const columns = useUsersColumns(t);
   const editDialog = useDialogState<User>();
 
   const updateUserMutation = useUpdateUser({
@@ -87,6 +87,7 @@ export const UsersTable = memo(function UsersTable() {
         enableColumnFilters
         showExport
         actions={actions}
+        initialState={{ sorting: [{ id: "created_at", desc: true }] }}
       />
 
       {editDialog.data && (

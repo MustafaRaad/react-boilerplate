@@ -10,10 +10,12 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
+  type SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -88,6 +90,9 @@ type DataTableProps<TData> = {
   enableVirtualization?: boolean; // Enable virtual scrolling for large datasets
   estimateRowHeight?: number; // Estimated row height in pixels (default: 53)
   onRefresh?: () => void; // Callback to refresh table data
+  initialState?: {
+    sorting?: SortingState;
+  };
 };
 
 // Overload for query result (recommended)
@@ -205,6 +210,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     enableVirtualization = false,
     estimateRowHeight = 53,
     onRefresh,
+    initialState,
   } = props;
 
   // Memoize columns, actions, and data for performance
@@ -242,6 +248,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   });
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>(initialState?.sorting ?? []);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync pagination state with URL params
@@ -282,6 +289,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     state: {
       pagination,
       columnFilters,
+      sorting,
     },
     pageCount:
       mode === "server" && total && pagination.pageSize
@@ -300,7 +308,9 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
             updateUrlPagination(next.pageIndex + 1, next.pageSize);
           },
     onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: enableColumnFilters
       ? getFilteredRowModel()
       : undefined,

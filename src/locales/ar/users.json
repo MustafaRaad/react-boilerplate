@@ -10,7 +10,7 @@
       "roles": "الأدوار",
       "role": "الدور",
       "approved": "مُعتمد",
-      "createdAt": "تاريخ الإنشاء",
+      "created_at": "تاريخ الإنشاء",
       "actions": "الإجراءات"
     },
     "filters": {
