@@ -5,9 +5,11 @@
     "columns": {
       "name": "الاسم",
       "email": "البريد الإلكتروني",
-      "phone": "رقم الهاتف",
+      "phone_no": "رقم الهاتف",
       "status": "الحالة",
       "roles": "الأدوار",
+      "role": "الدور",
+      "approved": "مُعتمد",
       "createdAt": "تاريخ الإنشاء",
       "actions": "الإجراءات"
     },
@@ -20,19 +22,6 @@
         "inactive": "غير نشط"
       }
     }
-  },
-  "validation": {
-    "nameMinLength": "يجب أن يكون الاسم 2 حرف على الأقل",
-    "nameRequired": "الاسم مطلوب",
-    "invalidEmail": "عنوان البريد الإلكتروني غير صالح",
-    "emailRequired": "البريد الإلكتروني مطلوب",
-    "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
-    "passwordRequired": "كلمة المرور مطلوبة",
-    "phoneMinLength": "يجب أن يكون رقم الهاتف 10 أرقام على الأقل",
-    "phoneMaxLength": "يجب ألا يزيد رقم الهاتف عن 15 رقماً",
-    "phoneRequired": "رقم الهاتف مطلوب",
-    "roleRequired": "الدور مطلوب",
-    "fieldRequired": "هذا الحقل مطلوب"
   },
   "dialogs": {
     "create": {
@@ -49,36 +38,35 @@
       "description": "سيتم حذف {{name}} نهائياً."
     }
   },
-  "form": {
-    "name": {
-      "label": "الاسم",
-      "placeholder": "أدخل الاسم الكامل للمستخدم"
-    },
-    "email": {
-      "label": "البريد الإلكتروني",
-      "placeholder": "user@example.com"
-    },
-    "password": {
-      "label": "كلمة المرور",
-      "placeholder": "أدخل كلمة المرور"
-    },
-    "phone_no": {
-      "label": "رقم الهاتف",
-      "placeholder": "+1234567890"
-    },
-    "role": {
-      "label": "الدور",
-      "placeholder": "اختر دور"
-    },
-    "approved": {
-      "label": "الحساب موافق عليه",
-      "placeholder": ""
-    }
+  "fields": {
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "phone_no": "رقم الهاتف",
+    "role": "الدور",
+    "approved": "الحساب موافق عليه"
   },
-  "roles": {
-    "admin": "مدير",
-    "manager": "مدير فرع",
-    "user": "مستخدم",
-    "cashier": "أمين الصندوق"
+  "placeholders": {
+    "name": "أدخل الاسم الكامل للمستخدم",
+    "email": "user@example.com",
+    "password": "أدخل كلمة المرور",
+    "phone_no": "+1234567890",
+    "role": "اختر دور",
+    "approved": ""
+  },
+  "descriptions": {
+    "name": "",
+    "email": "",
+    "password": "",
+    "phone_no": "",
+    "role": "",
+    "approved": ""
+  },
+  "options": {
+    "role": {
+      "admin": "مدير",
+      "staff": "موظف",
+      "user": "مستخدم"
+    }
   }
 }

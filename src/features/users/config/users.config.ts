@@ -5,17 +5,17 @@
  *
  * USER FORM CONFIGURATION - Single Source of Truth
  * ================================================
- * 
+ *
  * This is the ONLY file you need to define for user forms!
  * Everything else is automated from this configuration.
- * 
+ *
  * The system automatically generates:
  * - Zod validation schema
  * - Form fields rendering
  * - Default values
  * - Error messages
  * - Table columns (coming soon)
- * 
+ *
  * To add a new field: Just add it to USER_FIELDS below!
  */
 
@@ -27,9 +27,9 @@ import { defineFields, field } from "@/shared/forms/autoForm";
  */
 export const USER_FIELDS = defineFields({
   name: field.text({
-    label: "users.name",
-    placeholder: "users.namePlaceholder",
-    description: "users.nameDescription",
+    label: "users.fields.name",
+    placeholder: "users.placeholders.name",
+    description: "users.descriptions.name",
     required: true,
     validation: {
       minLength: 2,
@@ -37,16 +37,16 @@ export const USER_FIELDS = defineFields({
   }),
 
   email: field.email({
-    label: "users.email",
-    placeholder: "users.emailPlaceholder",
-    description: "users.emailDescription",
+    label: "users.fields.email",
+    placeholder: "users.placeholders.email",
+    description: "users.descriptions.email",
     required: true,
   }),
 
   phone_no: field.tel({
-    label: "users.phone_no",
-    placeholder: "users.phonePlaceholder",
-    description: "users.phoneDescription",
+    label: "users.fields.phone_no",
+    placeholder: "users.placeholders.phone_no",
+    description: "users.descriptions.phone_no",
     required: true,
     validation: {
       minLength: 10,
@@ -55,21 +55,21 @@ export const USER_FIELDS = defineFields({
   }),
 
   role: field.select({
-    label: "users.role",
-    placeholder: "users.selectRole",
-    description: "users.roleDescription",
+    label: "users.fields.role",
+    placeholder: "users.placeholders.role",
+    description: "users.descriptions.role",
     required: true,
     options: [
-      { value: "admin", label: "users.role.admin" },
-      { value: "staff", label: "users.role.staff" },
-      { value: "user", label: "users.role.user" },
+      { value: "admin", label: "users.options.role.admin" },
+      { value: "staff", label: "users.options.role.staff" },
+      { value: "user", label: "users.options.role.user" },
     ],
   }),
 
   password: field.password({
-    label: "users.password",
-    placeholder: "users.passwordPlaceholder",
-    description: "users.passwordDescription",
+    label: "users.fields.password",
+    placeholder: "users.placeholders.password",
+    description: "users.descriptions.password",
     required: true,
     validation: {
       minLength: 6,
@@ -78,8 +78,8 @@ export const USER_FIELDS = defineFields({
   }),
 
   approved: field.checkbox({
-    label: "users.approved",
-    description: "users.approvedDescription",
+    label: "users.fields.approved",
+    description: "users.descriptions.approved",
     defaultValue: false,
     // showInMode: ["edit"], // Only show in edit mode
   }),
@@ -90,7 +90,7 @@ export type UserFieldName = keyof typeof USER_FIELDS;
 
 /**
  * Example: Define a product form in just a few lines!
- * 
+ *
  * export const PRODUCT_FIELDS = defineFields({
  *   name: field.text({ required: true, validation: { minLength: 3 } }),
  *   price: field.number({ required: true, validation: { min: 0, positive: true } }),

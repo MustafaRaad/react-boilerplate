@@ -121,8 +121,16 @@
       "invalid": "Invalid email address"
     },
     "password": {
-      "min": "Password must be at least 6 characters"
-    }
+      "min": "Password must be at least 6 characters",
+      "required": "Password is required"
+    },
+    "nameMinLength": "Name must be at least 2 characters",
+    "nameRequired": "Name is required",
+    "phoneMinLength": "Phone number must be at least 10 digits",
+    "phoneMaxLength": "Phone number must be at most 15 digits",
+    "phoneRequired": "Phone number is required",
+    "roleRequired": "Role is required",
+    "fieldRequired": "This field is required"
   },
   "errors": {
     "unexpected": "Something went wrong",

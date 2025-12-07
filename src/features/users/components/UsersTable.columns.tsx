@@ -23,7 +23,7 @@ type TFn = (key: string) => string;
  */
 export const createUsersColumns = (t: TFn): ColumnDef<User, unknown>[] => {
   return createAutoColumns<User>(USER_FIELDS, t, {
-    exclude: ["approved"], // Hide these fields from table
+    // exclude: ["approved"], // Hide these fields from table
     dateFields: ["created_at"], // Format as dates
   });
 };

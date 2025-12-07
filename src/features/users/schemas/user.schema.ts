@@ -27,21 +27,21 @@ export const userSchema = z.object({
  */
 const userFieldValidation = (t: (key: string) => string) => ({
   name: z
-    .string({ message: t("validation.nameRequired") })
-    .min(2, t("validation.nameMinLength")),
+    .string({ message: t("common:validation.nameRequired") })
+    .min(2, t("common:validation.nameMinLength")),
   email: z
-    .string({ message: t("validation.emailRequired") })
-    .email(t("validation.invalidEmail")),
+    .string({ message: t("common:validation.email.required") })
+    .email(t("common:validation.email.invalid")),
   phone_no: z
-    .string({ message: t("validation.phoneRequired") })
-    .min(10, t("validation.phoneMinLength"))
-    .max(15, t("validation.phoneMaxLength")),
+    .string({ message: t("common:validation.phoneRequired") })
+    .min(10, t("common:validation.phoneMinLength"))
+    .max(15, t("common:validation.phoneMaxLength")),
   role: z
-    .string({ message: t("validation.roleRequired") })
-    .min(1, t("validation.roleRequired")),
+    .string({ message: t("common:validation.roleRequired") })
+    .min(1, t("common:validation.roleRequired")),
   password: z
-    .string({ message: t("validation.passwordRequired") })
-    .min(6, t("validation.passwordMinLength")),
+    .string({ message: t("common:validation.password.required") })
+    .min(6, t("common:validation.password.min")),
   approved: z.number().int().min(0).max(1),
 });
 

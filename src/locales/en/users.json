@@ -5,9 +5,11 @@
     "columns": {
       "name": "Name",
       "email": "Email",
-      "phone": "Phone",
+      "phone_no": "Phone",
       "status": "Status",
       "roles": "Roles",
+      "role": "Role",
+      "approved": "Approved",
       "createdAt": "Created at",
       "actions": "Actions"
     },
@@ -20,19 +22,6 @@
         "inactive": "Inactive"
       }
     }
-  },
-  "validation": {
-    "nameMinLength": "Name must be at least 2 characters",
-    "nameRequired": "Name is required",
-    "invalidEmail": "Invalid email address",
-    "emailRequired": "Email is required",
-    "passwordMinLength": "Password must be at least 6 characters",
-    "passwordRequired": "Password is required",
-    "phoneMinLength": "Phone number must be at least 10 digits",
-    "phoneMaxLength": "Phone number must be at most 15 digits",
-    "phoneRequired": "Phone number is required",
-    "roleRequired": "Role is required",
-    "fieldRequired": "This field is required"
   },
   "dialogs": {
     "create": {
@@ -49,36 +38,35 @@
       "description": "This will permanently delete {{name}}."
     }
   },
-  "form": {
-    "name": {
-      "label": "Name",
-      "placeholder": "Enter user's full name"
-    },
-    "email": {
-      "label": "Email",
-      "placeholder": "user@example.com"
-    },
-    "password": {
-      "label": "Password",
-      "placeholder": "Enter password"
-    },
-    "phone_no": {
-      "label": "Phone Number",
-      "placeholder": "+1234567890"
-    },
-    "role": {
-      "label": "Role",
-      "placeholder": "Select a role"
-    },
-    "approved": {
-      "label": "Account Approved",
-      "placeholder": ""
-    }
+  "fields": {
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "phone_no": "Phone Number",
+    "role": "Role",
+    "approved": "Account Approved"
   },
-  "roles": {
-    "admin": "Administrator",
-    "manager": "Manager",
-    "user": "User",
-    "cashier": "Cashier"
+  "placeholders": {
+    "name": "Enter user's full name",
+    "email": "user@example.com",
+    "password": "Enter password",
+    "phone_no": "+1234567890",
+    "role": "Select a role",
+    "approved": ""
+  },
+  "descriptions": {
+    "name": "",
+    "email": "",
+    "password": "",
+    "phone_no": "",
+    "role": "",
+    "approved": ""
+  },
+  "options": {
+    "role": {
+      "admin": "Administrator",
+      "staff": "Staff",
+      "user": "User"
+    }
   }
 }
