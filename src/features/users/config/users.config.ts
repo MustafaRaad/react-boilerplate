@@ -81,7 +81,6 @@ export const USER_FIELDS = defineFields({
     label: "fields.approved",
     description: "descriptions.approved",
     defaultValue: false,
-    // showInMode: ["edit"], // Only show in edit mode
   }),
 });
 

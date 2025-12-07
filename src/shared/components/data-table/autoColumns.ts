@@ -110,10 +110,45 @@ export function createAutoColumns<T extends Record<string, unknown>>(
           );
         };
 
-        columnDef.cell = ({ row }) => {
-          const value = row.getValue(fieldName);
-          return value ? String(value) : "-";
-        };
+        // Check if this is a boolean-like field (0/1, true/false)
+        const isBooleanField = fieldConfig.options.every(
+          (opt) =>
+            opt.value === "0" ||
+            opt.value === "1" ||
+            opt.value === 0 ||
+            opt.value === 1
+        );
+
+        if (isBooleanField) {
+          // Special rendering for boolean-like fields with badges
+          columnDef.cell = ({ row }) => {
+            const value = row.getValue(fieldName);
+            if (value === null || value === undefined) return "-";
+
+            const isTrue =
+              value === 1 ||
+              value === "1" ||
+              value === true ||
+              value === "true";
+            
+            const label = fieldConfig.options?.find(
+              (opt) => String(opt.value) === String(value)
+            )?.label ?? "";
+            
+            const translatedLabel = t(label);
+            const icon = isTrue ? "✓" : "✗";
+            
+            // Return formatted text with emoji
+            return `${icon} ${translatedLabel}`;
+          };
+        } else {
+          // Default select rendering
+          columnDef.cell = ({ row }) => {
+            const value = row.getValue(fieldName);
+            return value ? String(value) : "-";
+          };
+        }
+        
         columnDef.filterFn = selectFilterFn;
         columnDef.meta = {
           filterVariant: "select",
@@ -121,11 +156,33 @@ export function createAutoColumns<T extends Record<string, unknown>>(
         };
       }
 
-      // Add checkbox display
+      // Add checkbox display with select filter
       if (fieldConfig.type === "checkbox") {
         columnDef.cell = ({ row }) => {
           const value = row.getValue(fieldName);
-          return value ? "✓" : "✗";
+          const isTrue = value === 1 || value === "1" || value === true || value === "true";
+          const translatedLabel = t(isTrue ? "options.approved.yes" : "options.approved.no");
+          const icon = isTrue ? "✓" : "✗";
+          return `${icon} ${translatedLabel}`;
+        };
+        
+        // Add select filter for checkbox fields
+        const checkboxOptions = [
+          { id: "1", name: t("options.approved.yes") },
+          { id: "0", name: t("options.approved.no") },
+        ];
+        
+        const checkboxFilterFn: FilterFn<T> = (row, _columnId, filterValue) => {
+          const value = row.getValue(fieldName);
+          const isTrue = value === 1 || value === "1" || value === true || value === "true";
+          const valueAsString = isTrue ? "1" : "0";
+          return valueAsString === String(filterValue);
+        };
+        
+        columnDef.filterFn = checkboxFilterFn;
+        columnDef.meta = {
+          filterVariant: "select",
+          filterOptions: checkboxOptions,
         };
       }
 

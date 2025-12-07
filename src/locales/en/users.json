@@ -67,6 +67,10 @@
       "admin": "Administrator",
       "staff": "Staff",
       "user": "User"
+    },
+    "approved": {
+      "yes": "Approved",
+      "no": "Not Approved"
     }
   }
 }
