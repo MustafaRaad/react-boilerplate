@@ -892,6 +892,42 @@ In `src/shared/components/layout/Sidebar.tsx`, add:
 
 **Use the factory pattern - DO NOT write pagination logic manually.**
 
+### Page Header Pattern
+
+**ALWAYS include the feature icon from navigation config in page titles:**
+
+```typescript
+import { Users } from "lucide-react"; // ← Import icon from navigation
+import { useTranslation } from "react-i18next";
+
+const { t } = useTranslation("users");
+
+return (
+  <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-1">
+        <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
+          <Users className="h-6 w-6 text-secondary" /> {/* ← Icon before title */}
+          {t("list.title")}
+        </h1>
+        <p className="text-muted-foreground">{t("list.description")}</p>
+      </div>
+      <Button onClick={() => createDialog.open()}>
+        <Plus className="h-4 w-4" />
+        {tCommon("actions.add")}
+      </Button>
+    </div>
+    {/* Table component */}
+  </div>
+);
+```
+
+**Icon Guidelines:**
+- Use icon from `src/shared/config/navigation.ts` for the feature
+- Size: `h-6 w-6` for page titles
+- Color: `text-secondary` for consistency
+- Position: Before title text with `gap-2`
+
 ### Pattern A: Simple List (No Filters)
 
 ```typescript

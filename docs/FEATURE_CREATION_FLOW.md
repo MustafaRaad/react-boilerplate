@@ -177,6 +177,24 @@ export const endpoints = {
 - Tables: build `<Feature>Table.tsx` + `<Feature>Table.columns.tsx` using TanStack Table + shared `DataTable`.
 - Dialogs/forms: prefer `GenericFormDialog` or `AutoFormDialog`; wire schemas and translations to `common` + feature namespaces.
 
+### Page Header Pattern
+
+**ALWAYS add the feature icon from navigation config before page titles:**
+
+```tsx
+import { Products } from "lucide-react"; // ← From navigation.ts
+
+<div className="space-y-1">
+  <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
+    <Products className="h-6 w-6 text-secondary" /> {/* ← Icon here */}
+    {t("list.title")}
+  </h1>
+  <p className="text-muted-foreground">{t("list.description")}</p>
+</div>
+```
+
+**Icon specs:** `h-6 w-6 text-secondary`, positioned before title with `gap-2`.
+
 ## 6) Routing and navigation
 
 - Register route under the dashboard tree (e.g., `routeTree.ts` or file routes) and ensure it is protected if needed.
