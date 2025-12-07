@@ -65,7 +65,7 @@ src/
   shared/                      Reusable building blocks
     components/
       data/                    DataTable (server/client pagination)
-      form/                    FormField helper for TanStack Form
+      dialogs/                 GenericFormDialog with TanStack Form + Field components
       layout/                  DashboardLayout, AppSidebar, SiteHeader, error/not-found
       ui/                      shadcn UI primitives (button, card, input, sidebar, etc.; includes calendar for date picker)
     config/
@@ -119,6 +119,22 @@ src/
 - `DataTable` supports `mode="server"` (uses total/page/pageSize props) or `mode="client"` (local pagination).
 - Users/Roles switch to client mode automatically when `backendKind` is `laravel` so search happens locally.
 
+## Forms
+
+**Form Architecture:**
+
+- **TanStack Form** (`@tanstack/react-form`) for form state management
+- **Zod** schemas for validation with translated error messages
+- **Shadcn Field components** (Field, FieldLabel, FieldError) for consistent UI/UX
+- **GenericFormDialog** component for CRUD operations with automatic field generation
+
+**Benefits:**
+
+- Type-safe form state with full TypeScript support
+- Automatic validation with translated error messages
+- Consistent Field components across all forms
+- No form library lock-in (headless form state)
+
 ## Localization & Intlayer
 
 - Locale sources: `src/locales/en/*.json`, `src/locales/ar/*.json` (synced via Intlayer).
@@ -135,7 +151,7 @@ src/
    - For queries: use `createDataTableHook<T>()` factory for paginated data
    - For mutations: use `createMutationHook<TVariables>()` factory (see `useUsers.ts` example)
    - Factory pattern eliminates boilerplate and ensures consistency
-3. Build UI under `src/features/foo/components` or `src/features/foo/pages`; reuse shared UI/DataTable/FormField.
+3. Build UI under `src/features/foo/components` or `src/features/foo/pages`; reuse shared UI/DataTable/GenericFormDialog with Field components.
 4. For dialogs: pass `namespace` and `fieldsDefinition` to `GenericActionDialog` (config generated internally)
 5. Register a route in `routeTree.ts` under `dashboardRoute` for protected pages.
 6. Add navigation item to `src/shared/config/navigation.ts` in `mainNavItems`.

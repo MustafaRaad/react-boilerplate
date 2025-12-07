@@ -670,10 +670,13 @@ export const useProducts = createDataTableHook<Product>(
 ```typescript
 import { GenericFormDialog } from "@/shared/components/dialogs/GenericFormDialog";
 import { productCreateSchema } from "./schemas/product.schema";
+import { useTranslation } from "react-i18next";
+
+const { t } = useTranslation();
 
 <GenericFormDialog
   mode="create" // or "edit"
-  schema={productCreateSchema}
+  schema={productCreateSchema(t)} // Pass t function for translated validation
   initialValues={{}}
   title="Create Product"
   description="Add a new product to the catalog"
@@ -682,7 +685,17 @@ import { productCreateSchema } from "./schemas/product.schema";
   }}
   open={isOpen}
   onOpenChange={setIsOpen}
+  fieldConfig={{
+    name: { type: "text", label: "Product Name", placeholder: "Enter name" },
+    price: { type: "number", label: "Price", placeholder: "0.00" },
+  }}
 />;
+
+// Uses TanStack Form with:
+// - Form-level Zod validation
+// - Shadcn Field components (Field, FieldLabel, FieldError)
+// - Automatic field type inference from schema
+// - Translated validation messages
 ```
 
 #### Option B: `GenericActionDialog` (Simpler)

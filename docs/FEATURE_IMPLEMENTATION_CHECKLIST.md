@@ -339,6 +339,8 @@ export const createFeatureColumns = (t: (key: string) => string) => [
 
 ### Step 6: Create Dialog/Form Configuration
 
+**Important:** Forms use TanStack Form with shadcn Field components (Field, FieldLabel, FieldError) for consistent UI/UX.
+
 **File:** `src/features/{featureName}/config/dialogConfig.ts`
 
 ```typescript
@@ -348,36 +350,42 @@ export const createFeatureColumns = (t: (key: string) => string) => [
  * @contact mustf.raad@gmail.com
  */
 
-import type { FieldDefinition } from "@/shared/components/dialogs/SchemaFormFields";
+import type { SchemaFieldConfig } from "@/shared/components/dialogs/SchemaFormFields";
 
-export const featureFieldsDefinition: FieldDefinition[] = [
-  {
-    name: "name",
+export const featureFieldsDefinition: SchemaFieldConfig<FeatureFormData> = {tureFormData> = {
+  name: {
     type: "text",
-    labelKey: "{featureName}:fields.name",
+    label: "Name",
+    placeholder: "Enter name",
+    order: 1,
   },
-  {
-    name: "email",
+  email: {
     type: "email",
-    labelKey: "{featureName}:fields.email",
+    label: "Email",
+    placeholder: "user@example.com",
+    order: 2,
   },
-];
+};
 
-export const featureEditFieldsDefinition: FieldDefinition[] = [
-  {
-    name: "id",
-    type: "hidden",
+export const featureEditFieldsDefinition: SchemaFieldConfig<FeatureUpdateData> = {
+  id: {
+    type: "number",
+    hidden: true,
   },
   ...featureFieldsDefinition,
-];
+};
 ```
 
 **Rules:**
 
-- Define field types: `text`, `email`, `number`, `checkbox`, `select`, `textarea`, `hidden`
-- Use translation keys in format: `{namespace}:fields.{fieldName}`
+- Define field types: `text`, `email`, `number`, `checkbox`, `select`, `textarea`, `password`, `date`
+- Use `label` and `placeholder` properties for field display text
+- Set `hidden: true` to hide fields (useful for id in edit forms)
+- Use `order` property to control field rendering order
+- For select fields, provide `options: [{ value, label }]`
 - Create separate definitions for create vs. edit if needed
-- Include `id` field as `hidden` in edit forms
+- Forms use TanStack Form's `useForm` hook with Zod schema validation
+- Field components (Field, FieldLabel, FieldError) from shadcn provide consistent styling
 
 ---
 
