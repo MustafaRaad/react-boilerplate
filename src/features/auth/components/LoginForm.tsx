@@ -3,7 +3,9 @@
  * @license MIT
  * @contact mustf.raad@gmail.com
  */
-
+import TermsDialog from "./TermsDialog";
+import PrivacyPolicyDialog from "./PrivacyPolicyDialog";
+import PasswordResetDialog from "@/features/auth/components/PasswordResetDialog";
 import { useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "@tanstack/react-router";
@@ -141,12 +143,16 @@ export function LoginForm({
                       <FieldLabel htmlFor={field.name}>
                         {t("auth.password")}
                       </FieldLabel>
-                      <a
-                        href="#"
-                        className="ml-auto text-sm underline-offset-2 hover:underline"
-                      >
-                        {t("auth.forgotPassword", "Forgot your password?")}
-                      </a>
+                      <PasswordResetDialog
+                        trigger={
+                          <button
+                            type="button"
+                            className="ms-auto text-sm underline-offset-2 hover:underline"
+                          >
+                            {t("auth.forgotPassword", "Forgot your password?")}
+                          </button>
+                        }
+                      />
                     </div>
                     <Input
                       id={field.name}
@@ -189,7 +195,7 @@ export function LoginForm({
               <div>
                 <OptimizedImage
                   src="/logo.svg"
-                  alt={t("auth.brandTitle", "App logo")}
+                  alt={t("app.title", "App logo")}
                   width={120}
                   height={120}
                   priority
@@ -197,11 +203,11 @@ export function LoginForm({
                 />
                 <div className="mt-4 text-center">
                   <p className="text-lg font-semibold text-foreground">
-                    {t("auth.brandTitle", "Mustafa Raad Dashboard")}
+                    {t("app.title", "Mustafa Raad Dashboard")}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {t(
-                      "auth.brandSubtitle",
+                      "app.description",
                       "Secure access to your workspace with confidence."
                     )}
                   </p>
@@ -211,11 +217,25 @@ export function LoginForm({
           </div>
         </CardContent>
       </Card>
+
       <FieldDescription className="mt-auto px-6 text-center">
         {t("auth.tosPrefix", "By clicking continue, you agree to our")}{" "}
-        <a href="#">{t("auth.terms", "Terms of Service")}</a>{" "}
+        <TermsDialog
+          trigger={
+            <button type="button" className="underline text-primary">
+              {t("auth.terms", "Terms of Service")}
+            </button>
+          }
+        />{" "}
         {t("auth.and", "and")}{" "}
-        <a href="#">{t("auth.privacy", "Privacy Policy")}</a>.
+        <PrivacyPolicyDialog
+          trigger={
+            <button type="button" className="underline text-primary">
+              {t("auth.privacy", "Privacy Policy")}
+            </button>
+          }
+        />
+        .
       </FieldDescription>
     </div>
   );
