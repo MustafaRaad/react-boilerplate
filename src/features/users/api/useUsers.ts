@@ -4,6 +4,7 @@
  * @contact mustf.raad@gmail.com
  */
 
+import React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/core/api/client";
 import { endpoints } from "@/core/api/endpoints";
@@ -15,10 +16,30 @@ import {
 } from "@/features/users/types";
 import type { EndpointDef } from "@/core/api/endpoints";
 
-export const useUsers = createDataTableHook<User>(
-  "users",
-  endpoints.users.list
-);
+export const useUsers = () => {
+  const query = createDataTableHook<User>("users", endpoints.users.list)();
+
+  // Sort data by created_at descending (newest first) after loading
+  const sortedData = React.useMemo(() => {
+    if (!query.data?.items) return query.data;
+
+    const sortedItems = [...query.data.items].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
+
+    return {
+      ...query.data,
+      items: sortedItems,
+    };
+  }, [query.data]);
+
+  return {
+    ...query,
+    data: sortedData,
+  };
+};
 
 /**
  * Generic mutation hook factory - DRY pattern for all CRUD operations
