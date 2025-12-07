@@ -74,7 +74,12 @@ export const UsersTable = memo(function UsersTable() {
   // Memoize submit handler to prevent child re-renders
   const handleUpdateSubmit = useCallback(
     async (values: Record<string, unknown>) => {
-      await updateUserMutation.mutateAsync(values as UserUpdateData);
+      // Transform approved from boolean to number (0 or 1)
+      const transformedValues = {
+        ...values,
+        approved: values.approved ? 1 : 0,
+      };
+      await updateUserMutation.mutateAsync(transformedValues as UserUpdateData);
     },
     [updateUserMutation]
   );
@@ -95,7 +100,10 @@ export const UsersTable = memo(function UsersTable() {
           fields={USER_FIELDS}
           namespace="users"
           mode="edit"
-          initialValues={editDialog.data}
+          initialValues={{
+            ...editDialog.data,
+            approved: editDialog.data.approved === 1, // Convert number to boolean for checkbox
+          }}
           open={editDialog.isOpen}
           onOpenChange={editDialog.setOpen}
           onSubmit={handleUpdateSubmit}

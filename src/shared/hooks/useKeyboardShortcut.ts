@@ -31,6 +31,9 @@ export function useKeyboardShortcut(
 ) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Safety check: ensure e.key exists before calling toLowerCase
+      if (!e.key) return;
+
       const matchesModifiers =
         (modifiers.ctrl === undefined || e.ctrlKey === modifiers.ctrl) &&
         (modifiers.shift === undefined || e.shiftKey === modifiers.shift) &&
