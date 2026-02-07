@@ -8,6 +8,7 @@ import { apiFetch } from "@/core/api/client";
 import { endpoints } from "@/core/api/endpoints";
 import { useApiMutation } from "@/core/api/hooks";
 import { backendKind } from "@/core/config/env";
+import { DEFAULT_RATE_LIMITS, rateLimiter } from "@/core/security/rateLimit";
 import {
   normalizeUserProfile,
   buildLoginRequestBody,
@@ -19,10 +20,28 @@ import {
 } from "@/features/auth/types/auth.types";
 import { useAuthStore } from "@/store/auth.store";
 import { type LoginFormValues } from "@/features/auth/types";
+import { type UnifiedApiError } from "@/core/types/api";
 
 export const useLogin = () => {
   return useApiMutation<AuthUser, LoginFormValues>({
     mutationFn: async (values) => {
+      const rateLimitConfig = DEFAULT_RATE_LIMITS.login;
+      const rateLimitKey = `login:${values.email.trim().toLowerCase()}`;
+
+      if (!rateLimiter.check(rateLimitKey, rateLimitConfig)) {
+        const retryAfter = rateLimiter.getRetryAfter(rateLimitKey);
+        const error: UnifiedApiError = {
+          code: 429,
+          message:
+            rateLimitConfig.message ||
+            `Rate limit exceeded. Retry after ${Math.ceil(
+              retryAfter / 1000
+            )} seconds.`,
+          raw: { retryAfter },
+        };
+        throw error;
+      }
+
       const store = useAuthStore.getState();
       const targetBackend = backendKind;
 

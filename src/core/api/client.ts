@@ -411,9 +411,10 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
   endpoint: EndpointDef<unknown, TRaw>,
   options: ApiFetchOptions = {}
 ): Promise<TNormalized> {
+  const authState = useAuthStore.getState();
   const backend =
     options.overrideBackendKind ??
-    useAuthStore.getState().tokens?.backend ??
+    authState.tokens?.backend ??
     defaultBackendKind;
 
   const startTime = Date.now();
@@ -424,27 +425,30 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
   }
 
   // Apply rate limiting based on endpoint type
-  const authState = useAuthStore.getState();
   const identityKey =
     authState.user?.id !== undefined && authState.user?.id !== null
       ? `user:${authState.user.id}`
       : "anon";
   const rateLimitKey =
     options.rateLimitKey ?? `${identityKey}:${endpoint.method}:${endpoint.path}`;
-  let rateLimitConfig: RateLimitConfig =
-    options.rateLimitConfig ?? DEFAULT_RATE_LIMITS.api;
+  let rateLimitConfig: RateLimitConfig | null =
+    options.rateLimitConfig ?? null;
 
-  // Use stricter rate limits for sensitive endpoints
-  if (endpoint.path.includes("login")) {
-    rateLimitConfig = DEFAULT_RATE_LIMITS.login;
-  } else if (endpoint.path.includes("register")) {
-    rateLimitConfig = DEFAULT_RATE_LIMITS.register;
-  } else if (endpoint.path.includes("password")) {
-    rateLimitConfig = DEFAULT_RATE_LIMITS.resetPassword;
-  } else if (endpoint.path.includes("upload")) {
-    rateLimitConfig = DEFAULT_RATE_LIMITS.upload;
-  } else if (endpoint.path.includes("search") || options.query) {
-    rateLimitConfig = DEFAULT_RATE_LIMITS.search;
+  if (!rateLimitConfig) {
+    rateLimitConfig = DEFAULT_RATE_LIMITS.api;
+
+    // Use stricter rate limits for sensitive endpoints
+    if (endpoint.path.includes("login")) {
+      rateLimitConfig = DEFAULT_RATE_LIMITS.login;
+    } else if (endpoint.path.includes("register")) {
+      rateLimitConfig = DEFAULT_RATE_LIMITS.register;
+    } else if (endpoint.path.includes("password")) {
+      rateLimitConfig = DEFAULT_RATE_LIMITS.resetPassword;
+    } else if (endpoint.path.includes("upload")) {
+      rateLimitConfig = DEFAULT_RATE_LIMITS.upload;
+    } else if (endpoint.path.includes("search") || options.query) {
+      rateLimitConfig = DEFAULT_RATE_LIMITS.search;
+    }
   }
 
   if (!options.skipRateLimit) {

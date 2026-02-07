@@ -245,10 +245,14 @@ export function AutoFormDialog<T extends FieldsConfig>({
       },
     },
     onSubmit: async ({ value }) => {
+      const parsed = schema.safeParse(value);
+      if (!parsed.success) return;
+      const sanitizedValues = parsed.data as Record<string, unknown>;
+
       try {
         setIsSubmitting(true);
-        await onSubmit(value);
-        onSuccess?.(value);
+        await onSubmit(sanitizedValues);
+        onSuccess?.(sanitizedValues);
         form.reset();
         handleOpenChange(false);
         toast.success(

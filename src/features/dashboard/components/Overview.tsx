@@ -6,7 +6,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { RiArrowUpRightLine } from "@remixicon/react";
+import { RiArrowRightUpLine } from "@remixicon/react";
 import {
   Card,
   CardContent,
@@ -56,7 +56,7 @@ export const Overview = () => {
                     </CardDescription>
                   </div>
                 </div>
-                <RiArrowUpRightLine className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" />
+                <RiArrowRightUpLine className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
@@ -66,11 +66,11 @@ export const Overview = () => {
                     </p>
                     <p className="text-xl font-semibold">{item.label}</p>
                   </div>
-                  {displayPath ? (
+                  {displayPath && (
                     <div className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
                       {displayPath}
                     </div>
-                  ) : null}
+                  )}
                 </div>
               </CardContent>
             </Card>

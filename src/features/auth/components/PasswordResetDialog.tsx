@@ -24,6 +24,7 @@ import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
 import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
+import { DEFAULT_RATE_LIMITS, rateLimiter } from "@/core/security/rateLimit";
 
 export interface PasswordResetDialogProps {
   trigger?: React.ReactNode;
@@ -58,6 +59,7 @@ export function PasswordResetDialog({
   const resetSchema = z.object({
     email: z
       .string()
+      .trim()
       .min(1, t("validation.email.required"))
       .email(t("validation.email.invalid")),
   });
@@ -88,10 +90,28 @@ export function PasswordResetDialog({
       },
     },
     onSubmit: async ({ value }) => {
+      const parsed = resetSchema.safeParse(value);
+      if (!parsed.success) return;
+
+      const email = parsed.data.email;
+      const rateLimitKey = `password-reset:${email.toLowerCase()}`;
+      const rateLimitConfig = DEFAULT_RATE_LIMITS.resetPassword;
+
+      if (!rateLimiter.check(rateLimitKey, rateLimitConfig)) {
+        const retryAfter = rateLimiter.getRetryAfter(rateLimitKey);
+        toast.error(
+          rateLimitConfig.message ||
+            `Rate limit exceeded. Retry after ${Math.ceil(
+              retryAfter / 1000
+            )} seconds.`
+        );
+        return;
+      }
+
       try {
         setIsSubmitting(true);
         if (onSubmit) {
-          await onSubmit(value.email);
+          await onSubmit(email);
         }
         toast.success(
           t(

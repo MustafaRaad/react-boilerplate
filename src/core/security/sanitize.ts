@@ -185,7 +185,8 @@ export function sanitizeCssColor(value: string): string | null {
   if (!trimmed) return null;
 
   const hex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
-  const functional = /^(rgb|rgba|hsl|hsla)\([\d\s.,%+-]+\)$/i;
+  const functional =
+    /^(rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\([\d\s.,%+\/-]+\)$/i;
   const cssVar = /^var\(--[a-zA-Z0-9_-]+\)$/;
   const keywords = /^(currentColor|transparent|inherit|initial|unset)$/i;
   const named = /^[a-zA-Z]+$/;
