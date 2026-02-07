@@ -1,34 +1,47 @@
-import { useTheme } from "next-themes";
-import { Toaster as Sonner } from "sonner";
-import { useTranslation } from "react-i18next";
-
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+import { useTheme } from "next-themes"
+import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { RiCheckboxCircleLine, RiInformationLine, RiErrorWarningLine, RiCloseCircleLine, RiLoaderLine } from "@remixicon/react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
-  const { i18n } = useTranslation();
-  const isRtl = i18n.dir() === "rtl";
+  const { theme = "system" } = useTheme()
 
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
-      position={isRtl ? "bottom-left" : "bottom-right"}
-      dir={isRtl ? "rtl" : "ltr"}
+      icons={{
+        success: (
+          <RiCheckboxCircleLine className="size-4" />
+        ),
+        info: (
+          <RiInformationLine className="size-4" />
+        ),
+        warning: (
+          <RiErrorWarningLine className="size-4" />
+        ),
+        error: (
+          <RiCloseCircleLine className="size-4" />
+        ),
+        loading: (
+          <RiLoaderLine className="size-4 animate-spin" />
+        ),
+      }}
+      style={
+        {
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
+          "--border-radius": "var(--radius)",
+        } as React.CSSProperties
+      }
       toastOptions={{
         classNames: {
-          toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+          toast: "cn-toast",
         },
       }}
       {...props}
     />
-  );
-};
+  )
+}
 
-export { Toaster };
+export { Toaster }
