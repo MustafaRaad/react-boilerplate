@@ -7,11 +7,11 @@ import { ErrorBoundary } from "@/shared/components/error/ErrorBoundary";
 import { SkipToContent } from "@/shared/components/a11y/SkipToContent";
 import { KeyboardShortcuts } from "@/shared/components/a11y/KeyboardShortcuts";
 import { ColorContrastAudit } from "@/shared/components/a11y/ColorContrastAudit";
-import { Loader } from "lucide-react";
+import { RiLoader4Line } from "@remixicon/react";
 
 const LoadingFallback = () => (
   <div className="flex h-[50vh] items-center justify-center">
-    <Loader className="size-12 animate-spin text-secondary" />
+    <RiLoader4Line className="size-12 animate-spin text-secondary" />
   </div>
 );
 

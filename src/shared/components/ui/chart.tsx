@@ -2,6 +2,7 @@ import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
+import { sanitizeCssColor, sanitizeCssIdentifier } from "@/core/security/sanitize"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -42,7 +43,8 @@ const ChartContainer = React.forwardRef<
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+  const rawChartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+  const chartId = sanitizeCssIdentifier(rawChartId) || rawChartId
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -74,27 +76,41 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  const cssText = Object.entries(THEMES)
+    .map(([theme, prefix]) => {
+      const rules = colorConfig
+        .map(([key, itemConfig]) => {
+          const safeKey = sanitizeCssIdentifier(key)
+          if (!safeKey) return null
+
+          const color =
+            itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+            itemConfig.color
+
+          if (!color) return null
+
+          const safeColor = sanitizeCssColor(String(color))
+          if (!safeColor) return null
+
+          return `  --color-${safeKey}: ${safeColor};`
+        })
+        .filter(Boolean)
+        .join("\n")
+
+      if (!rules) return null
+
+      const scope = prefix ? `${prefix} ` : ""
+      return `${scope}[data-chart="${id}"] {\n${rules}\n}`
+    })
+    .filter(Boolean)
+    .join("\n")
+
+  if (!cssText) {
+    return null
+  }
+
   return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
+    <style>{cssText}</style>
   )
 }
 

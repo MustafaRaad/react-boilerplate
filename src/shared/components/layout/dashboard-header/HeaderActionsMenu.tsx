@@ -6,13 +6,13 @@
 
 import { memo, useCallback, useMemo, useState } from "react";
 import {
-  ChevronDown,
-  Languages,
-  LogOut,
-  Moon,
-  ShieldCheck,
-  Sun,
-} from "lucide-react";
+  RiArrowDownSLine,
+  RiGlobalLine,
+  RiLogoutBoxLine,
+  RiMoonLine,
+  RiShieldCheckLine,
+  RiSunLine,
+} from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "@tanstack/react-router";
 import { useTheme } from "next-themes";
@@ -62,7 +62,7 @@ export default memo(function SettingsMenu() {
     () => [
       {
         label: t("header.SettingsMenu.account"),
-        icon: <ShieldCheck className="h-4 w-4" />,
+        icon: <RiShieldCheckLine className="h-4 w-4" />,
         href: "/dashboard/settings/account",
       },
     ],
@@ -97,7 +97,7 @@ export default memo(function SettingsMenu() {
           <div className="hidden md:grid flex-1 text-start text-sm leading-tight mx-2">
             <span className="truncate font-medium">{displayName}</span>
           </div>
-          <ChevronDown className="ms-auto h-4 w-4" />
+          <RiArrowDownSLine className="ms-auto h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -128,16 +128,16 @@ export default memo(function SettingsMenu() {
 
         <DropdownMenuItem onClick={toggleTheme} className="gap-2">
           {theme === "dark" ? (
-            <Sun className="h-4 w-4" />
+            <RiSunLine className="h-4 w-4" />
           ) : (
-            <Moon className="h-4 w-4" />
+            <RiMoonLine className="h-4 w-4" />
           )}
           {theme === "dark" ? t("theme.light") : t("theme.dark")}
         </DropdownMenuItem>
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <Languages className="h-4 w-4 me-2" />
+            <RiGlobalLine className="h-4 w-4 me-2" />
             {t("language.switch")}
           </DropdownMenuSubTrigger>
           <DropdownMenuPortal>
@@ -159,7 +159,7 @@ export default memo(function SettingsMenu() {
 
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="gap-2">
-          <LogOut className="h-4 w-4" />
+          <RiLogoutBoxLine className="h-4 w-4" />
           {t("auth.logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -12,14 +12,15 @@ import {
   TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { ConfirmDeleteDialog } from "@/shared/components/ConfirmDeleteDialog";
-import { Eye, Pencil, Trash2, type LucideIcon } from "lucide-react";
+import { RiEyeLine, RiPencilLine, RiDeleteBinLine } from "@remixicon/react";
 import React from "react";
+import type { ComponentType } from "react";
 
 /**
  * Configuration for a table action button
  */
 export interface DataTableAction<TData> {
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   onClick?: (row: TData) => void;
   onConfirm?: (row: TData) => Promise<void> | void;
@@ -118,4 +119,4 @@ export const DataTableActions = React.memo(
   DataTableActionsComponent
 ) as typeof DataTableActionsComponent;
 
-export { Eye, Pencil, Trash2 };
+export { RiEyeLine as Eye, RiPencilLine as Pencil, RiDeleteBinLine as Trash2 };

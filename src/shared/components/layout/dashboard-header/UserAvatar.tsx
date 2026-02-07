@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { UserRound } from "lucide-react";
+import { RiUserLine } from "@remixicon/react";
 import {
   Avatar,
   AvatarFallback,
@@ -18,7 +18,7 @@ export const UserAvatar = memo(function UserAvatar({
     <Avatar className={`${sizeClass} rounded-lg`}>
       {src && <AvatarImage src={src} alt={alt} />}
       <AvatarFallback className="rounded-lg">
-        <UserRound className="h-4 w-4" />
+        <RiUserLine className="h-4 w-4" />
       </AvatarFallback>
     </Avatar>
   );

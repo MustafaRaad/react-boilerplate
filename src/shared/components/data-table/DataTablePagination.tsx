@@ -5,7 +5,7 @@
  */
 
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { RiArrowLeftLine, RiArrowRightLine } from "@remixicon/react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Select,
@@ -51,7 +51,7 @@ const DataTablePaginationComponent = ({
           onClick={onPreviousPage}
           disabled={!canPreviousPage}
         >
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <RiArrowLeftLine className="h-4 w-4 rtl:rotate-180" />
           <span className="hidden sm:inline">{t("table.previous")}</span>
         </Button>
         <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ const DataTablePaginationComponent = ({
           disabled={!canNextPage}
         >
           <span className="hidden sm:inline">{t("table.next")}</span>
-          <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+          <RiArrowRightLine className="h-4 w-4 rtl:rotate-180" />
         </Button>
       </div>
       <div className="flex items-center gap-2">

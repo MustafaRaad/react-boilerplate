@@ -8,6 +8,7 @@ import { type EndpointDef } from "@/core/api/endpoints";
 import {
   apiBaseUrl,
   backendKind as defaultBackendKind,
+  apiCredentials,
 } from "@/core/config/env";
 import {
   aspNetEnvelopeSchema,
@@ -34,6 +35,7 @@ import {
   addCsrfHeader,
   initializeCsrfToken,
   requiresCsrfProtection,
+  validateCsrfToken,
 } from "@/core/security/csrf";
 import {
   rateLimiter,
@@ -61,6 +63,7 @@ type ApiFetchOptions = {
   query?: Record<string, unknown>;
   overrideBackendKind?: BackendKind;
   signal?: AbortSignal;
+  credentials?: RequestCredentials;
   /**
    * Custom retry configuration for this request
    */
@@ -69,6 +72,18 @@ type ApiFetchOptions = {
    * Skip interceptors for this request
    */
   skipInterceptors?: boolean;
+  /**
+   * Rate limit configuration overrides
+   */
+  rateLimitConfig?: RateLimitConfig;
+  /**
+   * Custom rate limit key (defaults to user + method + path)
+   */
+  rateLimitKey?: string;
+  /**
+   * Skip client-side rate limiting
+   */
+  skipRateLimit?: boolean;
 };
 
 // Re-export interceptor and retry utilities for convenience
@@ -348,8 +363,10 @@ const performFetch = async (
     }
   }
 
+  const csrfRequired = requiresCsrfProtection(endpoint.method);
+
   // Add CSRF token for state-changing requests
-  if (requiresCsrfProtection(endpoint.method)) {
+  if (csrfRequired) {
     headers = addCsrfHeader(headers) as Record<string, string>;
   }
 
@@ -366,6 +383,7 @@ const performFetch = async (
     headers,
     body: sanitizedBody ? JSON.stringify(sanitizedBody) : undefined,
     signal: options.signal,
+    credentials: options.credentials ?? apiCredentials,
     metadata: {
       endpoint: endpoint.path,
       timestamp: startTime,
@@ -383,6 +401,7 @@ const performFetch = async (
     headers: requestConfig.headers,
     body: requestConfig.body,
     signal: requestConfig.signal,
+    credentials: requestConfig.credentials,
   });
 
   return response;
@@ -405,8 +424,15 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
   }
 
   // Apply rate limiting based on endpoint type
-  const rateLimitKey = `${endpoint.method}:${endpoint.path}`;
-  let rateLimitConfig: RateLimitConfig = DEFAULT_RATE_LIMITS.api;
+  const authState = useAuthStore.getState();
+  const identityKey =
+    authState.user?.id !== undefined && authState.user?.id !== null
+      ? `user:${authState.user.id}`
+      : "anon";
+  const rateLimitKey =
+    options.rateLimitKey ?? `${identityKey}:${endpoint.method}:${endpoint.path}`;
+  let rateLimitConfig: RateLimitConfig =
+    options.rateLimitConfig ?? DEFAULT_RATE_LIMITS.api;
 
   // Use stricter rate limits for sensitive endpoints
   if (endpoint.path.includes("login")) {
@@ -421,16 +447,18 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
     rateLimitConfig = DEFAULT_RATE_LIMITS.search;
   }
 
-  if (!rateLimiter.check(rateLimitKey, rateLimitConfig)) {
-    const retryAfter = rateLimiter.getRetryAfter(rateLimitKey);
-    throw normalizeError(backend, 429, {
-      message:
-        rateLimitConfig.message ||
-        `Rate limit exceeded. Retry after ${Math.ceil(
-          retryAfter / 1000
-        )} seconds.`,
-      retryAfter,
-    });
+  if (!options.skipRateLimit) {
+    if (!rateLimiter.check(rateLimitKey, rateLimitConfig)) {
+      const retryAfter = rateLimiter.getRetryAfter(rateLimitKey);
+      throw normalizeError(backend, 429, {
+        message:
+          rateLimitConfig.message ||
+          `Rate limit exceeded. Retry after ${Math.ceil(
+            retryAfter / 1000
+          )} seconds.`,
+        retryAfter,
+      });
+    }
   }
 
   // Configure retry with exponential backoff
@@ -453,6 +481,7 @@ export async function apiFetch<TNormalized, TRaw = unknown>(
   };
 
   const handleResponse = async (response: Response): Promise<TNormalized> => {
+    validateCsrfToken(response.headers);
     const body = await parseJson(response);
     const duration = Date.now() - startTime;
 

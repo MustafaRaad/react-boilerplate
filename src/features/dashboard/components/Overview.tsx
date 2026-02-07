@@ -6,7 +6,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowUpRight } from "lucide-react";
+import { RiArrowUpRightLine } from "@remixicon/react";
 import {
   Card,
   CardContent,
@@ -56,7 +56,7 @@ export const Overview = () => {
                     </CardDescription>
                   </div>
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" />
+                <RiArrowUpRightLine className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">

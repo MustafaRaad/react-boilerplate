@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { AlertTriangle } from "lucide-react";
+import { RiErrorWarningLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { EmptyStateCard } from "@/shared/components/error/EmptyStateCard";
 
@@ -20,7 +20,7 @@ export const ErrorPage = ({ error }: ErrorPageProps) => {
 
   return (
     <EmptyStateCard
-      icon={<AlertTriangle className="text-destructive" />}
+      icon={<RiErrorWarningLine className="text-destructive" />}
       title={t("errors.unexpected")}
       description={message}
       actions={[

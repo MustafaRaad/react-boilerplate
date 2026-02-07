@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, Loader } from "lucide-react";
+import { RiErrorWarningLine, RiLoader4Line } from "@remixicon/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +57,7 @@ export function ConfirmDeleteDialog({
         <AlertDialogHeader className="space-y-4">
           <div className="flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle
+              <RiErrorWarningLine
                 className="size-6 text-destructive"
                 aria-hidden="true"
               />
@@ -83,7 +83,7 @@ export function ConfirmDeleteDialog({
           >
             {isLoading ? (
               <>
-                <Loader className="ltr:mr-2 rtl:ml-2 size-4 animate-spin" />
+                <RiLoader4Line className="ltr:mr-2 rtl:ml-2 size-4 animate-spin" />
                 {t("deleting")}
               </>
             ) : (

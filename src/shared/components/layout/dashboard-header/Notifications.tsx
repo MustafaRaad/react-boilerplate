@@ -1,4 +1,4 @@
-import { CheckCircle, History, Bell } from "lucide-react";
+import { RiCheckboxCircleLine, RiHistoryLine, RiNotificationLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -42,7 +42,7 @@ function NotificationCard({
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-sm text-foreground">{t(notification.title)}</h3>
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-light whitespace-nowrap">
-              <History className="size-3.5" aria-hidden="true" />
+              <RiHistoryLine className="size-3.5" aria-hidden="true" />
               {notification.timestamp}
             </span>
           </div>
@@ -101,7 +101,7 @@ export default function Notifications() {
           aria-label={t("notifications.button.open")}
         >
           <div className="relative">
-            <Bell className="size-4" />
+            <RiNotificationLine className="size-4" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 flex size-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75" />
@@ -139,7 +139,7 @@ export default function Notifications() {
               items.map((n) => <NotificationCard key={n.id} notification={n} />)
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Bell
+                <RiNotificationLine
                   className="size-12 text-muted-foreground/50 mb-3"
                   aria-hidden="true"
                 />
@@ -159,7 +159,7 @@ export default function Notifications() {
             aria-label={t("notifications.actions.markAllRead")}
             disabled={unreadCount === 0}
           >
-            <CheckCircle className="size-4" aria-hidden="true" />
+            <RiCheckboxCircleLine className="size-4" aria-hidden="true" />
             {t("notifications.actions.markAllRead")}
           </Button>
         </SheetFooter>

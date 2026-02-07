@@ -4,7 +4,7 @@
  * @contact mustf.raad@gmail.com
  */
 
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { RiArrowDownLine, RiArrowUpLine } from "@remixicon/react";
 import * as React from "react";
 import { Area, AreaChart } from "recharts";
 import { Card } from "@/shared/components/ui/card";
@@ -84,9 +84,9 @@ export function MiniStats<T extends AnyRecord = AnyRecord>({
             }`}
           >
             {trend.direction === "up" ? (
-              <TrendingUp className="w-3.5 h-3.5" aria-hidden />
+              <RiArrowUpLine className="w-3.5 h-3.5" aria-hidden />
             ) : trend.direction === "down" ? (
-              <TrendingDown className="w-3.5 h-3.5" aria-hidden />
+              <RiArrowDownLine className="w-3.5 h-3.5" aria-hidden />
             ) : null}
             {trend.text}
           </div>

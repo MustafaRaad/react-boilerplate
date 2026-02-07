@@ -4,7 +4,7 @@
  * @contact mustf.raad@gmail.com
  */
 
-import { TrendingUp } from "lucide-react";
+import { RiArrowUpLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import * as React from "react";
 import { Bar, BarChart, LabelList, XAxis, YAxis } from "recharts";
@@ -143,7 +143,7 @@ export function ChartBarLabelCustom({ className }: { className?: string }) {
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 leading-none font-medium">
           {t("barLabelCustom.footer.topCompany")}{" "}
-          <TrendingUp className="h-4 w-4" aria-hidden />
+          <RiArrowUpLine className="h-4 w-4" aria-hidden />
         </div>
         <div className="text-muted-foreground leading-none">
           {t("barLabelCustom.footer.note")}

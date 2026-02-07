@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { Compass } from "lucide-react";
+import { RiCompassLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { EmptyStateCard } from "@/shared/components/error/EmptyStateCard";
 
@@ -9,7 +9,7 @@ export const NotFoundPage = () => {
 
   return (
     <EmptyStateCard
-      icon={<Compass className="text-primary" />}
+      icon={<RiCompassLine className="text-primary" />}
       title={t("errors.notFound")}
       description={t("errors.notFoundDescription")}
       actions={[

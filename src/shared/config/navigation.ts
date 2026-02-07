@@ -1,10 +1,10 @@
-import { LayoutDashboard, Users, TrendingUp } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { RiDashboardLine, RiGroupLine, RiArrowUpLine } from "@remixicon/react";
+import type { ComponentType } from "react";
 
 export type AppNavItem = {
   label: string;
   href: string;
-  icon?: LucideIcon;
+  icon?: ComponentType<{ className?: string }>;
   feature?: string;
   children?: AppNavItem[];
 };
@@ -13,19 +13,19 @@ export const mainNavItems: AppNavItem[] = [
   {
     label: "navigation.dashboard",
     href: "/dashboard",
-    icon: LayoutDashboard,
+    icon: RiDashboardLine,
     feature: "dashboard",
   },
   {
     label: "navigation.users",
     href: "/dashboard/users",
-    icon: Users,
+    icon: RiGroupLine,
     feature: "users",
   },
   {
     label: "navigation.statistics",
     href: "/dashboard/statistics",
-    icon: TrendingUp,
+    icon: RiArrowUpLine,
     feature: "statistics",
   },
 ];

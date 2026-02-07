@@ -27,6 +27,7 @@ export interface RequestConfig {
   headers: Record<string, string>;
   body?: string;
   signal?: AbortSignal;
+  credentials?: RequestCredentials;
   metadata?: {
     endpoint: string;
     timestamp: number;

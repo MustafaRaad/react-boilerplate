@@ -22,7 +22,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
-import { Loader } from "lucide-react";
+import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
 
 export interface PasswordResetDialogProps {
@@ -189,7 +189,7 @@ export function PasswordResetDialog({
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  <RiLoader4Line className="mr-2 h-4 w-4 animate-spin" />
                   {t("auth.sending", "Sending...")}
                 </>
               ) : (

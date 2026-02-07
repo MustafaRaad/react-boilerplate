@@ -246,12 +246,14 @@ export function generateSchema<T extends FieldsConfig>(
     }
 
     let fieldSchema: z.ZodTypeAny;
+    const validation = fieldConfig.validation;
 
     // Build schema based on field type
     switch (fieldConfig.type) {
       case "email":
         fieldSchema = z
           .string()
+          .trim()
           .email(
             t("validation.invalidEmail", { defaultValue: "Invalid email" })
           );
@@ -259,21 +261,21 @@ export function generateSchema<T extends FieldsConfig>(
 
       case "tel":
         fieldSchema = z.string();
-        if (fieldConfig.validation?.minLength) {
+        if (validation?.minLength) {
           fieldSchema = (fieldSchema as z.ZodString).min(
-            fieldConfig.validation.minLength,
+            validation.minLength,
             t("validation.minLength", {
-              count: fieldConfig.validation.minLength,
-              defaultValue: `Minimum ${fieldConfig.validation.minLength} characters`,
+              count: validation.minLength,
+              defaultValue: `Minimum ${validation.minLength} characters`,
             })
           );
         }
-        if (fieldConfig.validation?.maxLength) {
+        if (validation?.maxLength) {
           fieldSchema = (fieldSchema as z.ZodString).max(
-            fieldConfig.validation.maxLength,
+            validation.maxLength,
             t("validation.maxLength", {
-              count: fieldConfig.validation.maxLength,
-              defaultValue: `Maximum ${fieldConfig.validation.maxLength} characters`,
+              count: validation.maxLength,
+              defaultValue: `Maximum ${validation.maxLength} characters`,
             })
           );
         }
@@ -281,30 +283,30 @@ export function generateSchema<T extends FieldsConfig>(
 
       case "number":
         fieldSchema = z.number();
-        if (fieldConfig.validation?.min !== undefined) {
+        if (validation?.min !== undefined) {
           fieldSchema = (fieldSchema as z.ZodNumber).min(
-            fieldConfig.validation.min,
+            validation.min,
             t("validation.min", {
-              value: fieldConfig.validation.min,
-              defaultValue: `Minimum value is ${fieldConfig.validation.min}`,
+              value: validation.min,
+              defaultValue: `Minimum value is ${validation.min}`,
             })
           );
         }
-        if (fieldConfig.validation?.max !== undefined) {
+        if (validation?.max !== undefined) {
           fieldSchema = (fieldSchema as z.ZodNumber).max(
-            fieldConfig.validation.max,
+            validation.max,
             t("validation.max", {
-              value: fieldConfig.validation.max,
-              defaultValue: `Maximum value is ${fieldConfig.validation.max}`,
+              value: validation.max,
+              defaultValue: `Maximum value is ${validation.max}`,
             })
           );
         }
-        if (fieldConfig.validation?.integer) {
+        if (validation?.integer) {
           fieldSchema = (fieldSchema as z.ZodNumber).int(
             t("validation.integer", { defaultValue: "Must be an integer" })
           );
         }
-        if (fieldConfig.validation?.positive) {
+        if (validation?.positive) {
           fieldSchema = (fieldSchema as z.ZodNumber).positive(
             t("validation.positive", { defaultValue: "Must be positive" })
           );
@@ -331,12 +333,12 @@ export function generateSchema<T extends FieldsConfig>(
 
       case "password":
         fieldSchema = z.string();
-        if (fieldConfig.validation?.minLength) {
+        if (validation?.minLength) {
           fieldSchema = (fieldSchema as z.ZodString).min(
-            fieldConfig.validation.minLength,
+            validation.minLength,
             t("validation.minLength", {
-              count: fieldConfig.validation.minLength,
-              defaultValue: `Minimum ${fieldConfig.validation.minLength} characters`,
+              count: validation.minLength,
+              defaultValue: `Minimum ${validation.minLength} characters`,
             })
           );
         }
@@ -346,25 +348,49 @@ export function generateSchema<T extends FieldsConfig>(
       case "textarea":
       default:
         fieldSchema = z.string();
-        if (fieldConfig.validation?.minLength) {
+        if (validation?.minLength) {
           fieldSchema = (fieldSchema as z.ZodString).min(
-            fieldConfig.validation.minLength,
+            validation.minLength,
             t("validation.minLength", {
-              count: fieldConfig.validation.minLength,
-              defaultValue: `Minimum ${fieldConfig.validation.minLength} characters`,
+              count: validation.minLength,
+              defaultValue: `Minimum ${validation.minLength} characters`,
             })
           );
         }
-        if (fieldConfig.validation?.maxLength) {
+        if (validation?.maxLength) {
           fieldSchema = (fieldSchema as z.ZodString).max(
-            fieldConfig.validation.maxLength,
+            validation.maxLength,
             t("validation.maxLength", {
-              count: fieldConfig.validation.maxLength,
-              defaultValue: `Maximum ${fieldConfig.validation.maxLength} characters`,
+              count: validation.maxLength,
+              defaultValue: `Maximum ${validation.maxLength} characters`,
             })
           );
         }
         break;
+    }
+
+    if (
+      validation?.pattern &&
+      fieldSchema instanceof z.ZodString
+    ) {
+      fieldSchema = fieldSchema.regex(
+        validation.pattern,
+        t("validation.pattern", { defaultValue: "Invalid format" })
+      );
+    }
+
+    if (validation?.custom) {
+      const customValidator = validation.custom;
+      fieldSchema = fieldSchema.superRefine((value, ctx) => {
+        if (value === undefined || value === null || value === "") return;
+        const message = customValidator(value);
+        if (message) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message,
+          });
+        }
+      });
     }
 
     // Apply required/optional

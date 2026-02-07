@@ -34,7 +34,7 @@ import * as React from "react";
 import { useForm } from "@tanstack/react-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Loader, Plus, Pencil } from "lucide-react";
+import { RiLoader4Line, RiAddLine, RiPencilLine } from "@remixicon/react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -294,9 +294,9 @@ export function AutoFormDialog<T extends FieldsConfig>({
           <div className="flex items-center gap-3 pb-2">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary/60 border border-secondary/40 ">
               {mode === "create" ? (
-                <Plus className="h-5 w-5" />
+                <RiAddLine className="h-5 w-5" />
               ) : (
-                <Pencil className="h-5 w-5" />
+                <RiPencilLine className="h-5 w-5" />
               )}
             </div>
             <div>
@@ -475,7 +475,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  <RiLoader4Line className="mr-2 h-4 w-4 animate-spin" />
                   {loadingLabel}
                 </>
               ) : (

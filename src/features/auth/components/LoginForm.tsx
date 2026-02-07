@@ -10,7 +10,7 @@ import { useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Loader } from "lucide-react";
+import { RiLoader4Line } from "@remixicon/react";
 import { authLoginFormSchema as loginSchema } from "@/features/auth/schemas/auth.schema";
 import { type LoginFormValues } from "@/features/auth/types";
 import { useLogin } from "@/features/auth/hooks/useLogin";
@@ -69,7 +69,10 @@ export function LoginForm({
       },
     },
     onSubmit: async ({ value }) => {
-      await loginMutation.mutateAsync(value);
+      const parsed = loginSchema.safeParse(value);
+      if (!parsed.success) return;
+
+      await loginMutation.mutateAsync(parsed.data);
       router.navigate({ to: "/dashboard", replace: true });
     },
   });
@@ -193,7 +196,7 @@ export function LoginForm({
                 <Button type="submit" disabled={loginMutation.isPending}>
                   {loginMutation.isPending ? (
                     <>
-                      <Loader className="mr-2 h-4 w-4 animate-spin" />
+                      <RiLoader4Line className="mr-2 h-4 w-4 animate-spin" />
                       {t("auth.submit")}
                     </>
                   ) : (

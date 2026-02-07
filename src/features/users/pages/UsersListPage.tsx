@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { UsersTable } from "@/features/users/components/UsersTable";
 import { Button } from "@/shared/components/ui/button";
-import { UserPlus, Users } from "lucide-react";
+import { RiUserAddLine, RiGroupLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
@@ -41,7 +41,7 @@ export const UsersListPage = memo(function UsersListPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-            <Users className="h-6 w-6 text-secondary" />
+            <RiGroupLine className="h-6 w-6 text-secondary" />
             {t("list.title")}
           </h1>
           <p className="text-muted-foreground">{t("list.description")}</p>
@@ -51,7 +51,7 @@ export const UsersListPage = memo(function UsersListPage() {
           className="gap-2"
           onClick={() => createDialog.open()}
         >
-          <UserPlus className="h-4 w-4" />
+          <RiUserAddLine className="h-4 w-4" />
           {tCommon("actions.add")}
         </Button>
       </div>

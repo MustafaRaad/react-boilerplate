@@ -20,7 +20,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTranslation } from "react-i18next";
-import { Download, FilterX, Loader, RotateCw } from "lucide-react";
+import { RiDownloadLine, RiFilterOffLine, RiLoader4Line, RiRefreshLine } from "@remixicon/react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { backendKind } from "@/core/config/env";
 import { Button } from "@/shared/components/ui/button";
@@ -465,7 +465,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                         onClick={handleExport}
                         className="bg-card"
                       >
-                        <Download className="h-4 w-4" />
+                        <RiDownloadLine className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -483,7 +483,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                         className="bg-card"
                         disabled={isFetching}
                       >
-                        <RotateCw
+                        <RiRefreshLine
                           className={cn(
                             "h-4 w-4",
                             isFetching && "animate-spin"
@@ -506,7 +506,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                         className="bg-card"
                         disabled={!hasActiveFilters}
                       >
-                        <FilterX className="h-4 w-4" />
+                        <RiFilterOffLine className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -520,7 +520,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
             {/* Refetching indicator */}
             {isFetching && !isLoading && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader className="h-4 w-4 animate-spin" />
+                <RiLoader4Line className="h-4 w-4 animate-spin" />
                 <span>{t("table.updating")}</span>
               </div>
             )}

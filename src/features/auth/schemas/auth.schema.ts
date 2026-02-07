@@ -10,6 +10,7 @@ import { z } from "zod";
 export const authLoginFormSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(1, { message: "validation.email.required" })
     .email({ message: "validation.email.invalid" }),
   password: z.string().min(6, { message: "validation.password.min" }),
@@ -29,6 +30,7 @@ export const changePasswordSchema = z
 export const resetPasswordSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(1, { message: "validation.email.required" })
     .email({ message: "validation.email.invalid" }),
 });

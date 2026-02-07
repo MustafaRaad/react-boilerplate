@@ -11,7 +11,12 @@
  */
 
 const CSRF_TOKEN_KEY = 'csrf_token';
-const CSRF_HEADER_NAME = 'X-CSRF-Token';
+const CSRF_HEADER_NAME =
+  (import.meta.env.VITE_CSRF_HEADER_NAME as string) ?? 'X-CSRF-Token';
+const CSRF_COOKIE_NAME =
+  (import.meta.env.VITE_CSRF_COOKIE_NAME as string) ?? 'XSRF-TOKEN';
+const CSRF_META_NAME =
+  (import.meta.env.VITE_CSRF_META_NAME as string) ?? 'csrf-token';
 
 /**
  * Generate a random CSRF token
@@ -20,6 +25,39 @@ export function generateCsrfToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Read CSRF token from a cookie (e.g., Laravel's XSRF-TOKEN)
+ */
+export function getCsrfTokenFromCookie(
+  cookieName: string = CSRF_COOKIE_NAME
+): string | null {
+  if (typeof document === 'undefined') return null;
+
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${cookieName.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}=([^;]*)`)
+  );
+
+  if (!match) return null;
+
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+/**
+ * Read CSRF token from a meta tag (e.g., <meta name="csrf-token" content="...">)
+ */
+export function getCsrfTokenFromMeta(
+  metaName: string = CSRF_META_NAME
+): string | null {
+  if (typeof document === 'undefined') return null;
+
+  const meta = document.querySelector(`meta[name="${metaName}"]`);
+  return meta?.getAttribute('content') ?? null;
 }
 
 /**
@@ -63,7 +101,12 @@ export function initializeCsrfToken(): string {
   let token = getCsrfToken();
   
   if (!token) {
-    token = generateCsrfToken();
+    token = getCsrfTokenFromMeta() ?? getCsrfTokenFromCookie();
+
+    if (!token) {
+      token = generateCsrfToken();
+    }
+
     storeCsrfToken(token);
   }
   
@@ -74,13 +117,8 @@ export function initializeCsrfToken(): string {
  * Add CSRF token to request headers
  */
 export function addCsrfHeader(headers: HeadersInit = {}): HeadersInit {
-  const token = getCsrfToken();
-  
-  if (!token) {
-    console.warn('CSRF token not found. Initializing...');
-    initializeCsrfToken();
-  }
-  
+  const token = getCsrfToken() ?? initializeCsrfToken();
+
   return {
     ...headers,
     [CSRF_HEADER_NAME]: token || '',
@@ -96,6 +134,12 @@ export function validateCsrfToken(headers: Headers): void {
   
   if (newToken) {
     storeCsrfToken(newToken);
+    return;
+  }
+
+  const cookieToken = getCsrfTokenFromCookie();
+  if (cookieToken) {
+    storeCsrfToken(cookieToken);
   }
 }
 
@@ -121,4 +165,18 @@ export function refreshCsrfToken(): string {
  */
 export function getCsrfHeaderName(): string {
   return CSRF_HEADER_NAME;
+}
+
+/**
+ * Get CSRF cookie name (useful for backend configuration)
+ */
+export function getCsrfCookieName(): string {
+  return CSRF_COOKIE_NAME;
+}
+
+/**
+ * Get CSRF meta name (useful for backend configuration)
+ */
+export function getCsrfMetaName(): string {
+  return CSRF_META_NAME;
 }

@@ -6,7 +6,7 @@
 
 import { Fragment } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home } from "lucide-react";
+import { RiHomeLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import {
   Breadcrumb,
@@ -60,7 +60,7 @@ export function Breadcrumbs() {
                 <BreadcrumbPage>
                   {item.isDashboard ? (
                     <>
-                      <Home className="h-4 w-4" aria-hidden="true" />
+                      <RiHomeLine className="h-4 w-4" aria-hidden="true" />
                       <span className="sr-only">{item.label}</span>
                     </>
                   ) : (
@@ -75,7 +75,7 @@ export function Breadcrumbs() {
                   >
                     {item.isDashboard ? (
                       <>
-                        <Home className="h-4 w-4" aria-hidden="true" />
+                        <RiHomeLine className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">{item.label}</span>
                       </>
                     ) : (

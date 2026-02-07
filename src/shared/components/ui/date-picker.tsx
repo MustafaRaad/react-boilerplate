@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CalendarIcon } from "lucide-react";
+import { RiCalendarLine } from "@remixicon/react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { useTranslation } from "react-i18next";
@@ -58,7 +58,7 @@ export function DateRangePicker({
             className
           )}
         >
-          <CalendarIcon className="me-2 h-4 w-4" />
+          <RiCalendarLine className="me-2 h-4 w-4" />
           {dateRange?.from ? (
             dateRange.to ? (
               <>

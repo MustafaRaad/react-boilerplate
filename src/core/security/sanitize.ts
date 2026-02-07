@@ -169,3 +169,36 @@ export function sanitizeInteger(value: string | number): number | null {
   
   return num;
 }
+
+/**
+ * Sanitize CSS identifier (e.g., variable names, data attributes)
+ */
+export function sanitizeCssIdentifier(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
+/**
+ * Sanitize CSS color values to reduce CSS injection risk
+ */
+export function sanitizeCssColor(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const hex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+  const functional = /^(rgb|rgba|hsl|hsla)\([\d\s.,%+-]+\)$/i;
+  const cssVar = /^var\(--[a-zA-Z0-9_-]+\)$/;
+  const keywords = /^(currentColor|transparent|inherit|initial|unset)$/i;
+  const named = /^[a-zA-Z]+$/;
+
+  if (
+    hex.test(trimmed) ||
+    functional.test(trimmed) ||
+    cssVar.test(trimmed) ||
+    keywords.test(trimmed) ||
+    named.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  return null;
+}

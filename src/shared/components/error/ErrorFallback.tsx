@@ -4,7 +4,7 @@
  * @contact mustf.raad@gmail.com
  */
 
-import { AlertTriangle } from "lucide-react";
+import { RiErrorWarningLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -28,7 +28,7 @@ export function ErrorFallback({ error, onReset }: ErrorFallbackProps) {
     <Empty className="min-h-[400px]">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <AlertTriangle className="text-destructive" />
+          <RiErrorWarningLine className="text-destructive" />
         </EmptyMedia>
         <EmptyTitle>{t("errors.unexpected")}</EmptyTitle>
         <EmptyDescription>
