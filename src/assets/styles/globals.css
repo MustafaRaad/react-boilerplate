@@ -131,38 +131,6 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* Performance: Use content-visibility for off-screen elements */
-.off-screen {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 500px;
-}
-
-/* 2) WebKit browsers (Chrome/Edge/Safari) */
-*::-webkit-scrollbar {
-  width: var(--scrollbar-size);
-  height: var(--scrollbar-size);
-}
-
-*::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: var(--scrollbar-radius);
-}
-
-*::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: var(--scrollbar-radius);
-  /* Subtle inset border so it looks nice on light tracks */
-  box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--scrollbar-thumb) 10%, transparent);
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-}
-
-*::-webkit-scrollbar-thumb:active {
-  background: var(--scrollbar-thumb-active);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;

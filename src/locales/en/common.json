@@ -180,31 +180,6 @@
       "markAllRead": "Mark all as read"
     }
   },
-  "pwa": {
-    "install": {
-      "title": "Install App",
-      "description": "Install this app on your device for quick access and offline use.",
-      "button": "Install",
-      "later": "Not now"
-    },
-    "update": {
-      "title": "Update Available",
-      "description": "A new version of the app is available. Update now to get the latest features.",
-      "button": "Update Now",
-      "updating": "Updating...",
-      "later": "Later"
-    },
-    "offline": {
-      "banner": "You're offline - Some features may be limited",
-      "reconnected": "Back online - Data will sync automatically",
-      "page": {
-        "title": "You're Offline",
-        "description": "It looks like you've lost your internet connection. Some features may not be available until you're back online.",
-        "button": "Try Again",
-        "note": "This app works offline with limited functionality. Your changes will sync when you're back online."
-      }
-    }
-  },
   "keyboard": {
     "search": "Search shortcut pressed. Search feature coming soon.",
     "help": "Keyboard shortcuts help",
