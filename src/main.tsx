@@ -10,6 +10,7 @@ import App from "@/app/App";
 import { setupApiConfig } from "@/core/api/client";
 import { refreshAccessToken } from "@/features/auth/hooks/useRefreshToken";
 import "./assets/styles/globals.css";
+import { DirectionProvider } from "@/shared/components/ui/direction"
 
 
 // Initialize API configuration with auto-refresh on 401
@@ -25,6 +26,8 @@ setupApiConfig({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <DirectionProvider dir="rtl">
+      <App />
+    </DirectionProvider>
   </StrictMode>
 )
