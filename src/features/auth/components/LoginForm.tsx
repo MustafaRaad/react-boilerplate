@@ -131,7 +131,7 @@ export function LoginForm({
 
   const form = useForm({
     defaultValues: {
-      loginType: "phone" as const,
+      loginType: "phone" as LoginType,
       email: "",
       phone: "",
       username: "",
@@ -139,7 +139,12 @@ export function LoginForm({
     } satisfies LoginFormValues,
     validators: {
       onSubmit: ({ value }) => {
-        const result = loginSchema.safeParse(value);
+        // Ensure loginType is synced with state
+        const formData = {
+          ...value,
+          loginType,
+        };
+        const result = loginSchema.safeParse(formData);
         if (!result.success) {
           const formatted = result.error.format();
           // Translate validation message keys
@@ -158,12 +163,16 @@ export function LoginForm({
       },
     },
     onSubmit: async ({ value }) => {
+      // Ensure loginType is synced with state
       const formData = {
         ...value,
         loginType,
       };
       const parsed = loginSchema.safeParse(formData);
-      if (!parsed.success) return;
+      if (!parsed.success) {
+        console.error("Validation failed:", parsed.error.format());
+        return;
+      }
 
       await loginMutation.mutateAsync({
         ...parsed.data,
@@ -173,6 +182,11 @@ export function LoginForm({
     },
   });
 
+  // Sync form's loginType field when tab changes
+  useEffect(() => {
+    form.setFieldValue("loginType", loginType);
+  }, [loginType, form]);
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="mx-auto w-full border-border/50 bg-card/80 backdrop-blur-sm shadow-lg dark:bg-card/90">
@@ -181,17 +195,21 @@ export function LoginForm({
             <h2 className="text-2xl font-semibold tracking-tight text-foreground">
               {t("auth.welcomeTitle", "Welcome Back")}
             </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed text-balance">
-              {t("auth.welcomeSubtitle", "Please enter your credentials to access your account")}
+            <p className="text-muted-foreground text-sm leading-relaxed text-balance max-w-md">
+              {t("auth.welcomeSubtitle", "Please provide your authentication credentials to securely access your account and continue to your dashboard")}
+            </p>
+            <p className="text-muted-foreground text-xs leading-relaxed text-balance max-w-md mt-1">
+              {t("auth.loginInstructions", "Select your preferred authentication method and enter the corresponding credentials below")}
             </p>
           </div>
         </CardHeader>
         
         <CardContent className="pt-2">
           <form
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
-              void form.handleSubmit();
+              event.stopPropagation();
+              await form.handleSubmit();
             }}
           >
             <FieldGroup className="gap-5">
@@ -294,9 +312,11 @@ export function LoginForm({
                   return (
                     <Field data-invalid={isInvalid}>
                       <div className="flex items-center justify-between">
-                        <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
-                          {t("auth.passwordLabel", "Password")}
-                        </FieldLabel>
+                        <div className="flex flex-col gap-0.5">
+                          <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
+                            {t("auth.passwordLabel", "Secure Password")}
+                          </FieldLabel>
+                        </div>
                         <PasswordResetDialog
                           trigger={
                             <button
@@ -374,30 +394,35 @@ export function LoginForm({
         </CardContent>
       </Card>
 
-      <FieldDescription className="mt-2 px-6 text-center text-xs leading-relaxed text-muted-foreground">
-        {t("auth.tosPrefix", "By proceeding, you acknowledge and agree to our")}{" "}
-        <TermsDialog
-          trigger={
-            <button 
-              type="button" 
-              className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
-            >
-              {t("auth.terms", "Terms of Service")}
-            </button>
-          }
-        />{" "}
-        {t("auth.and", "and")}{" "}
-        <PrivacyPolicyDialog
-          trigger={
-            <button 
-              type="button" 
-              className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
-            >
-              {t("auth.privacy", "Privacy Policy")}
-            </button>
-          }
-        />
-        .
+      <FieldDescription className="mt-2 px-6 text-center text-xs leading-relaxed text-muted-foreground space-y-1">
+        <p>
+          {t("auth.tosPrefix", "By proceeding with the authentication process, you hereby acknowledge, understand, and expressly agree to be bound by our")}{" "}
+          <TermsDialog
+            trigger={
+              <button 
+                type="button" 
+                className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+              >
+                {t("auth.terms", "Terms of Service")}
+              </button>
+            }
+          />{" "}
+          {t("auth.and", "and")}{" "}
+          <PrivacyPolicyDialog
+            trigger={
+              <button 
+                type="button" 
+                className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+              >
+                {t("auth.privacy", "Privacy Policy")}
+              </button>
+            }
+          />
+          .
+        </p>
+        <p className="text-[10px] opacity-75">
+          {t("auth.tosSuffix", "Please review these documents carefully before continuing")}
+        </p>
       </FieldDescription>
     </div>
   );
