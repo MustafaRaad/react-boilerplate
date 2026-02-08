@@ -6,9 +6,11 @@
 
 import type { z } from "zod";
 import { type BackendKind } from "@/core/types/api";
+import type { AspNetEnvelope } from "@/core/types/api";
 import {
   aspNetLoginResultSchema,
   aspNetMeSchema,
+  aspNetMeEnvelopeSchema,
   authLoginFormSchema,
   changePasswordSchema,
   laravelLoginSchema,
@@ -42,15 +44,11 @@ export type AuthPos = {
 
 export type LaravelMeResponse = z.infer<typeof laravelMeSchema>;
 export type AspNetMeResponse = z.infer<typeof aspNetMeSchema>;
-export type AspNetMeEnvelope = {
-  code?: number | string | null;
-  message?: string | null;
-  result?: AspNetMeResponse | null;
-};
+export type AspNetMeEnvelopeResponse = z.infer<typeof aspNetMeEnvelopeSchema>;
 export type AuthMeResponse =
   | LaravelMeResponse
   | AspNetMeResponse
-  | AspNetMeEnvelope;
+  | AspNetEnvelope<AspNetMeResponse>;
 
 export type AuthTokens = {
   backend: BackendKind;

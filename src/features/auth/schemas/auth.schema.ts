@@ -146,13 +146,20 @@ export const aspNetMeSchema = z.object({
   lastName: z.string(),
   surname: z.string(),
   fullName: z.string(),
-  photo: z.string(),
+  photo: z.string().nullable(),
   status: z.number(),
   role: z.object({
     id: z.string(),
     isDeleted: z.boolean(),
     name: z.string(),
   }),
+});
+
+export const aspNetMeEnvelopeSchema = z.object({
+  code: z.number(),
+  message: z.string().nullable(),
+  error: z.string().nullable(),
+  result: aspNetMeSchema,
 });
 
 export type AuthLoginFormValues = z.infer<typeof authLoginFormSchema>;

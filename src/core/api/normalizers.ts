@@ -13,6 +13,7 @@
  * ALL backend differences should be handled here, not in components or hooks.
  */
 
+import type { z } from "zod";
 import { type BackendKind } from "@/core/types/api";
 import {
   type AuthTokens,
@@ -25,6 +26,7 @@ import {
   laravelMeSchema,
   aspNetLoginEnvelopeSchema,
   aspNetMeSchema,
+  aspNetMeEnvelopeSchema,
 } from "@/features/auth/schemas/auth.schema";
 
 /**
@@ -145,8 +147,17 @@ export function normalizeUserProfile(
       fees: parsed.fees,
     };
   } else {
-    // ASP.NET /me response structure
-    const parsed = aspNetMeSchema.parse(raw);
+    // ASP.NET /me response structure - can be envelope or direct
+    let parsed: z.infer<typeof aspNetMeSchema>;
+    
+    // Try to parse as envelope first
+    const envelopeParse = aspNetMeEnvelopeSchema.safeParse(raw);
+    if (envelopeParse.success) {
+      parsed = envelopeParse.data.result;
+    } else {
+      // Fallback to direct parsing for backward compatibility
+      parsed = aspNetMeSchema.parse(raw);
+    }
 
     return {
       user: {

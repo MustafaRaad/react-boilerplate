@@ -61,8 +61,8 @@ export const authEndpoints = {
     method: "POST",
   } as EndpointDef<LaravelLoginRequest, AuthTokens>,
   me: {
-    path: "/auth/me",
-    method: "POST",
+    path: "/User/me",
+    method: "GET",
     requiresAuth: true,
   } as EndpointDef<void, AuthMeResponse>,
 } as const;
