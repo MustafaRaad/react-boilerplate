@@ -16,9 +16,12 @@ import {
   RiLockPasswordLine,
   RiLoginBoxLine,
   RiEyeLine,
-  RiEyeOffLine
+  RiEyeOffLine,
+  RiPhoneLine,
+  RiUserLine
 } from "@remixicon/react";
 import { authLoginFormSchema as loginSchema } from "@/features/auth/schemas/auth.schema";
+import { z } from "zod";
 import { type LoginFormValues } from "@/features/auth/types";
 import { useLogin } from "@/features/auth/hooks/useLogin";
 import { cn } from "@/lib/utils";
@@ -32,17 +35,19 @@ import {
   FieldLabel,
 } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 import { useAuthStore } from "@/store/auth.store";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
   const loginMutation = useLogin();
   const router = useRouter();
   const { user, isInitializing } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+  const [loginType, setLoginType] = useState<"email" | "phone" | "username">("email");
 
   useEffect(() => {
     if (!isInitializing && user) {
@@ -52,7 +57,10 @@ export function LoginForm({
 
   const form = useForm({
     defaultValues: {
+      loginType: "email" as const,
       email: "",
+      phone: "",
+      username: "",
       password: "",
     } satisfies LoginFormValues,
     validators: {
@@ -76,10 +84,17 @@ export function LoginForm({
       },
     },
     onSubmit: async ({ value }) => {
-      const parsed = loginSchema.safeParse(value);
+      const formData = {
+        ...value,
+        loginType,
+      };
+      const parsed = loginSchema.safeParse(formData);
       if (!parsed.success) return;
 
-      await loginMutation.mutateAsync(parsed.data);
+      await loginMutation.mutateAsync({
+        ...parsed.data,
+        loginType,
+      });
       router.navigate({ to: "/dashboard", replace: true });
     },
   });
@@ -106,54 +121,185 @@ export function LoginForm({
             }}
           >
             <FieldGroup className="gap-5">
-
-              <form.Field
-                name="email"
-                validators={{
-                  onChange: ({ value }) => {
-                    const result = loginSchema.shape.email.safeParse(value);
-                    if (!result.success) {
-                      return result.error.issues[0]?.message
-                        ? t(result.error.issues[0].message)
-                        : undefined;
-                    }
-                    return undefined;
-                  },
-                }}
+              {/* Login Type Tabs */}
+              <Tabs 
+                value={loginType} 
+                onValueChange={(value) => {
+                  const newType = value as "email" | "phone" | "username";
+                  setLoginType(newType);
+                }} 
+                className="w-full"
               >
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
-                        {t("auth.emailLabel", "Email Address")}
-                      </FieldLabel>
-                      <div className="relative">
-                        <RiMailLine className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-                        <Input
-                          id={field.name}
-                          type="email"
-                          placeholder={t("auth.emailPlaceholder", "Enter your email address")}
-                          required
-                          value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          onBlur={field.handleBlur}
-                          autoComplete="email"
-                          aria-invalid={isInvalid}
-                          className={cn(
-                            "pl-9 transition-all duration-200",
-                            isInvalid && "border-destructive focus-visible:border-destructive"
-                          )}
-                        />
-                      </div>
-                      {isInvalid && field.state.meta.errors?.length ? (
-                        <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
-                      ) : null}
-                    </Field>
-                  );
-                }}
-              </form.Field>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="phone" className="flex items-center gap-2">
+                    <RiPhoneLine className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("auth.loginViaPhone", "Phone")}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="email" className="flex items-center gap-2">
+                    <RiMailLine className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("auth.loginViaEmail", "Email")}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="username" className="flex items-center gap-2">
+                    <RiUserLine className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("auth.loginViaUsername", "Username")}</span>
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Phone Login */}
+                <TabsContent value="phone" className="mt-4">
+                  <form.Field
+                    name="phone"
+                    validators={{
+                      onChange: ({ value }) => {
+                        if (!value || value.trim().length === 0) {
+                          return t("validation.phoneRequired", "Phone number is required");
+                        }
+                        const phoneRegex = /^(\+964|0)?7[0-9]{9}$/;
+                        if (!phoneRegex.test(value.replace(/\s/g, ""))) {
+                          return t("validation.phone.invalid", "Invalid Iraqi phone number format");
+                        }
+                        return undefined;
+                      },
+                    }}
+                  >
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
+                            {t("auth.phoneLabel", "Phone Number")}
+                          </FieldLabel>
+                          <div className="relative">
+                            <RiPhoneLine className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                            <Input
+                              id={field.name}
+                              type="tel"
+                              placeholder={t("auth.phonePlaceholder", "07XXXXXXXXX or +9647XXXXXXXXX")}
+                              required
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                              autoComplete="tel"
+                              aria-invalid={isInvalid}
+                              className={cn(
+                                "pl-9 transition-all duration-200",
+                                isInvalid && "border-destructive focus-visible:border-destructive"
+                              )}
+                            />
+                          </div>
+                          {isInvalid && field.state.meta.errors?.length ? (
+                            <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
+                          ) : null}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                </TabsContent>
+
+                {/* Email Login */}
+                <TabsContent value="email" className="mt-4">
+                  <form.Field
+                    name="email"
+                    validators={{
+                      onChange: ({ value }) => {
+                        if (!value || value.trim().length === 0) {
+                          return t("validation.email.required", "Email is required");
+                        }
+                        const result = z.string().email().safeParse(value);
+                        if (!result.success) {
+                          return t("validation.email.invalid", "Invalid email address");
+                        }
+                        return undefined;
+                      },
+                    }}
+                  >
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
+                            {t("auth.emailLabel", "Email Address")}
+                          </FieldLabel>
+                          <div className="relative">
+                            <RiMailLine className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                            <Input
+                              id={field.name}
+                              type="email"
+                              placeholder={t("auth.emailPlaceholder", "Enter your email address")}
+                              required
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                              autoComplete="email"
+                              aria-invalid={isInvalid}
+                              className={cn(
+                                "pl-9 transition-all duration-200",
+                                isInvalid && "border-destructive focus-visible:border-destructive"
+                              )}
+                            />
+                          </div>
+                          {isInvalid && field.state.meta.errors?.length ? (
+                            <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
+                          ) : null}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                </TabsContent>
+
+                {/* Username Login */}
+                <TabsContent value="username" className="mt-4">
+                  <form.Field
+                    name="username"
+                    validators={{
+                      onChange: ({ value }) => {
+                        if (!value || value.trim().length === 0) {
+                          return t("validation.usernameRequired", "Username is required");
+                        }
+                        if (value.trim().length < 3) {
+                          return t("validation.usernameMinLength", "Username must be at least 3 characters");
+                        }
+                        return undefined;
+                      },
+                    }}
+                  >
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
+                            {t("auth.usernameLabel", "Username")}
+                          </FieldLabel>
+                          <div className="relative">
+                            <RiUserLine className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                            <Input
+                              id={field.name}
+                              type="text"
+                              placeholder={t("auth.usernamePlaceholder", "Enter your username")}
+                              required
+                              value={field.state.value}
+                              onChange={(e) => field.handleChange(e.target.value)}
+                              onBlur={field.handleBlur}
+                              autoComplete="username"
+                              aria-invalid={isInvalid}
+                              className={cn(
+                                "pl-9 transition-all duration-200",
+                                isInvalid && "border-destructive focus-visible:border-destructive"
+                              )}
+                            />
+                          </div>
+                          {isInvalid && field.state.meta.errors?.length ? (
+                            <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
+                          ) : null}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                </TabsContent>
+              </Tabs>
 
               <form.Field
                 name="password"

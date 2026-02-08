@@ -26,7 +26,8 @@ export const useLogin = () => {
   return useApiMutation<AuthUser, LoginFormValues>({
     mutationFn: async (values) => {
       const rateLimitConfig = DEFAULT_RATE_LIMITS.login;
-      const rateLimitKey = `login:${values.email.trim().toLowerCase()}`;
+      const loginIdentifier = values.email || values.phone || values.username || "";
+      const rateLimitKey = `login:${loginIdentifier.trim().toLowerCase()}`;
 
       if (!rateLimiter.check(rateLimitKey, rateLimitConfig)) {
         const retryAfter = rateLimiter.getRetryAfter(rateLimitKey);
@@ -44,19 +45,30 @@ export const useLogin = () => {
 
       const store = useAuthStore.getState();
       const targetBackend = backendKind;
+      const loginType = values.loginType || "email";
 
       // Step 1: Build login request using centralized normalizer
       const loginPayload = buildLoginRequestBody(
         {
           email: values.email,
+          phone: values.phone,
+          username: values.username,
           password: values.password,
         },
         targetBackend
       );
 
-      // Step 2: Call login endpoint
+      // Step 2: Determine which endpoint to use based on login type
+      let loginEndpoint = endpoints.auth.login;
+      if (loginType === "phone" && endpoints.auth.loginViaPhoneNumber) {
+        loginEndpoint = endpoints.auth.loginViaPhoneNumber;
+      } else if (loginType === "username" && endpoints.auth.loginViaUsername) {
+        loginEndpoint = endpoints.auth.loginViaUsername;
+      }
+
+      // Step 3: Call login endpoint
       // NOTE: apiFetch already normalizes the response to AuthTokens
-      const tokens = await apiFetch<AuthTokens>(endpoints.auth.login, {
+      const tokens = await apiFetch<AuthTokens>(loginEndpoint, {
         body: loginPayload,
         overrideBackendKind: targetBackend,
       });

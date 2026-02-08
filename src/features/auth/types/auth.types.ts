@@ -95,6 +95,8 @@ export type LoginResultLaravel = z.infer<typeof laravelLoginSchema>;
 export type RefreshResultLaravel = z.infer<typeof laravelRefreshSchema>;
 
 // Form-related types
-export type LoginFormValues = z.infer<typeof authLoginFormSchema>;
+export type LoginFormValues = z.infer<typeof authLoginFormSchema> & {
+  loginType?: "email" | "phone" | "username";
+};
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

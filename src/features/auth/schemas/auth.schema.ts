@@ -7,7 +7,61 @@
 import { z } from "zod";
 
 // FORM SCHEMAS
-export const authLoginFormSchema = z.object({
+export const authLoginFormSchema = z
+  .object({
+    loginType: z.enum(["email", "phone", "username"]),
+    email: z.string().trim().optional(),
+    phone: z.string().trim().optional(),
+    username: z.string().trim().optional(),
+    password: z.string().min(6, { message: "validation.password.min" }),
+  })
+  .refine(
+    (data) => {
+      if (data.loginType === "email") {
+        return data.email && data.email.length > 0;
+      }
+      if (data.loginType === "phone") {
+        return data.phone && data.phone.length > 0;
+      }
+      if (data.loginType === "username") {
+        return data.username && data.username.length > 0;
+      }
+      return false;
+    },
+    {
+      message: "validation.fieldRequired",
+      path: ["email"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.loginType === "email") {
+        return z.string().email().safeParse(data.email).success;
+      }
+      return true;
+    },
+    {
+      message: "validation.email.invalid",
+      path: ["email"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.loginType === "phone") {
+        // Iraqi phone number format: +964XXXXXXXXX or 07XXXXXXXXX
+        const phoneRegex = /^(\+964|0)?7[0-9]{9}$/;
+        return data.phone && phoneRegex.test(data.phone.replace(/\s/g, ""));
+      }
+      return true;
+    },
+    {
+      message: "validation.phone.invalid",
+      path: ["phone"],
+    }
+  );
+
+// Legacy schema for backward compatibility
+export const authLoginFormSchemaLegacy = z.object({
   email: z
     .string()
     .trim()
