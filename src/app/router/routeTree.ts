@@ -11,7 +11,6 @@ import {
 } from "@tanstack/react-router";
 import { lazy } from "react";
 import { NotFoundPage } from "@/shared/components/layout/NotFoundPage";
-import { Overview } from "@/features/dashboard/components/Overview";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import {
   ProtectedDashboard,
@@ -20,6 +19,7 @@ import {
 } from "./routeComponents";
 
 // ✅ Lazy load feature pages for better code splitting
+const Overview = lazy(() => import("@/features/dashboard/components/Overview").then(m => ({ default: m.Overview })));
 const UsersListPage = lazy(() => import("@/features/users/pages/UsersListPage").then(m => ({ default: m.UsersListPage })));
 const StatisticsPage = lazy(() => import("@/features/statistics/pages/StatisticsPage").then(m => ({ default: m.StatisticsPage })));
 

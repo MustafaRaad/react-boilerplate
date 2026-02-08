@@ -57,7 +57,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
-                      size="md"
                       tooltip={t(item.label)}
                       isActive={isActive}
                     >

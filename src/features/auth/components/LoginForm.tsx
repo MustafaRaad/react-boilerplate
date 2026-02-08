@@ -14,7 +14,6 @@ import { RiLoader4Line } from "@remixicon/react";
 import { authLoginFormSchema as loginSchema } from "@/features/auth/schemas/auth.schema";
 import { type LoginFormValues } from "@/features/auth/types";
 import { useLogin } from "@/features/auth/hooks/useLogin";
-import { OptimizedImage } from "@/shared/components/ui/optimized-image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
@@ -79,10 +78,9 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+      <Card className="mx-auto w-full max-w-md">
+        <CardContent className="p-6 md:p-8">
           <form
-            className="p-6 md:p-8"
             onSubmit={(event) => {
               event.preventDefault();
               void form.handleSubmit();
@@ -206,36 +204,6 @@ export function LoginForm({
               </Field>
             </FieldGroup>
           </form>
-
-          <div className="relative hidden md:block bg-linear-to-br from-primary/15 via-secondary/15 to-background px-6 py-8 dark:from-primary/20 dark:via-secondary/20 dark:to-background">
-            <div className="absolute inset-0 opacity-70">
-              <div className="bg-primary/20 dark:bg-primary/15 absolute -left-10 -top-10 h-40 w-40 rounded-full blur-3xl" />
-              <div className="bg-secondary/25 dark:bg-secondary/15 absolute bottom-0 right-4 h-48 w-48 rounded-full blur-3xl" />
-            </div>
-            <div className="relative flex h-full items-center justify-center">
-              <div>
-                <OptimizedImage
-                  src="/logo.svg"
-                  alt={t("app.title", "App logo")}
-                  width={120}
-                  height={120}
-                  priority
-                  className="m-auto h-30 w-30"
-                />
-                <div className="mt-4 text-center">
-                  <p className="text-lg font-semibold text-foreground">
-                    {t("app.title", "Mustafa Raad Dashboard")}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {t(
-                      "app.description",
-                      "Secure access to your workspace with confidence."
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
