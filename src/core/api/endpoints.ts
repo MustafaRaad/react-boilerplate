@@ -27,7 +27,7 @@ export const endpoints = {
   auth: authEndpoints,
   users: {
     list: {
-      path: "/Users/ListUsers",
+      path: "/User",
       method: "GET",
       requiresAuth: true,
     } as EndpointDef<

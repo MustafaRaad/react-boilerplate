@@ -3,7 +3,7 @@ import { Outlet } from "@tanstack/react-router";
 import { AppSidebar } from "@/shared/components/layout/AppSidebar";
 import { DashboardHeader } from "@/shared/components/layout/dashboard-header";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
-import { ErrorBoundary } from "@/shared/components/error/ErrorBoundary";
+import { ErrorBoundary } from "@/shared/mcp/ErrorBoundary";
 import { SkipToContent } from "@/shared/components/a11y/SkipToContent";
 import { KeyboardShortcuts } from "@/shared/components/a11y/KeyboardShortcuts";
 import { ColorContrastAudit } from "@/shared/components/a11y/ColorContrastAudit";

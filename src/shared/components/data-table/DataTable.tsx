@@ -300,13 +300,13 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
       mode === "client"
         ? setPagination
         : (updater) => {
-            const next =
-              typeof updater === "function"
-                ? updater(pagination)
-                : (updater as PaginationState);
-            setPagination(next);
-            updateUrlPagination(next.pageIndex + 1, next.pageSize);
-          },
+          const next =
+            typeof updater === "function"
+              ? updater(pagination)
+              : (updater as PaginationState);
+          setPagination(next);
+          updateUrlPagination(next.pageIndex + 1, next.pageSize);
+        },
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -453,86 +453,86 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
           isFetching ||
           refetch ||
           onRefresh) && (
-          <div className="flex items-center justify-between gap-2 px-1">
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                {showExport && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleExport}
-                        className="bg-card"
-                      >
-                        <RiDownloadLine className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t("table.exportCsv")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                {(refetch || onRefresh) && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleRefresh}
-                        className="bg-card"
-                        disabled={isFetching}
-                      >
-                        <RiRefreshLine
-                          className={cn(
-                            "h-4 w-4",
-                            isFetching && "animate-spin"
-                          )}
-                        />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t("table.refresh")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-                {enableColumnFilters && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleClearFilters}
-                        className="bg-card"
-                        disabled={!hasActiveFilters}
-                      >
-                        <RiFilterOffLine className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{t("table.clearFilters")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </TooltipProvider>
-            </div>
-
-            {/* Refetching indicator */}
-            {isFetching && !isLoading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <RiLoader4Line className="h-4 w-4 animate-spin" />
-                <span>{t("table.updating")}</span>
+            <div className="flex items-center justify-between gap-2 px-1">
+              <div className="flex items-center gap-2">
+                <TooltipProvider>
+                  {showExport && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleExport}
+                          className="bg-card"
+                        >
+                          <RiDownloadLine className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t("table.exportCsv")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {(refetch || onRefresh) && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleRefresh}
+                          className="bg-card"
+                          disabled={isFetching}
+                        >
+                          <RiRefreshLine
+                            className={cn(
+                              "h-4 w-4",
+                              isFetching && "animate-spin"
+                            )}
+                          />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t("table.refresh")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {enableColumnFilters && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleClearFilters}
+                          className="bg-card"
+                          disabled={!hasActiveFilters}
+                        >
+                          <RiFilterOffLine className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{t("table.clearFilters")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </TooltipProvider>
               </div>
-            )}
-          </div>
-        )}
+
+              {/* Refetching indicator */}
+              {isFetching && !isLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <RiLoader4Line className="h-4 w-4 animate-spin" />
+                  <span>{t("table.updating")}</span>
+                </div>
+              )}
+            </div>
+          )}
         <div
           ref={tableContainerRef}
           className={cn(
             "border shadow rounded-lg my-4 overflow-x-auto",
             enableVirtualization &&
-              mode === "client" &&
-              "max-h-[600px] overflow-y-auto"
+            mode === "client" &&
+            "max-h-[600px] overflow-y-auto"
           )}
         >
           <Table className="min-w-[800px]">
@@ -546,15 +546,15 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                         className={cn(
                           "h-12 px-4",
                           header.column.id === "actions" &&
-                            "w-[1%] whitespace-nowrap text-center"
+                          "w-[1%] whitespace-nowrap text-center"
                         )}
                       >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -647,3 +647,6 @@ export const DataTable = memo(DataTableInner) as typeof DataTableInner;
 
 // Re-export for convenience
 export type { DataTableAction } from "@/shared/components/data-table/DataTableActions";
+
+// Export DataTable as the single source of truth
+export { DataTable as default } from "./DataTable";

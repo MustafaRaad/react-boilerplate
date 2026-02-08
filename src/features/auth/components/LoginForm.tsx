@@ -29,7 +29,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -394,7 +393,7 @@ export function LoginForm({
         </CardContent>
       </Card>
 
-      <FieldDescription className="mt-2 px-6 text-center text-xs leading-relaxed text-muted-foreground space-y-1">
+      <div className="mt-2 px-6 text-center text-xs leading-relaxed text-muted-foreground space-y-1">
         <p>
           {t("auth.tosPrefix", "By proceeding with the authentication process, you hereby acknowledge, understand, and expressly agree to be bound by our")}{" "}
           <TermsDialog
@@ -423,7 +422,7 @@ export function LoginForm({
         <p className="text-[10px] opacity-75">
           {t("auth.tosSuffix", "Please review these documents carefully before continuing")}
         </p>
-      </FieldDescription>
+      </div>
     </div>
   );
 }

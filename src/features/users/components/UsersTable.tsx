@@ -2,31 +2,37 @@
  * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
  * @license MIT
  * @contact mustf.raad@gmail.com
+ * 
+ * Users Table - Single Source of Truth Implementation
+ * Uses the unified DataTable component following MCP patterns
  */
 
 import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { RiEyeLine as Eye, RiPencilLine as Pencil, RiDeleteBinLine as Trash2 } from "@remixicon/react";
-import {
-  DataTable,
-  type DataTableAction,
-} from "@/shared/components/data-table/DataTable.tsx";
+import { DataTable, type DataTableAction } from "@/shared/components/data-table";
+import { ErrorBoundary } from "@/shared/mcp/ErrorBoundary";
 import { useUsers } from "@/features/users/api/useUsers";
+import { useUpdateUser, useDeleteUser } from "@/features/users/api/useUsers";
 import { useUsersColumns } from "./UsersTable.columns.tsx";
 import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
 import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
-import { useUpdateUser, useDeleteUser } from "../api/useUsers";
 import type { User, UserUpdateData } from "@/features/users/types";
 
+/**
+ * Users Table Component
+ * Single source of truth for user data tables - uses MCP patterns
+ */
 export const UsersTable = memo(function UsersTable() {
   const { t } = useTranslation("users");
   const { t: tCommon } = useTranslation("common");
-  const usersQuery = useUsers();
+  const usersModel = useUsers(); // MCP Model
   const columns = useUsersColumns(t);
   const editDialog = useDialogState<User>();
 
+  // MCP Protocol hooks
   const updateUserMutation = useUpdateUser({
     onSuccess: () => {
       toast.success(t("dialogs.edit.success"));
@@ -40,7 +46,8 @@ export const UsersTable = memo(function UsersTable() {
     onError: () => toast.error(t("messages.deleteError")),
   });
 
-  const actions: DataTableAction<User>[] = useMemo(
+  // Actions following MCP pattern
+  const actions = useMemo<DataTableAction<User>[]>(
     () => [
       {
         icon: Eye,
@@ -50,7 +57,7 @@ export const UsersTable = memo(function UsersTable() {
       {
         icon: Pencil,
         label: tCommon("actions.edit"),
-        onClick: editDialog.open,
+        onClick: (user) => editDialog.open(user),
       },
       {
         icon: Trash2,
@@ -61,14 +68,13 @@ export const UsersTable = memo(function UsersTable() {
         confirmDescription: (user) =>
           t("dialogs.delete.description", {
             name: user.name ?? user.email ?? `#${user.id}`,
-            defaultValue: `This will permanently delete ${
-              user.name ?? user.email ?? "this user"
-            }.`,
+            defaultValue: `This will permanently delete ${user.name ?? user.email ?? "this user"
+              }.`,
           }),
         variant: "destructive",
       },
     ],
-    [tCommon, editDialog.open, deleteUserMutation, t]
+    [tCommon, editDialog, deleteUserMutation, t]
   );
 
   // Memoize submit handler to prevent child re-renders
@@ -85,10 +91,10 @@ export const UsersTable = memo(function UsersTable() {
   );
 
   return (
-    <>
+    <ErrorBoundary>
       <DataTable
+        queryResult={usersModel}
         columns={columns}
-        queryResult={usersQuery}
         enableColumnFilters
         showExport
         actions={actions}
@@ -118,6 +124,6 @@ export const UsersTable = memo(function UsersTable() {
           }}
         />
       )}
-    </>
+    </ErrorBoundary>
   );
 });

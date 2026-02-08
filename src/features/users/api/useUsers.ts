@@ -2,31 +2,37 @@
  * @copyright Copyright (c) 2025 Mustafa Raad Mutashar
  * @license MIT
  * @contact mustf.raad@gmail.com
+ * 
+ * Users API - MCP Pattern Implementation
+ * Follows Model-Component-Protocol pattern for better performance and maintainability
  */
 
-import React from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/core/api/client";
-import { endpoints } from "@/core/api/endpoints";
+import { useMemo } from "react";
 import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
-import {
-  type User,
-  type UserFormData,
-  type UserUpdateData,
+import { endpoints } from "@/core/api/endpoints";
+import { createCRUDProtocol } from "@/shared/mcp/createProtocol";
+import type {
+  User,
+  UserFormData,
+  UserUpdateData,
 } from "@/features/users/types";
-import type { EndpointDef } from "@/core/api/endpoints";
 
+/**
+ * User Model Hook (MCP Pattern)
+ * Handles data fetching with automatic caching and refetching
+ */
 export const useUsers = () => {
   const query = createDataTableHook<User>("users", endpoints.users.list)();
 
-  // Sort data by created_at descending (newest first) after loading
-  const sortedData = React.useMemo(() => {
+  // Memoized sorted data - performance optimization
+  const sortedData = useMemo(() => {
     if (!query.data?.items) return query.data;
 
+    // Sort by created_at descending (newest first)
     const sortedItems = [...query.data.items].sort((a, b) => {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA; // Descending order (newest first)
+      return dateB - dateA;
     });
 
     return {
@@ -42,41 +48,8 @@ export const useUsers = () => {
 };
 
 /**
- * Generic mutation hook factory - DRY pattern for all CRUD operations
- * Eliminates code duplication across create/update/delete mutations
- */
-function createMutationHook<TVariables>(
-  queryKey: string,
-  endpoint: EndpointDef<unknown, unknown>,
-  transform?: (data: TVariables) => unknown
-) {
-  return (options?: {
-    onSuccess?: () => void;
-    onError?: (error: unknown) => void;
-  }) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (data: TVariables) => {
-        return await apiFetch(endpoint, {
-          body: transform ? transform(data) : data,
-        });
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [queryKey] });
-        options?.onSuccess?.();
-      },
-      onError: (error) => {
-        console.error(`Mutation failed for ${queryKey}:`, error);
-        options?.onError?.(error);
-      },
-    });
-  };
-}
-
-/**
  * Transform form data to API format
- * Handles field mapping and data type conversions
+ * Centralized transformation logic for consistency
  */
 const transformUserData = (data: UserFormData | UserUpdateData) => ({
   ...data,
@@ -92,21 +65,58 @@ const transformUserData = (data: UserFormData | UserUpdateData) => ({
   password: "password" in data && data.password ? data.password : undefined,
 });
 
-// Mutation hooks using factory pattern
-export const useCreateUser = createMutationHook<UserFormData>(
-  "users",
-  endpoints.users.create,
-  transformUserData
-);
+/**
+ * User Protocol Factory (MCP Pattern)
+ * Creates CRUD protocol with automatic cache invalidation
+ */
+const userProtocolFactory = createCRUDProtocol<
+  UserFormData,
+  UserUpdateData,
+  number
+>({
+  queryKey: ["users"],
+  endpoints: {
+    create: endpoints.users.create,
+    update: endpoints.users.update,
+    delete: endpoints.users.delete,
+  },
+  transforms: {
+    create: transformUserData,
+    update: transformUserData,
+    delete: (id) => ({ id }),
+  },
+  invalidateQueries: [["users"]],
+});
 
-export const useUpdateUser = createMutationHook<UserUpdateData>(
-  "users",
-  endpoints.users.update,
-  transformUserData
-);
+/**
+ * User Protocol Hook (MCP Pattern)
+ * Provides CRUD operations with automatic cache invalidation
+ */
+export const useUserProtocol = () => {
+  return userProtocolFactory();
+};
 
-export const useDeleteUser = createMutationHook<number>(
-  "users",
-  endpoints.users.delete,
-  (userId) => ({ id: userId })
-);
+// Legacy exports for backward compatibility - maintain existing API
+export const useCreateUser = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}) => {
+  const protocol = useUserProtocol();
+  return protocol.create(options);
+};
+
+export const useUpdateUser = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}) => {
+  const protocol = useUserProtocol();
+  return protocol.update(options);
+};
+
+export const useDeleteUser = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}) => {
+  const protocol = useUserProtocol();
+  return protocol.delete(options);
+};
