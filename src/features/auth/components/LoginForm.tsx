@@ -10,9 +10,9 @@ import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { 
-  RiLoader4Line, 
-  RiMailLine, 
+import {
+  RiLoader4Line,
+  RiMailLine,
   RiLockPasswordLine,
   RiLoginBoxLine,
   RiEyeLine,
@@ -120,7 +120,7 @@ export function LoginForm({
   const { user, isInitializing } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState<LoginType>("phone");
-  
+
   const loginFieldConfigs = createLoginFieldConfigs(t);
 
   useEffect(() => {
@@ -153,8 +153,8 @@ export function LoginForm({
               key,
               Array.isArray(errors) && errors.length > 0
                 ? errors.map((msg: string) =>
-                    typeof msg === "string" ? t(msg) : msg
-                  )
+                  typeof msg === "string" ? t(msg) : msg
+                )
                 : errors,
             ])
           );
@@ -190,7 +190,7 @@ export function LoginForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="mx-auto w-full border-border/50 bg-card/80 backdrop-blur-sm shadow-lg dark:bg-card/90">
-        <CardHeader className="flex flex-col items-center gap-3 pb-4">
+        <CardHeader className="flex flex-col items-center gap-3">
           <div className="flex flex-col items-center gap-2 text-center">
             <h2 className="text-2xl font-semibold tracking-tight text-foreground">
               {t("auth.welcomeTitle", "Welcome Back")}
@@ -198,12 +198,9 @@ export function LoginForm({
             <p className="text-muted-foreground text-sm leading-relaxed text-balance max-w-md">
               {t("auth.welcomeSubtitle", "Please provide your authentication credentials to securely access your account and continue to your dashboard")}
             </p>
-            <p className="text-muted-foreground text-xs leading-relaxed text-balance max-w-md mt-1">
-              {t("auth.loginInstructions", "Select your preferred authentication method and enter the corresponding credentials below")}
-            </p>
           </div>
         </CardHeader>
-        
+
         <CardContent className="pt-2">
           <form
             onSubmit={async (event) => {
@@ -214,22 +211,25 @@ export function LoginForm({
           >
             <FieldGroup className="gap-5">
               {/* Login Type Tabs */}
-              <Tabs 
-                value={loginType} 
+              <Tabs
+                value={loginType}
                 onValueChange={(value) => {
                   const newType = value as LoginType;
                   setLoginType(newType);
-                }} 
+                }}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-3">
+                <p className="text-muted-foreground text-xs leading-relaxed text-balance max-w-md mt-1">
+                  {t("auth.loginInstructions", "Select your preferred authentication method and enter the corresponding credentials below")}
+                </p>
+                <TabsList className="grid w-full grid-cols-3  mb-4">
                   {loginFieldConfigs.map((config) => {
                     const Icon = config.icon;
                     const tabLabelKey = `auth.loginVia${config.type.charAt(0).toUpperCase() + config.type.slice(1)}` as const;
                     return (
-                      <TabsTrigger 
-                        key={config.type} 
-                        value={config.type} 
+                      <TabsTrigger
+                        key={config.type}
+                        value={config.type}
                         className="flex items-center gap-2"
                       >
                         <Icon className="h-4 w-4" />
@@ -371,8 +371,8 @@ export function LoginForm({
               </form.Field>
 
               <Field className="pt-2">
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={loginMutation.isPending}
                   className="w-full h-10 text-base font-semibold shadow-sm transition-all duration-200 hover:shadow-md"
                 >
@@ -399,8 +399,8 @@ export function LoginForm({
           {t("auth.tosPrefix", "By proceeding with the authentication process, you hereby acknowledge, understand, and expressly agree to be bound by our")}{" "}
           <TermsDialog
             trigger={
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
               >
                 {t("auth.terms", "Terms of Service")}
@@ -410,8 +410,8 @@ export function LoginForm({
           {t("auth.and", "and")}{" "}
           <PrivacyPolicyDialog
             trigger={
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
               >
                 {t("auth.privacy", "Privacy Policy")}
