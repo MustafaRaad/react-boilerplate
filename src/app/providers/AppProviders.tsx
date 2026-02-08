@@ -15,6 +15,7 @@ import { queryClient } from "@/core/api/queryClient";
 import { i18n } from "@/core/i18n/i18n";
 import { useDirection } from "@/shared/hooks/useDirection";
 import { Toaster } from "@/shared/components/ui/sonner";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
 
 const DirectionObserver = () => {
   useDirection();
@@ -26,15 +27,17 @@ export const AppProviders = () => {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <I18nextProvider i18n={i18n}>
         <QueryClientProvider client={queryClient}>
-          <DirectionObserver />
-          <RouterProvider router={router} />
-          <Toaster richColors />
-          {import.meta.env.DEV ? (
-            <ReactQueryDevtools initialIsOpen={false} />
-          ) : null}
-          {import.meta.env.DEV ? (
-            <TanStackRouterDevtools router={router} position="bottom-right" />
-          ) : null}
+          <TooltipProvider>
+            <DirectionObserver />
+            <RouterProvider router={router} />
+            <Toaster richColors />
+            {import.meta.env.DEV ? (
+              <ReactQueryDevtools initialIsOpen={false} />
+            ) : null}
+            {import.meta.env.DEV ? (
+              <TanStackRouterDevtools router={router} position="bottom-right" />
+            ) : null}
+          </TooltipProvider>
         </QueryClientProvider>
       </I18nextProvider>
     </ThemeProvider>
