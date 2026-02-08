@@ -45,9 +45,10 @@ export const useLogin = () => {
 
       const store = useAuthStore.getState();
       const targetBackend = backendKind;
-      const loginType = values.loginType || "email";
+      const loginType = values.loginType || "phone";
 
       // Step 1: Build login request using centralized normalizer
+      // For ASP.NET, always include clientId and fingerprintHash
       const loginPayload = buildLoginRequestBody(
         {
           email: values.email,
@@ -55,16 +56,24 @@ export const useLogin = () => {
           username: values.username,
           password: values.password,
         },
-        targetBackend
+        targetBackend,
+        {
+          clientId: "web-app",
+          fingerprintHash: "default-hash", // TODO: Generate actual fingerprint hash
+        }
       );
 
       // Step 2: Determine which endpoint to use based on login type
+      // Main login endpoint is for phone number
+      // Username endpoint is separate
       let loginEndpoint = endpoints.auth.login;
-      if (loginType === "phone" && endpoints.auth.loginViaPhoneNumber) {
-        loginEndpoint = endpoints.auth.loginViaPhoneNumber;
-      } else if (loginType === "username" && endpoints.auth.loginViaUsername) {
+      if (loginType === "username") {
+        loginEndpoint = endpoints.auth.loginViaUsername;
+      } else if (loginType === "email") {
+        // Email login uses username endpoint (email is treated as username)
         loginEndpoint = endpoints.auth.loginViaUsername;
       }
+      // Phone login uses the main login endpoint (default)
 
       // Step 3: Call login endpoint
       // NOTE: apiFetch already normalizes the response to AuthTokens

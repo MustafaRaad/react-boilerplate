@@ -38,6 +38,78 @@ import { Input } from "@/shared/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 import { useAuthStore } from "@/store/auth.store";
 
+type LoginType = "email" | "phone" | "username";
+
+interface LoginFieldConfig {
+  type: LoginType;
+  name: keyof LoginFormValues;
+  icon: React.ComponentType<{ className?: string }>;
+  labelKey: string;
+  placeholderKey: string;
+  inputType: string;
+  autoComplete: string;
+  createValidator: (t: ReturnType<typeof useTranslation>["t"]) => (value: string) => string | undefined;
+}
+
+const createLoginFieldConfigs = (t: ReturnType<typeof useTranslation>["t"]): LoginFieldConfig[] => [
+  {
+    type: "phone",
+    name: "phone",
+    icon: RiPhoneLine,
+    labelKey: "auth.phoneLabel",
+    placeholderKey: "auth.phonePlaceholder",
+    inputType: "tel",
+    autoComplete: "tel",
+    createValidator: () => (value: string) => {
+      if (!value || value.trim().length === 0) {
+        return t("validation.phoneRequired", "Phone number is required");
+      }
+      const phoneRegex = /^(\+964|0)?7[0-9]{9}$/;
+      if (!phoneRegex.test(value.replace(/\s/g, ""))) {
+        return t("validation.phone.invalid", "Invalid Iraqi phone number format");
+      }
+      return undefined;
+    },
+  },
+  {
+    type: "email",
+    name: "email",
+    icon: RiMailLine,
+    labelKey: "auth.emailLabel",
+    placeholderKey: "auth.emailPlaceholder",
+    inputType: "email",
+    autoComplete: "email",
+    createValidator: () => (value: string) => {
+      if (!value || value.trim().length === 0) {
+        return t("validation.email.required", "Email is required");
+      }
+      const result = z.string().email().safeParse(value);
+      if (!result.success) {
+        return t("validation.email.invalid", "Invalid email address");
+      }
+      return undefined;
+    },
+  },
+  {
+    type: "username",
+    name: "username",
+    icon: RiUserLine,
+    labelKey: "auth.usernameLabel",
+    placeholderKey: "auth.usernamePlaceholder",
+    inputType: "text",
+    autoComplete: "username",
+    createValidator: () => (value: string) => {
+      if (!value || value.trim().length === 0) {
+        return t("validation.usernameRequired", "Username is required");
+      }
+      if (value.trim().length < 3) {
+        return t("validation.usernameMinLength", "Username must be at least 3 characters");
+      }
+      return undefined;
+    },
+  },
+];
+
 export function LoginForm({
   className,
   ...props
@@ -47,7 +119,9 @@ export function LoginForm({
   const router = useRouter();
   const { user, isInitializing } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState<"email" | "phone" | "username">("email");
+  const [loginType, setLoginType] = useState<LoginType>("phone");
+  
+  const loginFieldConfigs = createLoginFieldConfigs(t);
 
   useEffect(() => {
     if (!isInitializing && user) {
@@ -57,7 +131,7 @@ export function LoginForm({
 
   const form = useForm({
     defaultValues: {
-      loginType: "email" as const,
+      loginType: "phone" as const,
       email: "",
       phone: "",
       username: "",
@@ -125,180 +199,79 @@ export function LoginForm({
               <Tabs 
                 value={loginType} 
                 onValueChange={(value) => {
-                  const newType = value as "email" | "phone" | "username";
+                  const newType = value as LoginType;
                   setLoginType(newType);
                 }} 
                 className="w-full"
               >
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="phone" className="flex items-center gap-2">
-                    <RiPhoneLine className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("auth.loginViaPhone", "Phone")}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="email" className="flex items-center gap-2">
-                    <RiMailLine className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("auth.loginViaEmail", "Email")}</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="username" className="flex items-center gap-2">
-                    <RiUserLine className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("auth.loginViaUsername", "Username")}</span>
-                  </TabsTrigger>
+                  {loginFieldConfigs.map((config) => {
+                    const Icon = config.icon;
+                    const tabLabelKey = `auth.loginVia${config.type.charAt(0).toUpperCase() + config.type.slice(1)}` as const;
+                    return (
+                      <TabsTrigger 
+                        key={config.type} 
+                        value={config.type} 
+                        className="flex items-center gap-2"
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="hidden sm:inline">
+                          {t(tabLabelKey, config.type.charAt(0).toUpperCase() + config.type.slice(1))}
+                        </span>
+                      </TabsTrigger>
+                    );
+                  })}
                 </TabsList>
 
-                {/* Phone Login */}
-                <TabsContent value="phone" className="mt-4">
-                  <form.Field
-                    name="phone"
-                    validators={{
-                      onChange: ({ value }) => {
-                        if (!value || value.trim().length === 0) {
-                          return t("validation.phoneRequired", "Phone number is required");
-                        }
-                        const phoneRegex = /^(\+964|0)?7[0-9]{9}$/;
-                        if (!phoneRegex.test(value.replace(/\s/g, ""))) {
-                          return t("validation.phone.invalid", "Invalid Iraqi phone number format");
-                        }
-                        return undefined;
-                      },
-                    }}
-                  >
-                    {(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched && !field.state.meta.isValid;
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
-                            {t("auth.phoneLabel", "Phone Number")}
-                          </FieldLabel>
-                          <div className="relative">
-                            <RiPhoneLine className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-                            <Input
-                              id={field.name}
-                              type="tel"
-                              placeholder={t("auth.phonePlaceholder", "07XXXXXXXXX or +9647XXXXXXXXX")}
-                              required
-                              value={field.state.value}
-                              onChange={(e) => field.handleChange(e.target.value)}
-                              onBlur={field.handleBlur}
-                              autoComplete="tel"
-                              aria-invalid={isInvalid}
-                              className={cn(
-                                "pl-9 transition-all duration-200",
-                                isInvalid && "border-destructive focus-visible:border-destructive"
-                              )}
-                            />
-                          </div>
-                          {isInvalid && field.state.meta.errors?.length ? (
-                            <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
-                          ) : null}
-                        </Field>
-                      );
-                    }}
-                  </form.Field>
-                </TabsContent>
-
-                {/* Email Login */}
-                <TabsContent value="email" className="mt-4">
-                  <form.Field
-                    name="email"
-                    validators={{
-                      onChange: ({ value }) => {
-                        if (!value || value.trim().length === 0) {
-                          return t("validation.email.required", "Email is required");
-                        }
-                        const result = z.string().email().safeParse(value);
-                        if (!result.success) {
-                          return t("validation.email.invalid", "Invalid email address");
-                        }
-                        return undefined;
-                      },
-                    }}
-                  >
-                    {(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched && !field.state.meta.isValid;
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
-                            {t("auth.emailLabel", "Email Address")}
-                          </FieldLabel>
-                          <div className="relative">
-                            <RiMailLine className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-                            <Input
-                              id={field.name}
-                              type="email"
-                              placeholder={t("auth.emailPlaceholder", "Enter your email address")}
-                              required
-                              value={field.state.value}
-                              onChange={(e) => field.handleChange(e.target.value)}
-                              onBlur={field.handleBlur}
-                              autoComplete="email"
-                              aria-invalid={isInvalid}
-                              className={cn(
-                                "pl-9 transition-all duration-200",
-                                isInvalid && "border-destructive focus-visible:border-destructive"
-                              )}
-                            />
-                          </div>
-                          {isInvalid && field.state.meta.errors?.length ? (
-                            <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
-                          ) : null}
-                        </Field>
-                      );
-                    }}
-                  </form.Field>
-                </TabsContent>
-
-                {/* Username Login */}
-                <TabsContent value="username" className="mt-4">
-                  <form.Field
-                    name="username"
-                    validators={{
-                      onChange: ({ value }) => {
-                        if (!value || value.trim().length === 0) {
-                          return t("validation.usernameRequired", "Username is required");
-                        }
-                        if (value.trim().length < 3) {
-                          return t("validation.usernameMinLength", "Username must be at least 3 characters");
-                        }
-                        return undefined;
-                      },
-                    }}
-                  >
-                    {(field) => {
-                      const isInvalid =
-                        field.state.meta.isTouched && !field.state.meta.isValid;
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
-                            {t("auth.usernameLabel", "Username")}
-                          </FieldLabel>
-                          <div className="relative">
-                            <RiUserLine className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-                            <Input
-                              id={field.name}
-                              type="text"
-                              placeholder={t("auth.usernamePlaceholder", "Enter your username")}
-                              required
-                              value={field.state.value}
-                              onChange={(e) => field.handleChange(e.target.value)}
-                              onBlur={field.handleBlur}
-                              autoComplete="username"
-                              aria-invalid={isInvalid}
-                              className={cn(
-                                "pl-9 transition-all duration-200",
-                                isInvalid && "border-destructive focus-visible:border-destructive"
-                              )}
-                            />
-                          </div>
-                          {isInvalid && field.state.meta.errors?.length ? (
-                            <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
-                          ) : null}
-                        </Field>
-                      );
-                    }}
-                  </form.Field>
-                </TabsContent>
+                {loginFieldConfigs.map((config) => {
+                  const Icon = config.icon;
+                  const validator = config.createValidator(t);
+                  return (
+                    <TabsContent key={config.type} value={config.type} className="mt-4">
+                      <form.Field
+                        name={config.name}
+                        validators={{
+                          onChange: ({ value }) => validator(value as string),
+                        }}
+                      >
+                        {(field) => {
+                          const isInvalid =
+                            field.state.meta.isTouched && !field.state.meta.isValid;
+                          return (
+                            <Field data-invalid={isInvalid}>
+                              <FieldLabel htmlFor={field.name} className="text-sm font-semibold text-foreground">
+                                {t(config.labelKey, config.type.charAt(0).toUpperCase() + config.type.slice(1))}
+                              </FieldLabel>
+                              <div className="relative">
+                                <Icon className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                                <Input
+                                  id={field.name}
+                                  type={config.inputType}
+                                  placeholder={t(config.placeholderKey, `Enter your ${config.type}`)}
+                                  required
+                                  value={field.state.value as string}
+                                  onChange={(e) => field.handleChange(e.target.value)}
+                                  onBlur={field.handleBlur}
+                                  autoComplete={config.autoComplete}
+                                  aria-invalid={isInvalid}
+                                  dir="ltr"
+                                  className={cn(
+                                    "pl-9 transition-all duration-200",
+                                    "text-left [direction:ltr]",
+                                    isInvalid && "border-destructive focus-visible:border-destructive"
+                                  )}
+                                />
+                              </div>
+                              {isInvalid && field.state.meta.errors?.length ? (
+                                <FieldError className="text-xs">{field.state.meta.errors[0]}</FieldError>
+                              ) : null}
+                            </Field>
+                          );
+                        }}
+                      </form.Field>
+                    </TabsContent>
+                  );
+                })}
               </Tabs>
 
               <form.Field
@@ -349,8 +322,10 @@ export function LoginForm({
                           onBlur={field.handleBlur}
                           autoComplete="current-password"
                           aria-invalid={isInvalid}
+                          dir="ltr"
                           className={cn(
                             "pl-9 pr-9 transition-all duration-200",
+                            "text-left [direction:ltr]",
                             isInvalid && "border-destructive focus-visible:border-destructive"
                           )}
                         />

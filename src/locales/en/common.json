@@ -13,7 +13,21 @@
     "dashboard": "Dashboard",
     "users": "Users",
     "roles": "Roles",
-    "statistics": "Statistics"
+    "statistics": "Statistics",
+    "mcpUi": "MCP UI"
+  },
+  "mcpUi": {
+    "title": "MCP UI",
+    "subtitle": "Render MCP Apps inside the dashboard using the @mcp-ui client.",
+    "controlsTitle": "Host Controls",
+    "controlsDescription": "Update tool input and watch the embedded app react.",
+    "toolInputLabel": "Tool input (query)",
+    "toolInputPlaceholder": "Type a query for the app",
+    "logTitle": "Message log",
+    "logEmpty": "No messages yet",
+    "clearLog": "Clear log",
+    "demoTitle": "Embedded App",
+    "demoDescription": "Rendered by AppRenderer with a sandbox proxy."
   },
   "header": {
     "settings": "Settings",

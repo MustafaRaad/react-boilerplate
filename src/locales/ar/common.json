@@ -13,7 +13,21 @@
     "dashboard": "لوحة تحكم مصطفى رعد",
     "users": "المستخدمين",
     "roles": "الأدوار",
-    "statistics": "الإحصائيات"
+    "statistics": "الإحصائيات",
+    "mcpUi": "واجهة MCP"
+  },
+  "mcpUi": {
+    "title": "واجهة MCP",
+    "subtitle": "اعرض تطبيقات MCP داخل لوحة التحكم باستخدام عميل @mcp-ui.",
+    "controlsTitle": "تحكم المضيف",
+    "controlsDescription": "حدّث مدخلات الأداة وشاهد التطبيق المضمّن يستجيب.",
+    "toolInputLabel": "مدخل الأداة (الاستعلام)",
+    "toolInputPlaceholder": "اكتب استعلامًا للتطبيق",
+    "logTitle": "سجل الرسائل",
+    "logEmpty": "لا توجد رسائل بعد",
+    "clearLog": "مسح السجل",
+    "demoTitle": "تطبيق مضمّن",
+    "demoDescription": "يتم العرض عبر AppRenderer مع وسيط sandbox."
   },
   "header": {
     "settings": "الإعدادات",

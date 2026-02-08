@@ -167,6 +167,35 @@ export function normalizeUserProfile(
 }
 
 /**
+ * Normalizes Iraqi phone number to international format
+ * Converts formats like "07XXXXXXXXX" or "07711087733" to "+9647711087733"
+ *
+ * @param phone - Phone number in various formats
+ * @returns Normalized phone number in +964 format
+ */
+function normalizePhoneNumber(phone: string): string {
+  const cleaned = phone.replace(/\s/g, "");
+  
+  // Already in international format
+  if (cleaned.startsWith("+964")) {
+    return cleaned;
+  }
+  
+  // Remove leading 0 and add +964 prefix
+  if (cleaned.startsWith("0")) {
+    return `+964${cleaned.slice(1)}`;
+  }
+  
+  // If it starts with 7, assume it's missing the country code
+  if (cleaned.startsWith("7") && cleaned.length === 10) {
+    return `+964${cleaned}`;
+  }
+  
+  // Return as-is if format is unclear
+  return cleaned;
+}
+
+/**
  * Builds login request body based on backend and credentials
  *
  * @param credentials - User input (email/password or phone/password)
@@ -194,8 +223,9 @@ export function buildLoginRequestBody(
   } else {
     // ASP.NET: Phone login vs Username login
     if (credentials.phone) {
+      const normalizedPhone = normalizePhoneNumber(credentials.phone);
       return {
-        phoneNumber: credentials.phone,
+        phoneNumber: normalizedPhone,
         password: credentials.password,
         clientId: options?.clientId || "web-app",
         fingerprintHash: options?.fingerprintHash || "default-hash",
