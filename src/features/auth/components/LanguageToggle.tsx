@@ -34,10 +34,6 @@ export function LanguageToggle({
     { code: "ar", label: "العربية" },
   ];
 
-  const currentLangLabel = languages.find(
-    (lang) => lang.code === currentLanguage
-  )?.label || "English";
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
