@@ -36,6 +36,8 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { RiLoader4Line, RiAddLine, RiPencilLine } from "@remixicon/react";
 import { Button } from "@/shared/components/ui/button";
+import { useControllableState } from "@/shared/hooks/useControllableState";
+import { getErrorMessage } from "@/shared/utils/errorHandling";
 import {
   Dialog,
   DialogContent,
@@ -169,18 +171,12 @@ export function AutoFormDialog<T extends FieldsConfig>({
 }: AutoFormDialogProps<T>) {
   const { t } = useTranslation(namespace);
   const { t: tCommon } = useTranslation("common");
-  const [internalOpen, setInternalOpen] = React.useState(defaultOpen ?? false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const isControlled = open !== undefined;
-  const dialogOpen = isControlled ? open : internalOpen;
-
-  const handleOpenChange = React.useCallback(
-    (next: boolean) => {
-      if (!isControlled) setInternalOpen(next);
-      onOpenChange?.(next);
-    },
-    [isControlled, onOpenChange]
-  );
+  const [dialogOpen, setDialogOpen] = useControllableState({
+    value: open,
+    defaultValue: defaultOpen ?? false,
+    onChange: onOpenChange,
+  });
 
   // Auto-generate schema from field configuration
   const schema = React.useMemo(
@@ -254,7 +250,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
         await onSubmit(sanitizedValues);
         onSuccess?.(sanitizedValues);
         form.reset();
-        handleOpenChange(false);
+        setDialogOpen(false);
         toast.success(
           t(
             `messages.${mode}Success`,
@@ -262,11 +258,9 @@ export function AutoFormDialog<T extends FieldsConfig>({
           )
         );
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : t("errors.unexpected", "Something went wrong");
-        toast.error(message);
+        toast.error(
+          getErrorMessage(error, t("errors.unexpected", "Something went wrong"))
+        );
         onError?.(error);
       } finally {
         setIsSubmitting(false);
@@ -290,7 +284,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
   );
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
       <DialogContent className="md:min-w-2xl lg:min-w-4xl">
@@ -471,7 +465,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
             <Button
               type="button"
               variant="outline"
-              onClick={() => handleOpenChange(false)}
+              onClick={() => setDialogOpen(false)}
               disabled={isSubmitting}
             >
               {buttonCancelLabel}

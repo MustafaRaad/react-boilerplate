@@ -25,6 +25,8 @@ import { Input } from "@/shared/components/ui/input";
 import { RiLoader4Line } from "@remixicon/react";
 import { toast } from "sonner";
 import { DEFAULT_RATE_LIMITS, rateLimiter } from "@/core/security/rateLimit";
+import { useControllableState } from "@/shared/hooks/useControllableState";
+import { getErrorMessage } from "@/shared/utils/errorHandling";
 
 export interface PasswordResetDialogProps {
   trigger?: React.ReactNode;
@@ -42,18 +44,12 @@ export function PasswordResetDialog({
   onSubmit,
 }: PasswordResetDialogProps) {
   const { t } = useTranslation();
-  const [internalOpen, setInternalOpen] = React.useState(defaultOpen ?? false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const isControlled = open !== undefined;
-  const dialogOpen = isControlled ? open : internalOpen;
-
-  const handleOpenChange = React.useCallback(
-    (next: boolean) => {
-      if (!isControlled) setInternalOpen(next);
-      onOpenChange?.(next);
-    },
-    [isControlled, onOpenChange]
-  );
+  const [dialogOpen, setDialogOpen] = useControllableState({
+    value: open,
+    defaultValue: defaultOpen ?? false,
+    onChange: onOpenChange,
+  });
 
   // Password reset schema
   const resetSchema = z.object({
@@ -120,13 +116,11 @@ export function PasswordResetDialog({
           )
         );
         form.reset();
-        handleOpenChange(false);
+        setDialogOpen(false);
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : t("errors.unexpected", "Something went wrong");
-        toast.error(message);
+        toast.error(
+          getErrorMessage(error, t("errors.unexpected", "Something went wrong"))
+        );
       } finally {
         setIsSubmitting(false);
       }
@@ -134,7 +128,7 @@ export function PasswordResetDialog({
   });
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
       <DialogContent>
@@ -201,7 +195,7 @@ export function PasswordResetDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={() => handleOpenChange(false)}
+              onClick={() => setDialogOpen(false)}
               disabled={isSubmitting}
             >
               {t("actions.cancel", "Cancel")}

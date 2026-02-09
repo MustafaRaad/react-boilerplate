@@ -20,6 +20,7 @@ import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
 import { transformUserToApi, getUserDisplayName } from "../utils/userTransformers";
 import type { User, UserUpdateData } from "@/features/users/types";
+import { getErrorMessage } from "@/shared/utils/errorHandling";
 
 /**
  * Users Table Component
@@ -115,10 +116,7 @@ export const UsersTable = memo(function UsersTable() {
             editDialog.close();
           }}
           onError={(error: unknown) => {
-            const errorMessage = error instanceof Error
-              ? error.message
-              : tCommon("toasts.error");
-            toast.error(errorMessage);
+            toast.error(getErrorMessage(error, tCommon("toasts.error")));
           }}
         />
       )}

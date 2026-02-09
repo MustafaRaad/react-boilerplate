@@ -4,9 +4,6 @@ import { AppSidebar } from "@/shared/components/layout/AppSidebar";
 import { DashboardHeader } from "@/shared/components/layout/dashboard-header";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { ErrorBoundary } from "@/shared/mcp/ErrorBoundary";
-import { SkipToContent } from "@/shared/components/a11y/SkipToContent";
-import { KeyboardShortcuts } from "@/shared/components/a11y/KeyboardShortcuts";
-import { ColorContrastAudit } from "@/shared/components/a11y/ColorContrastAudit";
 import { RiLoader4Line } from "@remixicon/react";
 
 const LoadingFallback = () => (
@@ -18,9 +15,6 @@ const LoadingFallback = () => (
 export const DashboardLayout = () => {
   return (
     <SidebarProvider>
-      <SkipToContent />
-      <KeyboardShortcuts />
-      <ColorContrastAudit />
       <AppSidebar />
       <SidebarInset>
         <DashboardHeader />

@@ -9,6 +9,7 @@ import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
 import { useCreateUser } from "../api/useUsers";
 import type { UserFormData } from "../types";
+import { getErrorMessage } from "@/shared/utils/errorHandling";
 
 export const UsersListPage = memo(function UsersListPage() {
   const { t } = useTranslation("users");
@@ -70,9 +71,7 @@ export const UsersListPage = memo(function UsersListPage() {
           createDialog.close();
         }}
         onError={(error: unknown) => {
-          toast.error(
-            error instanceof Error ? error.message : tCommon("toasts.error")
-          );
+          toast.error(getErrorMessage(error, tCommon("toasts.error")));
         }}
       />
     </div>

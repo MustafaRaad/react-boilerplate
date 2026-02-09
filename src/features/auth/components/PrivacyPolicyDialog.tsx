@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useControllableState } from "@/shared/hooks/useControllableState";
 
 export interface PrivacyPolicyDialogProps {
   trigger?: React.ReactNode;
@@ -24,20 +25,14 @@ export function PrivacyPolicyDialog({
   defaultOpen,
   onOpenChange,
 }: PrivacyPolicyDialogProps) {
-  const [internalOpen, setInternalOpen] = React.useState(defaultOpen ?? false);
-  const isControlled = open !== undefined;
-  const dialogOpen = isControlled ? open : internalOpen;
-
-  const handleOpenChange = React.useCallback(
-    (next: boolean) => {
-      if (!isControlled) setInternalOpen(next);
-      onOpenChange?.(next);
-    },
-    [isControlled, onOpenChange]
-  );
+  const [dialogOpen, setDialogOpen] = useControllableState({
+    value: open,
+    defaultValue: defaultOpen ?? false,
+    onChange: onOpenChange,
+  });
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
       <DialogContent dir="rtl" className="sm:max-w-2xl">
@@ -141,7 +136,7 @@ export function PrivacyPolicyDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => handleOpenChange(false)}>
+          <Button variant="ghost" onClick={() => setDialogOpen(false)}>
             إغلاق
           </Button>
         </DialogFooter>
