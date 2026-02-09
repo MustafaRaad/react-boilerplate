@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { RiArrowUpLine } from "@remixicon/react";
 import { ChartAreaInteractive } from "../components/ChartAreaInteractive";
 import { ChartBarLabelCustom } from "../components/ChartBarLabelCustom";
 import { ChartBarStacked } from "../components/ChartBarStacked";
@@ -6,6 +7,7 @@ import { ChartLineLabel } from "../components/ChartLineLabel";
 import { ChartPieLabel } from "../components/ChartPieLabel";
 import { ChartRadialText } from "../components/ChartRadialText";
 import { MiniStats } from "../components/MiniStats";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 // Sample data for mini stats
 const miniStatsSales = Array.from({ length: 30 }, (_, i) => ({
@@ -27,7 +29,14 @@ export function StatisticsPage() {
   const { t } = useTranslation("statistics");
 
   return (
-    <div className="container mx-auto space-y-6">
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t("pageTitle")}
+        description={t("pageDescription")}
+        icon={RiArrowUpLine}
+        variant="list"
+      />
+
       {/* Mini Stats Grid */}
       <div className="grid gap-4 md:grid-cols-3">
         <MiniStats

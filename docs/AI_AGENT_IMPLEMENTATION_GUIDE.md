@@ -939,7 +939,93 @@ export const ProductsTable = memo(function ProductsTable() {
 });
 ```
 
-### Step 8: Add Translation Keys (`locales/en/products.json`)
+### Step 8: Create Page Component with PageHeader ✅
+
+**File:** `src/features/products/pages/ProductsPage.tsx`
+
+```typescript
+import { memo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { RiBoxLine, RiAddLine } from "@remixicon/react";
+import { toast } from "sonner";
+import { PageHeader, type PageHeaderAction } from "@/shared/components/PageHeader";
+import { ProductsTable } from "../components/ProductsTable";
+import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
+import { PRODUCT_FIELDS } from "@/features/products/config/products.config";
+import { useDialogState } from "@/shared/hooks/useDialogState";
+import { useCreateProduct } from "../api/useProducts";
+import type { ProductFormData } from "../types";
+import { getErrorMessage } from "@/shared/utils/errorHandling";
+
+export const ProductsPage = memo(function ProductsPage() {
+  const { t } = useTranslation("products");
+  const { t: tCommon } = useTranslation("common");
+  const createDialog = useDialogState();
+
+  const createProductMutation = useCreateProduct({
+    onSuccess: () => {
+      toast.success(t("dialogs.create.success"));
+      createDialog.close();
+    },
+    onError: () => toast.error(tCommon("toasts.error")),
+  });
+
+  const handleCreateSubmit = useCallback(
+    async (values: Record<string, unknown>) => {
+      await createProductMutation.mutateAsync(values as ProductFormData);
+    },
+    [createProductMutation]
+  );
+
+  const headerActions: PageHeaderAction[] = [
+    {
+      label: tCommon("actions.add"),
+      icon: RiAddLine,
+      onClick: () => createDialog.open(),
+      variant: "default",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t("list.title")}
+        description={t("list.description")}
+        icon={RiBoxLine}
+        variant="list"
+        actions={headerActions}
+      />
+
+      <ProductsTable />
+
+      <AutoFormDialog
+        fields={PRODUCT_FIELDS}
+        namespace="products"
+        mode="create"
+        open={createDialog.isOpen}
+        onOpenChange={createDialog.setOpen}
+        onSubmit={handleCreateSubmit}
+        onSuccess={() => {
+          toast.success(t("dialogs.create.success"));
+          createDialog.close();
+        }}
+        onError={(error: unknown) => {
+          toast.error(getErrorMessage(error, tCommon("toasts.error")));
+        }}
+      />
+    </div>
+  );
+});
+```
+
+**Key Points:**
+- ✅ Use `PageHeader` component for consistent headers across all features
+- ✅ Import icons from `@remixicon/react` (not `lucide-react`)
+- ✅ Use `variant="list"` for list pages, `variant="detail"` for detail pages
+- ✅ Pass actions as array of `PageHeaderAction` objects
+- ✅ Page component should be a direct child of DashboardLayout
+
+### Step 9: Add Translation Keys (`locales/en/products.json`)
 
 ```json
 {
@@ -1008,41 +1094,47 @@ In `src/shared/components/layout/Sidebar.tsx`, add:
 
 ### Page Header Pattern
 
-**ALWAYS include the feature icon from navigation config in page titles:**
+**✅ ALWAYS use the `PageHeader` component for consistent headers:**
 
 ```typescript
-import { Users } from "lucide-react"; // ← Import icon from navigation
+import { RiGroupLine, RiAddLine } from "@remixicon/react"; // ← Import icon from navigation
 import { useTranslation } from "react-i18next";
+import { PageHeader, type PageHeaderAction } from "@/shared/components/PageHeader";
 
 const { t } = useTranslation("users");
+const { t: tCommon } = useTranslation("common");
+
+const headerActions: PageHeaderAction[] = [
+  {
+    label: tCommon("actions.add"),
+    icon: RiAddLine,
+    onClick: () => createDialog.open(),
+    variant: "default",
+  },
+];
 
 return (
   <div className="flex flex-col gap-6">
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="space-y-1">
-        <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-          <Users className="h-6 w-6 text-secondary" />{" "}
-          {/* ← Icon before title */}
-          {t("list.title")}
-        </h1>
-        <p className="text-muted-foreground">{t("list.description")}</p>
-      </div>
-      <Button onClick={() => createDialog.open()}>
-        <Plus className="h-4 w-4" />
-        {tCommon("actions.add")}
-      </Button>
-    </div>
+    <PageHeader
+      title={t("list.title")}
+      description={t("list.description")}
+      icon={RiGroupLine}
+      variant="list"
+      actions={headerActions}
+    />
     {/* Table component */}
   </div>
 );
 ```
 
-**Icon Guidelines:**
+**PageHeader Guidelines:**
 
-- Use icon from `src/shared/config/navigation.ts` for the feature
-- Size: `h-6 w-6` for page titles
-- Color: `text-secondary` for consistency
-- Position: Before title text with `gap-2`
+- ✅ Use `PageHeader` component from `@/shared/components/PageHeader`
+- ✅ Import icons from `@remixicon/react` (matching navigation config)
+- ✅ Use `variant="list"` for list pages, `variant="detail"` for detail pages
+- ✅ Pass actions as array of `PageHeaderAction` objects
+- ✅ Icon is automatically styled and positioned by the component
+- ✅ Supports back button for detail pages with `onBack` prop
 
 ### Pattern A: Simple List (No Filters)
 

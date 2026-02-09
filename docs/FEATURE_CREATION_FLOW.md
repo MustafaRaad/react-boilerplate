@@ -14,6 +14,7 @@ This guide has been updated with:
 - ✅ **Data Transformers** for clean data conversion
 - ✅ **Single Source of Truth** for data tables
 - ✅ **Type-Safe Utilities** for better developer experience
+- ✅ **PageHeader Component** for consistent page headers across features
 
 ## Prerequisites
 
@@ -518,41 +519,86 @@ export const ProductsTable = memo(function ProductsTable() {
 **File:** `src/features/products/pages/ProductsPage.tsx`
 
 ```typescript
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Package, Plus } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
-import { DashboardLayout } from "@/shared/components/layout/DashboardLayout";
+import { RiBoxLine, RiAddLine } from "@remixicon/react";
+import { toast } from "sonner";
+import { PageHeader, type PageHeaderAction } from "@/shared/components/PageHeader";
 import { ProductsTable } from "../components/ProductsTable";
+import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
+import { PRODUCT_FIELDS } from "@/features/products/config/products.config";
+import { useDialogState } from "@/shared/hooks/useDialogState";
+import { useCreateProduct } from "../api/useProducts";
+import type { ProductFormData } from "../types";
+import { getErrorMessage } from "@/shared/utils/errorHandling";
 
 export const ProductsPage = memo(function ProductsPage() {
   const { t } = useTranslation("products");
+  const { t: tCommon } = useTranslation("common");
+  const createDialog = useDialogState();
+
+  const createProductMutation = useCreateProduct({
+    onSuccess: () => {
+      toast.success(t("dialogs.create.success"));
+      createDialog.close();
+    },
+    onError: () => toast.error(tCommon("toasts.error")),
+  });
+
+  const handleCreateSubmit = useCallback(
+    async (values: Record<string, unknown>) => {
+      await createProductMutation.mutateAsync(values as ProductFormData);
+    },
+    [createProductMutation]
+  );
+
+  const headerActions: PageHeaderAction[] = [
+    {
+      label: tCommon("actions.add"),
+      icon: RiAddLine,
+      onClick: () => createDialog.open(),
+      variant: "default",
+    },
+  ];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header with icon */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-              <Package className="h-6 w-6 text-secondary" />
-              {t("page.title")}
-            </h1>
-            <p className="text-muted-foreground">{t("page.subtitle")}</p>
-          </div>
-          <Button>
-            <Plus className="h-4 w-4" />
-            {t("actions.create")}
-          </Button>
-        </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t("list.title")}
+        description={t("list.description")}
+        icon={RiBoxLine}
+        variant="list"
+        actions={headerActions}
+      />
 
-        {/* Table */}
-        <ProductsTable />
-      </div>
-    </DashboardLayout>
+      <ProductsTable />
+
+      <AutoFormDialog
+        fields={PRODUCT_FIELDS}
+        namespace="products"
+        mode="create"
+        open={createDialog.isOpen}
+        onOpenChange={createDialog.setOpen}
+        onSubmit={handleCreateSubmit}
+        onSuccess={() => {
+          toast.success(t("dialogs.create.success"));
+          createDialog.close();
+        }}
+        onError={(error: unknown) => {
+          toast.error(getErrorMessage(error, tCommon("toasts.error")));
+        }}
+      />
+    </div>
   );
 });
 ```
+
+**Key Points:**
+- ✅ Use `PageHeader` component for consistent page headers
+- ✅ Import icons from `@remixicon/react` (not `lucide-react`)
+- ✅ Use `variant="list"` for list pages, `variant="detail"` for detail pages
+- ✅ Pass actions as array of `PageHeaderAction` objects
+- ✅ Page component should be a direct child of DashboardLayout (no wrapper div needed)
 
 ### Step 9: Add Route ✅
 
@@ -683,7 +729,7 @@ Before marking the feature as complete, verify:
 - [ ] `api/useProducts.ts` has list + mutations
 - [ ] `components/ProductsTable.tsx` uses DataTable
 - [ ] `components/ProductsTable.columns.tsx` defines columns
-- [ ] `pages/ProductsPage.tsx` exists and renders table
+- [ ] `pages/ProductsPage.tsx` exists and uses `PageHeader` component
 
 ### Endpoints
 - [ ] Endpoints registered in `src/core/api/endpoints.ts`

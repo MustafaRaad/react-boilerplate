@@ -6,7 +6,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { RiArrowRightUpLine } from "@remixicon/react";
+import { RiArrowRightUpLine, RiDashboardLine } from "@remixicon/react";
 import {
   Card,
   CardContent,
@@ -16,6 +16,7 @@ import {
 } from "@/shared/components/ui/card";
 import { mainNavItems } from "@/shared/config/navigation";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/shared/components/PageHeader";
 
 export const Overview = () => {
   const { t } = useTranslation();
@@ -31,7 +32,15 @@ export const Overview = () => {
     }));
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t("navigation.dashboard", { ns: "common" })}
+        description={t("dashboard.description", { ns: "common", defaultValue: "Welcome to your dashboard" })}
+        icon={RiDashboardLine}
+        variant="list"
+      />
+
+      <div className="grid gap-4 md:grid-cols-3">
       {pages.map((item) => {
         const Icon = item.icon;
         const displayPath = item.displayPath === "" ? "/" : item.displayPath;

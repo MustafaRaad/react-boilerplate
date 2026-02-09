@@ -46,6 +46,7 @@ const productProtocolFactory = createCRUDProtocol<
 
 #### Component (UI)
 ```typescript
+// Table Component
 export const ProductsTable = () => {
   const productsModel = useProducts(); // Model
   const protocol = useProductProtocol(); // Protocol
@@ -54,6 +55,32 @@ export const ProductsTable = () => {
     <ErrorBoundary>
       <DataTable queryResult={productsModel} columns={columns} />
     </ErrorBoundary>
+  );
+};
+
+// Page Component with PageHeader
+export const ProductsPage = () => {
+  const { t } = useTranslation("products");
+  const headerActions: PageHeaderAction[] = [
+    {
+      label: "Add Product",
+      icon: RiAddLine,
+      onClick: () => createDialog.open(),
+      variant: "default",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title={t("list.title")}
+        description={t("list.description")}
+        icon={RiBoxLine}
+        variant="list"
+        actions={headerActions}
+      />
+      <ProductsTable />
+    </div>
   );
 };
 ```
@@ -68,7 +95,7 @@ export const ProductsTable = () => {
 - ✅ Transformers utility (data conversion)
 - ✅ Table component with ErrorBoundary
 - ✅ Column definitions
-- ✅ Page component
+- ✅ Page component with `PageHeader`
 - ✅ Route added to router
 - ✅ Navigation item added
 - ✅ Translations (en + ar)

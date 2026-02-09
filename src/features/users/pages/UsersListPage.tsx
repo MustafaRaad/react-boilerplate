@@ -1,6 +1,5 @@
 import { memo, useCallback } from "react";
 import { UsersTable } from "@/features/users/components/UsersTable";
-import { Button } from "@/shared/components/ui/button";
 import { RiUserAddLine, RiGroupLine } from "@remixicon/react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,6 +9,7 @@ import { useDialogState } from "@/shared/hooks/useDialogState";
 import { useCreateUser } from "../api/useUsers";
 import type { UserFormData } from "../types";
 import { getErrorMessage } from "@/shared/utils/errorHandling";
+import { PageHeader, type PageHeaderAction } from "@/shared/components/PageHeader";
 
 export const UsersListPage = memo(function UsersListPage() {
   const { t } = useTranslation("users");
@@ -32,25 +32,24 @@ export const UsersListPage = memo(function UsersListPage() {
     [createUserMutation]
   );
 
+  const headerActions: PageHeaderAction[] = [
+    {
+      label: tCommon("actions.add"),
+      icon: RiUserAddLine,
+      onClick: () => createDialog.open(),
+      variant: "default",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-            <RiGroupLine className="h-6 w-6 text-secondary" />
-            {t("list.title")}
-          </h1>
-          <p className="text-muted-foreground">{t("list.description")}</p>
-        </div>
-        <Button
-          size="default"
-          className="gap-2"
-          onClick={() => createDialog.open()}
-        >
-          <RiUserAddLine className="h-4 w-4" />
-          {tCommon("actions.add")}
-        </Button>
-      </div>
+      <PageHeader
+        title={t("list.title")}
+        description={t("list.description")}
+        icon={RiGroupLine}
+        variant="list"
+        actions={headerActions}
+      />
 
       <UsersTable />
 
