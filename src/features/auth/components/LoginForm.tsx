@@ -373,7 +373,7 @@ export function LoginForm({
                 <Button
                   type="submit"
                   disabled={loginMutation.isPending}
-                  className="w-full h-10 text-base font-semibold shadow-sm transition-all duration-200 hover:shadow-md"
+                  className="w-full h-10 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
                 >
                   {loginMutation.isPending ? (
                     <>

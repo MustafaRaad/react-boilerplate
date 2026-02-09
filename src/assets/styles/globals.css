@@ -21,7 +21,7 @@
   --scrollbar-thumb: var(--primary);
   --scrollbar-thumb-hover: color-mix(in oklch, var(--primary) 88%, white 12%);
   --scrollbar-thumb-active: color-mix(in oklch, var(--primary) 76%, black 24%);
-  --radius: 0.875rem;
+  --radius: 1rem;
 
   --background: oklch(98% 0.01 240);
   --foreground: oklch(10% 0.02 280);
