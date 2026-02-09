@@ -5,31 +5,39 @@
  * @contact mustf.raad@gmail.com
  */
 
-import React, { memo, useEffect, useState, useRef } from "react";
+import React, {
+  memo,
+  useEffect,
+  useState,
+  useRef,
+  startTransition,
+} from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
   type PaginationState,
   type SortingState,
+  type RowSelectionState,
+  type ExpandedState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
+  getExpandedRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTranslation } from "react-i18next";
-import { RiDownloadLine, RiFilterOffLine, RiLoader4Line, RiRefreshLine } from "@remixicon/react";
+import {
+  RiDownloadLine,
+  RiFilterOffLine,
+  RiLoader4Line,
+  RiRefreshLine,
+  RiFilterLine,
+  RiArrowDownSLine,
+  RiArrowUpSLine,
+} from "@remixicon/react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { backendKind } from "@/core/config/env";
 import { Button } from "@/shared/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
 import { Input } from "@/shared/components/ui/input";
 import {
   Select,
@@ -57,22 +65,57 @@ import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { DataTableSkeleton } from "@/shared/components/data-table/DataTableSkeleton";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { DynamicComboboxFilter } from "@/shared/components/DynamicComboboxFilter";
+import type { EndpointDef } from "@/core/api/endpoints";
+
+// Type for combobox options (used by DynamicComboboxFilter)
+type ComboboxOption = {
+  value: string;
+  label: string;
+  description?: string;
+};
+
+// Constants
+const INPUT_DEBOUNCE_MS = 500;
+const DEFAULT_PAGE_SIZE = 15;
+const SKELETON_ROW_COUNT = 10;
+
+// Common class names
+const FLEX_CENTER_GAP = "flex items-center gap-2";
 
 // Extend TanStack Table column meta for filter configuration
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
-    filterVariant?: "select" | "input" | "date";
-    filterOptions?: Array<{ id: string | number; name: string }>;
+    filterVariant?: "select" | "input" | "date" | "combobox";
+    filterInputType?: "text" | "number" | "email" | "tel" | "url" | "search";
+    filterOptions?:
+    | Array<{ id: string | number; name: string }>
+    | ((table: unknown) => Array<{ id: string | number; name: string }>);
+    filterEndpoint?: EndpointDef<unknown, unknown>;
+    filterTransformItem?: <TData = unknown>(item: TData) => ComboboxOption;
+    filterSearchQueryParam?: string;
+    filterServerSideSearch?: boolean;
+    isFilterDisabled?: (table: unknown) => boolean;
   }
 }
 
 // Helper types for cleaner column definitions
 interface ColumnDefWithFilter {
   enableColumnFilter?: boolean;
+  header?: string | ((props: unknown) => unknown);
   meta?: {
-    filterVariant?: "select" | "input" | "date";
-    filterOptions?: Array<{ id: string | number; name: string }>;
+    filterVariant?: "select" | "input" | "date" | "combobox";
+    filterInputType?: "text" | "number" | "email" | "tel" | "url" | "search";
+    filterOptions?:
+    | Array<{ id: string | number; name: string }>
+    | ((table: unknown) => Array<{ id: string | number; name: string }>);
+    filterEndpoint?: EndpointDef<unknown, unknown>;
+    filterTransformItem?: <TData = unknown>(item: TData) => ComboboxOption;
+    filterSearchQueryParam?: string;
+    filterServerSideSearch?: boolean;
+    isFilterDisabled?: (table: unknown) => boolean;
   };
 }
 
@@ -90,9 +133,22 @@ type DataTableProps<TData> = {
   enableVirtualization?: boolean; // Enable virtual scrolling for large datasets
   estimateRowHeight?: number; // Estimated row height in pixels (default: 53)
   onRefresh?: () => void; // Callback to refresh table data
+  toolbarActions?: React.ReactNode; // Custom actions to render in the toolbar
   initialState?: {
     sorting?: SortingState;
   };
+  // Row selection props
+  enableRowSelection?: boolean | ((row: TData) => boolean); // Enable row selection for all or specific rows
+  rowSelection?: RowSelectionState; // Controlled row selection state
+  onRowSelectionChange?: React.Dispatch<
+    React.SetStateAction<RowSelectionState>
+  >; // Callback when row selection changes
+  getRowId?: (row: TData) => string; // Function to get unique row ID (required for row selection)
+  onFiltersChange?: (filters: Record<string, unknown>) => void; // Callback when filters change (for server-side filtering)
+  enableGeneralSearch?: boolean; // Enable general text search filter
+  // Row expansion props
+  getRowCanExpand?: (row: TData) => boolean; // Function to determine if a row can be expanded
+  renderSubComponent?: (row: TData) => React.ReactNode; // Function to render expanded row content
 };
 
 // Overload for query result (recommended)
@@ -119,29 +175,98 @@ type DataTableUnionProps<TData> =
 function DebouncedInput({
   column,
   t,
+  placeholder,
+  inputType = "text",
 }: {
   column: {
     getFilterValue: () => unknown;
     setFilterValue: (value: unknown) => void;
   };
   t: (key: string) => string;
+  placeholder?: string;
+  inputType?: "text" | "number" | "email" | "tel" | "url" | "search";
 }) {
   const filterValue = column.getFilterValue();
-  const [inputValue, setInputValue] = useState((filterValue as string) ?? "");
-  const debouncedValue = useDebounce(inputValue, 500);
+  const [inputValue, setInputValue] = useState(
+    inputType === "number"
+      ? (filterValue !== undefined && filterValue !== null && filterValue !== ""
+        ? String(filterValue)
+        : "")
+      : ((filterValue as string) ?? "")
+  );
+  const debouncedValue = useDebounce(inputValue, INPUT_DEBOUNCE_MS);
+  const previousFilterValueRef = useRef(filterValue);
+  const isInternalUpdateRef = useRef(false);
 
   // Update filter when debounced value changes
   useEffect(() => {
-    column.setFilterValue(debouncedValue || undefined);
-  }, [debouncedValue, column]);
+    // Don't restore filter if it was cleared (undefined) and debouncedValue is empty
+    // This prevents the filter from being restored when Clear Filters is clicked
+    if (debouncedValue !== filterValue) {
+      // If filterValue is undefined/null/empty and debouncedValue is also empty, skip
+      // This means the filter was cleared externally
+      if (filterValue === undefined && (debouncedValue === "" || debouncedValue === undefined)) {
+        return;
+      }
+      isInternalUpdateRef.current = true;
+      // For number inputs, convert to number or undefined
+      if (inputType === "number") {
+        const numValue = debouncedValue === "" ? undefined : Number(debouncedValue);
+        column.setFilterValue(isNaN(numValue as number) ? undefined : numValue);
+      } else {
+        column.setFilterValue(debouncedValue || undefined);
+      }
+    }
+  }, [debouncedValue, column, filterValue, inputType]);
+
+  // Sync input value when filter is cleared externally (e.g., Clear Filters button)
+  useEffect(() => {
+    // Check if filterValue changed
+    const filterValueChanged = previousFilterValueRef.current !== filterValue;
+
+    // If filterValue changed, sync the input value
+    // When clearing (filterValue is undefined), always sync regardless of internal flag
+    const shouldSync = filterValueChanged && (!isInternalUpdateRef.current || filterValue === undefined);
+
+    if (shouldSync) {
+      const newValue =
+        filterValue === undefined || filterValue === null || filterValue === ""
+          ? ""
+          : String(filterValue);
+      // Always update if the value is different, especially when clearing (empty string)
+      if (inputValue !== newValue) {
+        // Use startTransition for all updates (including clearing)
+        // The update will be fast enough that users won't notice the slight delay
+        startTransition(() => {
+          setInputValue(newValue);
+        });
+      }
+    }
+
+    // Always update the ref to track changes
+    if (filterValueChanged) {
+      previousFilterValueRef.current = filterValue;
+    }
+
+    // Reset internal flag after processing
+    isInternalUpdateRef.current = false;
+  }, [filterValue, inputValue]);
+
+  const hasValue = inputValue !== "";
 
   return (
-    <Input
-      placeholder={t("table.filter")}
-      value={inputValue}
-      onChange={(e) => setInputValue(e.target.value)}
-      className="h-8 w-full"
-    />
+    <div className="relative">
+      <Input
+        type={inputType}
+        placeholder={placeholder || t("table.filter")}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        className={cn(
+          "w-full transition-all",
+          hasValue && "border-primary/50"
+        )}
+      />
+    </div>
   );
 }
 
@@ -151,31 +276,125 @@ import type { Row } from "@tanstack/react-table";
 type MemoizedTableRowProps<TData> = {
   row: Row<TData>;
   onRowClick?: (row: TData) => void;
+  selected: boolean;
+  renderSubComponent?: (row: TData) => React.ReactNode;
 };
 
 function TableRowComponent<TData>({
   row,
   onRowClick,
+  selected,
+  renderSubComponent,
 }: MemoizedTableRowProps<TData>) {
+  // Get expanded state - this will update when state changes
+  const isExpanded = row.getIsExpanded();
+
+  const handleRowClick = (e: React.MouseEvent<HTMLTableRowElement>) => {
+    // Don't expand if clicking on actions column or other interactive elements
+    const target = e.target as HTMLElement;
+    const isActionCell = target.closest('[data-action-cell]');
+    const isButton = target.closest('button:not([data-action-cell] button)');
+    const isLink = target.closest('a');
+    const isCheckbox = target.closest('input[type="checkbox"]');
+    const isExpander = target.closest('[data-expander]');
+
+    // Stop propagation if clicking on interactive elements
+    // The expander has its own click handler, so we skip it here
+    if (isActionCell || isButton || isLink || isCheckbox || isExpander) {
+      return;
+    }
+
+    // If renderSubComponent is provided, toggle expansion
+    if (renderSubComponent) {
+      try {
+        // Use row.toggleExpanded() which properly handles state updates
+        row.toggleExpanded();
+      } catch (error) {
+        console.error('Error toggling row expansion:', error);
+      }
+    }
+    // Also call the custom onRowClick if provided
+    if (onRowClick) {
+      onRowClick(row.original);
+    }
+  };
+
+  // If renderSubComponent is provided, the row should be expandable
+  const canExpand = renderSubComponent ? (row.getCanExpand() ?? true) : false;
+  const shouldBeClickable = (canExpand && renderSubComponent) || !!onRowClick;
+
   return (
-    <TableRow
-      key={row.id}
-      data-state={row.getIsSelected() && "selected"}
-      onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-      className={cn(
-        "transition-colors",
-        onRowClick && "cursor-pointer hover:bg-muted/60"
+    <>
+      <TableRow
+        key={row.id}
+        data-state={selected && "selected"}
+        data-expanded={isExpanded}
+        onClick={shouldBeClickable ? handleRowClick : undefined}
+        onKeyDown={
+          shouldBeClickable
+            ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleRowClick(e as unknown as React.MouseEvent<HTMLTableRowElement>);
+              }
+            }
+            : undefined
+        }
+        tabIndex={shouldBeClickable ? 0 : undefined}
+        role={shouldBeClickable ? "button" : undefined}
+        className={cn(
+          "transition-colors",
+          shouldBeClickable && "cursor-pointer hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+          isExpanded && "bg-muted/30"
+        )}
+      >
+        {row.getVisibleCells().map((cell) => (
+          <MemoizedTableCell key={cell.id} cell={cell} />
+        ))}
+      </TableRow>
+      {isExpanded && renderSubComponent && (
+        <TableRow key={`${row.id}-expanded`}>
+          <TableCell colSpan={row.getVisibleCells().length} className="p-0">
+            <div className="px-4 py-4 bg-muted/20">
+              {renderSubComponent(row.original)}
+            </div>
+          </TableCell>
+        </TableRow>
       )}
-    >
-      {row.getVisibleCells().map((cell) => (
-        <MemoizedTableCell key={cell.id} cell={cell} />
-      ))}
-    </TableRow>
+    </>
   );
 }
 
+// Optimized memo comparison - only re-render if row data or selection state changes
 const MemoizedTableRow = React.memo(
-  TableRowComponent
+  TableRowComponent,
+  (prev, next) => {
+    // Fast path: if row ID changed, definitely need to re-render
+    if (prev.row.id !== next.row.id) return false;
+
+    // If selection state changed, need to re-render
+    if (prev.selected !== next.selected) return false;
+
+    // If onRowClick reference changed, need to re-render
+    if (prev.onRowClick !== next.onRowClick) return false;
+
+    // If renderSubComponent reference changed, need to re-render
+    if (prev.renderSubComponent !== next.renderSubComponent) return false;
+
+    // If row expansion state changed, need to re-render
+    const prevExpanded = prev.row.getIsExpanded();
+    const nextExpanded = next.row.getIsExpanded();
+    if (prevExpanded !== nextExpanded) return false;
+
+    // If row object reference changed (TanStack Table creates new row objects when state changes), re-render
+    if (prev.row !== next.row) return false;
+
+    // If row original data changed (by reference), need to re-render
+    if (prev.row.original !== next.row.original) return false;
+
+    // All props are the same, skip re-render
+    return true;
+  }
 ) as typeof TableRowComponent;
 
 type MemoizedTableCellProps<TData> = {
@@ -187,6 +406,12 @@ function TableCellComponent<TData>({ cell }: MemoizedTableCellProps<TData>) {
     <TableCell
       className={cn(
         "px-4",
+        cell.column.id === "select" &&
+        "py-0 w-[1%] whitespace-nowrap text-center align-middle",
+        cell.column.id === "index" &&
+        "py-3 w-[1%] whitespace-nowrap text-center",
+        cell.column.id === "expander" &&
+        "py-3 w-[1%] whitespace-nowrap text-center",
         cell.column.id === "actions" ? "py-0 w-[1%] whitespace-nowrap" : "py-3"
       )}
     >
@@ -195,7 +420,58 @@ function TableCellComponent<TData>({ cell }: MemoizedTableCellProps<TData>) {
   );
 }
 
-const MemoizedTableCell = React.memo(TableCellComponent) as typeof TableCellComponent;
+const MemoizedTableCell = React.memo(
+  TableCellComponent
+) as typeof TableCellComponent;
+
+// Helper function to check if filter has a value
+const hasFilterValue = (filterValue: unknown): boolean => {
+  if (filterValue === undefined || filterValue === null || filterValue === "") {
+    return false;
+  }
+  if (typeof filterValue === "object" && filterValue !== null && "from" in filterValue) {
+    return (filterValue as { from?: unknown }).from !== undefined;
+  }
+  return true;
+};
+
+// Helper function to extract query result props
+const extractQueryResult = <TData,>(
+  props: DataTableUnionProps<TData>
+): {
+  isLoading: boolean;
+  isFetching: boolean;
+  refetch?: () => void;
+  data?: TData[];
+} => {
+  if ("queryResult" in props) {
+    return {
+      isLoading: props.queryResult.isLoading ?? false,
+      isFetching: props.queryResult.isFetching ?? false,
+      refetch: props.queryResult.refetch,
+      data: props.queryResult.data?.items,
+    };
+  }
+  return {
+    isLoading: false,
+    isFetching: false,
+    data: props.data,
+  };
+};
+
+// Loading indicator component
+const LoadingIndicator = ({
+  message,
+  className = ""
+}: {
+  message: string;
+  className?: string;
+}) => (
+  <div className={cn(FLEX_CENTER_GAP, "text-sm text-muted-foreground", className)}>
+    <RiLoader4Line className="h-4 w-4 animate-spin" />
+    <span>{message}</span>
+  </div>
+);
 
 const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   const {
@@ -207,38 +483,135 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     emptyMessage,
     className,
     actions,
-    enableVirtualization = false,
-    estimateRowHeight = 53,
     onRefresh,
+    toolbarActions,
     initialState,
+    enableRowSelection = false,
+    rowSelection: controlledRowSelection,
+    onRowSelectionChange,
+    getRowId,
+    onFiltersChange,
+    enableGeneralSearch = false,
+    getRowCanExpand,
+    renderSubComponent,
   } = props;
 
+  const { t } = useTranslation();
+
+  // Extract query result props once
+  const queryResult = extractQueryResult(props);
+
+  const renderSelectionHeader = React.useCallback(
+    ({ table }: { table: ReturnType<typeof useReactTable<TData>> }) => {
+      const hasSelectable = table
+        .getRowModel()
+        .rows.some((row) => row.getCanSelect());
+
+      const isAllSelected = table.getIsAllPageRowsSelected();
+      const isIndeterminate =
+        table.getIsSomePageRowsSelected() && !isAllSelected;
+
+      return (
+        <Checkbox
+          checked={
+            isAllSelected ? true : isIndeterminate ? "indeterminate" : false
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label={t("actions.selectAll", { ns: "common" })}
+          className="translate-y-[2px]"
+          onClick={(event) => event.stopPropagation()}
+          disabled={!hasSelectable}
+        />
+      );
+    },
+    [t]
+  );
+
+  const renderSelectionCell = React.useCallback(
+    ({ row }: { row: Row<TData> }) => {
+      if (!row.getCanSelect()) {
+        return null;
+      }
+
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label={t("actions.select", { ns: "common" })}
+          className="translate-y-[2px]"
+          onClick={(event) => event.stopPropagation()}
+          disabled={!row.getCanSelect()}
+        />
+      );
+    },
+    [t]
+  );
+
   // Memoize columns, actions, and data for performance
+  // Use deep equality for columns/actions to prevent unnecessary re-renders
   const memoizedColumns = React.useMemo(() => columns, [columns]);
   const memoizedActions = React.useMemo(() => actions, [actions]);
+
+  // Extract and memoize data to avoid re-rendering when other props change
   const memoizedData = React.useMemo(() => {
-    return "queryResult" in props
-      ? props.queryResult.data?.items ?? []
-      : props.data;
-  }, [props]);
+    return queryResult.data ?? [];
+  }, [queryResult.data]);
 
-  // Automatically determine mode based on backend
-  const mode = backendKind === "laravel" ? "client" : "server";
+  // Track if we've ever loaded data (to distinguish initial load from filter changes)
+  const hasEverLoadedDataRef = useRef(false);
 
-  // Extract total from either direct props or queryResult
-  const total =
-    "queryResult" in props ? props.queryResult.data?.rowCount : props.total;
-  const isLoading =
-    "queryResult" in props ? props.queryResult.isLoading ?? false : false;
-  const isFetching =
-    "queryResult" in props ? props.queryResult.isFetching ?? false : false;
-  const refetch =
-    "queryResult" in props ? props.queryResult.refetch : undefined;
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const searchParams = useSearch({ strict: false }) as Record<string, unknown>;
+  // Update ref when data is available
+  useEffect(() => {
+    if (memoizedData.length > 0) {
+      hasEverLoadedDataRef.current = true;
+    }
+  }, [memoizedData.length]);
+
+  // Resolve getRowId function for row selection
+  const resolvedGetRowId = React.useMemo(() => {
+    if (getRowId) return getRowId;
+    // Default: try to use 'id' property
+    return (row: TData) => {
+      const item = row as { id?: string | number };
+      return item.id ? String(item.id) : "";
+    };
+  }, [getRowId]);
+
+  const { isLoading, isFetching, refetch } = queryResult;
+
+  // Row selection state (internal if not controlled)
+  const [internalRowSelection, setInternalRowSelection] =
+    useState<RowSelectionState>({});
+  const rowSelection = controlledRowSelection ?? internalRowSelection;
+
+  // Handle row selection change with proper updater support
+  const handleRowSelectionChange = React.useCallback(
+    (
+      updaterOrValue:
+        | RowSelectionState
+        | ((old: RowSelectionState) => RowSelectionState)
+    ) => {
+      if (onRowSelectionChange) {
+        // Forward to controlled handler (supports updater functions)
+        onRowSelectionChange(
+          updaterOrValue as React.SetStateAction<RowSelectionState>
+        );
+      } else {
+        // If uncontrolled, use internal state setter
+        setInternalRowSelection(updaterOrValue);
+      }
+    },
+    [onRowSelectionChange]
+  );
+
+  // Initialize column filters as empty (no URL syncing)
+  const initialColumnFilters = React.useMemo(() => {
+    return [];
+  }, []);
 
   // Read pagination from URL params
+  const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as Record<string, unknown>;
   const urlPage = Number(searchParams.page ?? 1);
   const urlPageSize = Number(searchParams.pageSize ?? 10);
 
@@ -246,10 +619,6 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     pageIndex: urlPage - 1,
     pageSize: urlPageSize,
   });
-
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [sorting, setSorting] = useState<SortingState>(initialState?.sorting ?? []);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Sync pagination state with URL params
   useEffect(() => {
@@ -266,56 +635,219 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     });
   };
 
-  // Add actions column if actions are provided
+  const [columnFilters, setColumnFilters] =
+    useState<ColumnFiltersState>(initialColumnFilters);
+  const [generalSearch, setGeneralSearch] = useState<string>("");
+  const debouncedGeneralSearch = useDebounce(generalSearch, INPUT_DEBOUNCE_MS);
+  const [sorting, setSorting] = useState<SortingState>(
+    initialState?.sorting ?? []
+  );
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Clear dependent filters when parent filter changes
+  useEffect(() => {
+    const govFilter = columnFilters.find((f) => f.id === "gov_id");
+    const cityFilter = columnFilters.find((f) => f.id === "city_id");
+
+    // If governorate filter changes or is cleared, reset city filter
+    if (cityFilter && (!govFilter || govFilter.value === undefined)) {
+      setColumnFilters((prev) => prev.filter((f) => f.id !== "city_id"));
+    }
+  }, [columnFilters]);
+
+  // No URL syncing - filters are managed in component state only
+  // Convert columnFilters to simple object format for server-side filtering
+  const filterParamsRef = useRef<Record<string, unknown>>({});
+
+  // Helper to convert columnFilters to filter params
+  const columnFiltersToParams = React.useCallback((filters: ColumnFiltersState): Record<string, unknown> => {
+    const params: Record<string, unknown> = {};
+    filters.forEach((filter) => {
+      if (
+        filter.value !== undefined &&
+        filter.value !== null &&
+        filter.value !== ""
+      ) {
+        // Handle date range filters
+        if (
+          typeof filter.value === "object" &&
+          filter.value !== null &&
+          "from" in filter.value
+        ) {
+          const dateRange = filter.value as { from?: Date; to?: Date };
+          if (dateRange.from) {
+            params[`${filter.id}_from`] = dateRange.from.toISOString();
+          }
+          if (dateRange.to) {
+            params[`${filter.id}_to`] = dateRange.to.toISOString();
+          }
+        } else {
+          params[filter.id] = filter.value;
+        }
+      }
+    });
+    return params;
+  }, []);
+
+  // Notify parent component when filters change (for server-side filtering)
+  useEffect(() => {
+    if (!onFiltersChange) return;
+
+    const newParams = columnFiltersToParams(columnFilters);
+
+    // Add general search if enabled
+    if (enableGeneralSearch && debouncedGeneralSearch && debouncedGeneralSearch.trim() !== "") {
+      newParams.text = debouncedGeneralSearch.trim();
+    }
+
+    const paramsString = JSON.stringify(newParams);
+    const previousParamsString = JSON.stringify(filterParamsRef.current);
+
+    // Only notify if filters actually changed
+    if (paramsString !== previousParamsString) {
+      filterParamsRef.current = newParams;
+      // Debounce filter changes to avoid too many API calls
+      const timeoutId = setTimeout(() => {
+        onFiltersChange(newParams);
+      }, 300); // 300ms debounce for filter changes
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [columnFilters, debouncedGeneralSearch, enableGeneralSearch, onFiltersChange, columnFiltersToParams]);
+
+  // Add index, selection/actions columns when enabled
   const columnsWithActions = React.useMemo(() => {
-    if (!memoizedActions || memoizedActions.length === 0)
-      return memoizedColumns;
+    const hasSelectionColumn = memoizedColumns.some(
+      (col) => "id" in col && (col as ColumnDef<TData>).id === "select"
+    );
+    const hasIndexColumn = memoizedColumns.some(
+      (col) => "id" in col && (col as ColumnDef<TData>).id === "index"
+    );
+
+    // Index column - shows sequential row numbers
+    const indexColumn: ColumnDef<TData> = {
+      id: "index",
+      header: () => "#",
+      cell: ({ row }) => {
+        // Get the row index in the table (0-based) and add 1 for display
+        const rowIndex = row.index + 1;
+        return (
+          <span className="text-muted-foreground font-medium">{rowIndex}</span>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+      enableColumnFilter: false,
+      size: 60,
+    };
+
+    const selectionColumn: ColumnDef<TData> | null =
+      enableRowSelection && !hasSelectionColumn
+        ? {
+          id: "select",
+          header: renderSelectionHeader,
+          cell: renderSelectionCell,
+          enableSorting: false,
+          enableHiding: false,
+          enableColumnFilter: false,
+          size: 48,
+        }
+        : null;
+
+    // Build columns: index -> selection (if enabled) -> user columns -> actions (if enabled)
+    const baseColumns = hasIndexColumn
+      ? memoizedColumns
+      : selectionColumn
+        ? [indexColumn, selectionColumn, ...memoizedColumns]
+        : [indexColumn, ...memoizedColumns];
+
+    if (!memoizedActions || memoizedActions.length === 0) return baseColumns;
 
     const actionsColumn: ColumnDef<TData> = {
       id: "actions",
       header: () => t("actions.title", { ns: "common" }),
       cell: ({ row }) => (
-        <DataTableActions row={row.original} actions={memoizedActions} />
+        <div data-action-cell onClick={(e) => e.stopPropagation()}>
+          <DataTableActions row={row.original} actions={memoizedActions} />
+        </div>
       ),
       enableColumnFilter: false,
     };
 
-    return [...memoizedColumns, actionsColumn];
-  }, [memoizedColumns, memoizedActions, t]);
+    return [...baseColumns, actionsColumn];
+  }, [
+    memoizedColumns,
+    memoizedActions,
+    enableRowSelection,
+    t,
+    renderSelectionHeader,
+    renderSelectionCell,
+  ]);
 
-  const table = useReactTable({
+  // Extract total from either direct props or queryResult
+  const total =
+    "queryResult" in props ? props.queryResult.data?.rowCount : props.total;
+
+  // Automatically determine mode based on backend
+  const mode = backendKind === "laravel" ? "client" : "server";
+
+  const table = useReactTable<TData>({
     data: memoizedData,
     columns: columnsWithActions,
     state: {
       pagination,
       columnFilters,
       sorting,
+      expanded,
+      ...(enableRowSelection ? { rowSelection } : {}),
     },
     pageCount:
       mode === "server" && total && pagination.pageSize
         ? Math.ceil(total / pagination.pageSize)
+        : mode === "client" && memoizedData.length && pagination.pageSize
+        ? Math.ceil(memoizedData.length / pagination.pageSize)
         : undefined,
     manualPagination: mode === "server",
-    onPaginationChange:
-      mode === "client"
-        ? setPagination
-        : (updater) => {
-          const next =
-            typeof updater === "function"
-              ? updater(pagination)
-              : (updater as PaginationState);
-          setPagination(next);
-          updateUrlPagination(next.pageIndex + 1, next.pageSize);
-        },
+    manualFiltering: true,
+    manualSorting: true,
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater(pagination)
+          : (updater as PaginationState);
+      setPagination(next);
+      // Update URL for both client and server mode
+      updateUrlPagination(next.pageIndex + 1, next.pageSize);
+    },
     onColumnFiltersChange: setColumnFilters,
     onSortingChange: setSorting,
+    onExpandedChange: (updater) => {
+      setExpanded((old) => {
+        const newState = typeof updater === 'function' ? updater(old) : updater;
+        return newState;
+      });
+    },
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: enableColumnFilters
-      ? getFilteredRowModel()
-      : undefined,
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: getRowCanExpand
+      ? (row) => getRowCanExpand(row.original)
+      : renderSubComponent
+        ? () => true
+        : undefined,
     ...(mode === "client"
       ? { getPaginationRowModel: getPaginationRowModel() }
+      : {}),
+    // Row selection configuration
+    ...(enableRowSelection
+      ? {
+          enableRowSelection:
+            typeof enableRowSelection === "function"
+              ? (row) => enableRowSelection(row.original)
+              : enableRowSelection,
+          onRowSelectionChange: handleRowSelectionChange,
+          getRowId: resolvedGetRowId,
+        }
       : {}),
   });
 
@@ -323,27 +855,128 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   const canPrevious = table.getCanPreviousPage();
   const canNext = table.getCanNextPage();
 
+  // Get column header label for placeholder
+  function getColumnHeaderLabel(column: ReturnType<typeof table.getAllColumns>[0]): string {
+    const columnDef = column.columnDef as ColumnDefWithFilter;
+    const header = columnDef.header;
+
+    if (typeof header === "string") {
+      return header;
+    } else if (typeof header === "function") {
+      try {
+        const rendered = header({ column, header: column, table } as never);
+        if (typeof rendered === "string") {
+          return rendered;
+        }
+      } catch {
+        // Fallback to column id if header function fails
+      }
+    }
+    return column.id;
+  }
+
   // Render filter component based on column configuration
-  function renderColumnFilter(column: ReturnType<typeof table.getAllColumns>[0]) {
+  function renderColumnFilter(
+    column: ReturnType<typeof table.getAllColumns>[0]
+  ) {
     const columnDef = column.columnDef as ColumnDefWithFilter;
     const shouldShowFilter = columnDef.enableColumnFilter !== false;
     const filterVariant = columnDef.meta?.filterVariant;
-    const filterOptions = columnDef.meta?.filterOptions;
+    const filterInputType = columnDef.meta?.filterInputType ?? "text";
+    const filterOptionsConfig = columnDef.meta?.filterOptions;
+    const isFilterDisabled = columnDef.meta?.isFilterDisabled;
 
     if (!shouldShowFilter || !column.getCanFilter()) return null;
 
     const filterValue = column.getFilterValue();
+    const isDisabled = isFilterDisabled ? isFilterDisabled(table) : false;
+    const placeholder = getColumnHeaderLabel(column);
+
+    // Resolve dynamic filter options
+    const filterOptions =
+      typeof filterOptionsConfig === "function"
+        ? filterOptionsConfig(table)
+        : filterOptionsConfig;
+
+    if (filterVariant === "combobox") {
+      // Check if using endpoint-based combobox
+      if (columnDef.meta?.filterEndpoint) {
+        const endpoint = columnDef.meta.filterEndpoint;
+        const transformItem = columnDef.meta.filterTransformItem;
+        const searchQueryParam = columnDef.meta.filterSearchQueryParam ?? "text";
+        const serverSideSearch = columnDef.meta.filterServerSideSearch ?? true;
+
+        return (
+          <div className="relative">
+            <DynamicComboboxFilter
+              endpoint={endpoint}
+              value={(filterValue as string) ?? null}
+              onChange={(value) =>
+                column.setFilterValue(value === null ? undefined : value)
+              }
+              transformItem={transformItem}
+              searchQueryParam={searchQueryParam}
+              serverSideSearch={serverSideSearch}
+              placeholder={placeholder}
+              searchPlaceholder={t("table.search")}
+              emptyMessage={t("table.empty")}
+              disabled={isDisabled}
+            />
+          </div>
+        );
+      }
+
+      // Static combobox with options array - would need Combobox component
+      // For now, fall back to select if combobox not available
+      if (Array.isArray(filterOptions)) {
+        return (
+          <Select
+            value={(filterValue as string) ?? "all"}
+            onValueChange={(value) =>
+              column.setFilterValue(value === "all" ? undefined : value)
+            }
+            disabled={isDisabled}
+          >
+            <SelectTrigger
+              value={(filterValue as string) ?? "all"}
+              className={cn(
+                "w-full transition-all",
+                hasFilterValue(filterValue) && filterValue !== "all" && "border-primary/50"
+              )}
+            >
+              <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("table.all")}</SelectItem>
+              {filterOptions.map((option) => (
+                <SelectItem key={option.id} value={String(option.id)}>
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      }
+    }
 
     if (filterVariant === "select" && Array.isArray(filterOptions)) {
+      const hasValue = hasFilterValue(filterValue) && filterValue !== "all";
       return (
         <Select
           value={(filterValue as string) ?? "all"}
           onValueChange={(value) =>
             column.setFilterValue(value === "all" ? undefined : value)
           }
+          disabled={isDisabled}
         >
-          <SelectTrigger className="w-full" size="sm">
-            <SelectValue placeholder={t("table.filter")} />
+          <SelectTrigger
+            value={(filterValue as string) ?? "all"}
+            className={cn(
+              "w-full transition-all",
+              hasValue && "border-primary/50"
+            )}
+          >
+            <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("table.all")}</SelectItem>
@@ -358,25 +991,28 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     }
 
     if (filterVariant === "date") {
+      const dateRange = filterValue as DateRange | undefined;
+      const datePlaceholder = `${placeholder} - ${t("table.dateRangePlaceholder")}`;
+
       return (
-        <DateRangePicker
-          dateRange={filterValue as DateRange | undefined}
-          onDateRangeChange={(range) => column.setFilterValue(range)}
-          placeholder={t("table.selectDate")}
-        />
+        <div className="relative">
+          <DateRangePicker
+            dateRange={dateRange}
+            onDateRangeChange={(range) => column.setFilterValue(range)}
+            placeholder={datePlaceholder}
+          />
+        </div>
       );
     }
 
-    // Use debounced input for text filters
-    // Key prop resets state when filters are cleared
-    return (
-      <DebouncedInput key={String(filterValue ?? "")} column={column} t={t} />
-    );
+    // Use debounced input for text/number filters
+    return <DebouncedInput column={column} t={t} placeholder={placeholder} inputType={filterInputType} />;
   }
 
   // CSV Export handler
   const handleExport = () => {
-    const rows = table.getFilteredRowModel().rows.map((row) => row.original);
+    // In server mode, use raw data (all data from server)
+    const rows = memoizedData;
     exportToCsv({
       fileName: exportFileName,
       columns,
@@ -386,7 +1022,23 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
 
   // Clear all filters handler
   const handleClearFilters = () => {
+    // Clear general search
+    if (enableGeneralSearch) {
+      setGeneralSearch("");
+    }
+
+    // Clear column filters state first - this will trigger DebouncedInput sync
+    setColumnFilters([]);
+
+    // Then reset column filters in table
     table.resetColumnFilters();
+
+    // Manually clear each column's filter value to ensure all inputs are cleared
+    table.getAllColumns().forEach((column) => {
+      if (column.getCanFilter()) {
+        column.setFilterValue(undefined);
+      }
+    });
   };
 
   // Refresh table data handler
@@ -398,44 +1050,102 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     }
   };
 
-  const hasActiveFilters = columnFilters.length > 0;
+  const hasActiveFilters = columnFilters.length > 0 || (enableGeneralSearch && generalSearch.trim() !== "");
 
-  // Virtual scrolling setup for large datasets
+  // Get all filterable columns for toolbar
+  const filterableColumns = React.useMemo(() => {
+    if (!enableColumnFilters) return [];
+    return table.getAllColumns().filter((column) => {
+      const columnDef = column.columnDef as ColumnDefWithFilter;
+      const shouldShowFilter = columnDef.enableColumnFilter !== false;
+      return shouldShowFilter && column.getCanFilter();
+    });
+  }, [table, enableColumnFilters]);
+
+  // Computed values for repeated conditions
+  const hasFilters = enableColumnFilters && filterableColumns.length > 0;
+  const shouldShowFiltersWrapper = hasFilters || !!toolbarActions || enableGeneralSearch;
+
+  // State for filters section
+  const [showAllFilters, setShowAllFilters] = useState(false);
+  const filtersContainerRef = useRef<HTMLDivElement>(null);
+  const [hasWrappedFilters, setHasWrappedFilters] = useState(false);
+
+  // Check if filters have wrapped to multiple lines
+  useEffect(() => {
+    if (!enableColumnFilters || !filtersContainerRef.current) return;
+
+    const checkWrapping = () => {
+      const container = filtersContainerRef.current;
+      if (!container) return;
+
+      const children = Array.from(container.children) as HTMLElement[];
+      if (children.length === 0) {
+        setHasWrappedFilters(false);
+        return;
+      }
+
+      // Get the first child's position as baseline
+      const firstChild = children[0];
+      if (!firstChild) {
+        setHasWrappedFilters(false);
+        return;
+      }
+      const firstChildTop = firstChild.offsetTop;
+      const firstChildHeight = firstChild.offsetHeight;
+      const firstRowBottom = firstChildTop + firstChildHeight;
+
+      // Check if any child is positioned below the first row
+      // Using a threshold to account for rounding and gaps
+      const hasWrapping = children.some(
+        (child) => {
+          const childTop = child.offsetTop;
+          // If child is more than half its height below the first row, it's wrapped
+          return childTop > firstRowBottom + (firstChildHeight / 2);
+        }
+      );
+
+      setHasWrappedFilters(hasWrapping);
+    };
+
+    // Use requestAnimationFrame to ensure DOM is updated
+    const rafId = requestAnimationFrame(() => {
+      checkWrapping();
+    });
+
+    // Use ResizeObserver to detect layout changes
+    const resizeObserver = new ResizeObserver(() => {
+      requestAnimationFrame(checkWrapping);
+    });
+
+    if (filtersContainerRef.current) {
+      resizeObserver.observe(filtersContainerRef.current);
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      resizeObserver.disconnect();
+    };
+  }, [enableColumnFilters, filterableColumns.length, columnFilters, showAllFilters]);
+
+  // Get rows for rendering (server mode - no client-side filtering/sorting)
+  // Always use getRowModel() - the expanded state is managed separately
+  // The table object updates when expanded state changes, so rows will be fresh
   const rows = table.getRowModel().rows;
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => estimateRowHeight,
-    overscan: 5,
-    enabled: enableVirtualization && mode === "client",
-  });
 
-  const virtualRows =
-    enableVirtualization && mode === "client"
-      ? rowVirtualizer.getVirtualItems()
-      : [];
-  const totalSize =
-    enableVirtualization && mode === "client"
-      ? rowVirtualizer.getTotalSize()
-      : 0;
-  const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start || 0 : 0;
-  const paddingBottom =
-    virtualRows.length > 0
-      ? totalSize - (virtualRows[virtualRows.length - 1]?.end || 0)
-      : 0;
+  // Calculate column count including selection/actions
+  const totalColumnCount = columnsWithActions.length;
 
-  // Calculate column count including actions
-  const totalColumnCount =
-    memoizedActions && memoizedActions.length > 0
-      ? memoizedColumns.length + 1
-      : memoizedColumns.length;
+  // Show skeleton loader only during true initial load (never loaded data before)
+  // When filters change, query key changes causing isLoading=true, but we should show overlay instead
+  // During refetching (isFetching with existing data), show overlay instead
+  const isTrueInitialLoad = isLoading && !hasEverLoadedDataRef.current;
 
-  // Show skeleton loader during initial load
-  if (isLoading) {
+  if (isTrueInitialLoad) {
     return (
       <DataTableSkeleton
         columnCount={totalColumnCount}
-        rowCount={10}
+        rowCount={SKELETON_ROW_COUNT}
         showFilters={enableColumnFilters}
         showToolbar={showExport || enableColumnFilters}
         className={className}
@@ -447,96 +1157,168 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     <div className={cn("w-full space-y-4", className)}>
       {/* Table */}
       <div className="bg-card rounded-lg py-4 px-4 border">
-        {/* Top toolbar with actions */}
-        {(showExport ||
-          enableColumnFilters ||
-          isFetching ||
-          refetch ||
-          onRefresh) && (
-            <div className="flex items-center justify-between gap-2 px-1">
-              <div className="flex items-center gap-2">
-                <TooltipProvider>
-                  {showExport && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleExport}
-                          className="bg-card"
-                        >
-                          <RiDownloadLine className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t("table.exportCsv")}</p>
-                      </TooltipContent>
-                    </Tooltip>
+        {/* Top toolbar with actions and filters */}
+        {(isFetching || toolbarActions || hasFilters || enableGeneralSearch) && (
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-4">
+            {/* Right side: Filters Section */}
+            {shouldShowFiltersWrapper && (
+              <div className="flex-1 lg:flex-initial space-y-3 bg-muted/50 rounded-lg p-4 w-full">
+                {/* Filters Header */}
+                <div className="flex items-center justify-between">
+                  {hasFilters && (
+                    <div className={FLEX_CENTER_GAP}>
+                      <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
+                        <RiFilterLine className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">
+                          {t("table.filters")}
+                        </h3>
+                      </div>
+                    </div>
                   )}
-                  {(refetch || onRefresh) && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleRefresh}
-                          className="bg-card"
-                          disabled={isFetching}
-                        >
-                          <RiRefreshLine
-                            className={cn(
-                              "h-4 w-4",
-                              isFetching && "animate-spin"
-                            )}
-                          />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t("table.refresh")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {enableColumnFilters && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleClearFilters}
-                          className="bg-card"
-                          disabled={!hasActiveFilters}
-                        >
-                          <RiFilterOffLine className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{t("table.clearFilters")}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </TooltipProvider>
-              </div>
-
-              {/* Refetching indicator */}
-              {isFetching && !isLoading && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <RiLoader4Line className="h-4 w-4 animate-spin" />
-                  <span>{t("table.updating")}</span>
+                  <div className={FLEX_CENTER_GAP}>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="outline"
+                        onClick={handleClearFilters}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <RiFilterOffLine className="h-4 w-4" />
+                        <span className="hidden sm:inline">
+                          {t("table.clearFilters")}
+                        </span>
+                      </Button>
+                    )}
+                    {showExport && (
+                      <Button
+                        variant="outline"
+                        onClick={handleExport}
+                      >
+                        <RiDownloadLine className="h-4 w-4" />
+                        <span>{t("table.exportCsv")}</span>
+                      </Button>
+                    )}
+                    {(refetch || onRefresh) && (
+                      <Button
+                        variant="outline"
+                        onClick={handleRefresh}
+                        disabled={isFetching}
+                      >
+                        <RiRefreshLine
+                          className={cn("h-4 w-4", isFetching && "animate-spin")}
+                        />
+                        <span>{t("table.refresh")}</span>
+                      </Button>
+                    )}
+                    {toolbarActions}
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+
+
+
+                {/* Filters Container */}
+                {(hasFilters || enableGeneralSearch) && (
+                  <div className="relative">
+                    <div
+                      ref={filtersContainerRef}
+                      className={cn(
+                        "flex flex-wrap gap-3 transition-all duration-300",
+                        !showAllFilters && hasWrappedFilters && "max-h-16 overflow-hidden"
+                      )}
+                    >
+                      {/* General Search Filter */}
+                      {enableGeneralSearch && (
+                        <div className={cn(
+                          "relative transition-all duration-200",
+                          "min-w-[140px] max-w-[200px] shrink-0"
+                        )}>
+                          <div
+                            className={cn(
+                              "relative",
+                              generalSearch && "ring-2 ring-primary/20 rounded-md"
+                            )}
+                          >
+                            <Input
+                              placeholder={t("table.generalSearch")}
+                              value={generalSearch}
+                              onChange={(e) => setGeneralSearch(e.target.value)}
+                              className={cn(
+                                "w-full transition-all",
+                                generalSearch && "border-primary/50"
+                              )}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {filterableColumns.map((column) => {
+                        const filterValue = column.getFilterValue();
+                        const hasValue = hasFilterValue(filterValue);
+
+                        return (
+                          <div
+                            key={column.id}
+                            className={cn(
+                              "relative transition-all duration-200",
+                              "min-w-[140px] max-w-[200px] shrink-0"
+                            )}
+                          >
+                            <div
+                              className={cn(
+                                "relative",
+                                hasValue && "ring-2 ring-primary/20 rounded-md"
+                              )}
+                            >
+                              {renderColumnFilter(column)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Show More/Less Button */}
+                    {hasWrappedFilters && (
+                      <div className="flex justify-center mt-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowAllFilters(!showAllFilters)}
+                        >
+                          {showAllFilters ? (
+                            <>
+                              <RiArrowUpSLine className="h-4 w-4" />
+                              <span>{t("table.showLess")}</span>
+                            </>
+                          ) : (
+                            <>
+                              <RiArrowDownSLine className="h-4 w-4" />
+                              <span>{t("table.showMore")}</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Left side: Refetching indicator */}
+          </div>
+        )}
+        {isFetching && !isLoading && (
+          <LoadingIndicator
+            message={t("table.updating")}
+            className="whitespace-nowrap"
+          />
+        )}
         <div
           ref={tableContainerRef}
           className={cn(
-            "border shadow rounded-lg my-4 overflow-x-auto",
-            enableVirtualization &&
-            mode === "client" &&
-            "max-h-[600px] overflow-y-auto"
+            "rounded-lg my-4 overflow-x-auto overflow-y-auto border-2 relative max-h-[800px]"
           )}
         >
-          <Table className="min-w-[800px]">
-            <TableHeader>
+          <Table className="min-w-200">
+            <TableHeader className="relative z-20">
               {table.getHeaderGroups().map((headerGroup) => (
                 <React.Fragment key={headerGroup.id}>
                   <TableRow>
@@ -545,6 +1327,12 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                         key={header.id}
                         className={cn(
                           "h-12 px-4",
+                          header.column.id === "select" &&
+                          "w-[1%] whitespace-nowrap text-center",
+                          header.column.id === "index" &&
+                          "w-[1%] whitespace-nowrap text-center",
+                          header.column.id === "expander" &&
+                          "w-[1%] whitespace-nowrap text-center",
                           header.column.id === "actions" &&
                           "w-[1%] whitespace-nowrap text-center"
                         )}
@@ -558,63 +1346,26 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                       </TableHead>
                     ))}
                   </TableRow>
-                  {/* Column filters row */}
-                  {enableColumnFilters && (
-                    <TableRow className="bg-muted/50">
-                      {headerGroup.headers.map((header) => (
-                        <TableHead
-                          key={`${header.id}-filter`}
-                          className="px-4 py-3"
-                        >
-                          {!header.isPlaceholder &&
-                            renderColumnFilter(header.column)}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  )}
                 </React.Fragment>
               ))}
             </TableHeader>
-            <TableBody>
+            <TableBody className="relative">
+              {/* Loading overlay during refetching or when filters change (isLoading with previous data) */}
+              {/* Show overlay if: fetching with data, OR loading but we've loaded data before (filter change) */}
               {rows.length ? (
-                enableVirtualization && mode === "client" ? (
-                  // Virtual scrolling mode
-                  <>
-                    {paddingTop > 0 && (
-                      <tr>
-                        <td style={{ height: `${paddingTop}px` }} />
-                      </tr>
-                    )}
-                    {virtualRows.map((virtualRow) => {
-                      const row = rows[virtualRow.index];
-                      return (
-                        <MemoizedTableRow
-                          key={row.id}
-                          row={row}
-                          onRowClick={onRowClick}
-                        />
-                      );
-                    })}
-                    {paddingBottom > 0 && (
-                      <tr>
-                        <td style={{ height: `${paddingBottom}px` }} />
-                      </tr>
-                    )}
-                  </>
-                ) : (
-                  // Normal rendering mode
-                  rows.map((row) => (
-                    <MemoizedTableRow
-                      key={row.id}
-                      row={row}
-                      onRowClick={onRowClick}
-                    />
-                  ))
-                )
+                rows.map((row) => (
+                  <MemoizedTableRow
+                    key={`${row.id}-${row.getIsExpanded() ? 'expanded' : 'collapsed'}`}
+                    row={row}
+                    selected={row.getIsSelected()}
+                    onRowClick={onRowClick}
+                    renderSubComponent={renderSubComponent}
+                  />
+                ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={memoizedColumns.length}
+                    colSpan={table.getVisibleLeafColumns().length}
                     className="h-32 text-center text-muted-foreground"
                   >
                     {emptyMessage || t("table.empty")}
@@ -633,6 +1384,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
           canNextPage={canNext}
           onPreviousPage={() => table.previousPage()}
           onNextPage={() => table.nextPage()}
+          onPageChange={(page) => table.setPageIndex(page)}
           onPageSizeChange={(newSize) => {
             table.setPageSize(newSize);
           }}

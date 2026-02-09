@@ -23,6 +23,10 @@ export { DataTablePagination } from "./DataTablePagination";
 export { DataTableSkeleton } from "./DataTableSkeleton";
 export { exportToCsv } from "./export-csv";
 
+// Utilities
+export * from "./column-utils";
+export * from "./filters";
+
 // Re-export TanStack Table types for convenience
 export type {
   ColumnDef,

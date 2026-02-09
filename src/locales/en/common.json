@@ -95,9 +95,17 @@
     "filter": "Filter",
     "all": "All",
     "selectDate": "Select date range",
+    "dateRangePlaceholder": "Select date range",
     "updating": "Updating...",
     "emptyTitle": "No items found",
-    "emptyDescription": "Try adjusting your filters or create a new item."
+    "emptyDescription": "Try adjusting your filters or create a new item.",
+    "filters": "Filters",
+    "generalSearch": "Search...",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "loadingMore": "Loading more...",
+    "endOfData": "End of data",
+    "loadMore": "Load more"
   },
   "actions": {
     "save": "Save",
@@ -115,7 +123,9 @@
     "add": "Add New",
     "view": "View",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "select": "Select",
+    "selectAll": "Select all"
   },
   "dialogs": {
     "create": {

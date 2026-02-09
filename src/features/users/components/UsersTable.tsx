@@ -11,7 +11,7 @@ import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { RiEyeLine as Eye, RiPencilLine as Pencil, RiDeleteBinLine as Trash2 } from "@remixicon/react";
-import { DataTable, type DataTableAction } from "@/shared/components/data-table";
+import { DataTable, type DataTableAction } from "@/shared/components/data-table/index.ts";
 import { ErrorBoundary } from "@/shared/mcp/ErrorBoundary";
 import { useUsers, useUpdateUser, useDeleteUser } from "@/features/users/api/useUsers";
 import { useUsersColumns } from "./UsersTable.columns.tsx";

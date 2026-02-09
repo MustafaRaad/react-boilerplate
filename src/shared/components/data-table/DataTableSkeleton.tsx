@@ -41,9 +41,20 @@ const DataTableSkeletonComponent = ({
       <div className="bg-card rounded-lg py-4 px-4 border">
         {/* Toolbar skeleton */}
         {showToolbar && (
-          <div className="flex items-center gap-2 px-1 mb-4">
-            <Skeleton className="h-9 w-9" />
-            <Skeleton className="h-9 w-9" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-2 px-1 mb-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Skeleton className="h-9 w-9" />
+              <Skeleton className="h-9 w-9" />
+              {/* Filter skeletons in the same row */}
+              {showFilters && (
+                <>
+                  {Array.from({ length: Math.min(columnCount, 3) }).map((_, index) => (
+                    <Skeleton key={`filter-${index}`} className="h-8 w-32" />
+                  ))}
+                </>
+              )}
+            </div>
+            <Skeleton className="h-9 w-24" />
           </div>
         )}
 
