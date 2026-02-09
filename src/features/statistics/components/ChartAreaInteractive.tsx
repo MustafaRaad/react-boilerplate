@@ -173,7 +173,7 @@ export function ChartAreaInteractive({ className }: { className?: string }) {
           >
             <SelectValue placeholder={t("charts.selectPeriod")} />
           </SelectTrigger>
-          <SelectContent className="rounded-xl">``
+          <SelectContent className="rounded-xl">
             <SelectItem value="90d" className="rounded-lg">
               {t("charts.last90Days")}
             </SelectItem>

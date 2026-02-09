@@ -5,6 +5,7 @@
  */
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatDateTimeLocal } from "@/lib/formatters";
 
 /**
  * Safely retrieves nested values from an object using dot notation.
@@ -39,7 +40,7 @@ function formatCsvValue(value: unknown): string {
 
   // Handle Date objects
   if (value instanceof Date) {
-    return value.toLocaleString();
+    return formatDateTimeLocal(value);
   }
 
   // Handle ISO date strings
@@ -48,7 +49,7 @@ function formatCsvValue(value: unknown): string {
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)
   ) {
     try {
-      return new Date(value).toLocaleString();
+      return formatDateTimeLocal(new Date(value));
     } catch {
       return value;
     }

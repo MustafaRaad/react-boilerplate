@@ -27,12 +27,7 @@ export const UsersListPage = memo(function UsersListPage() {
   // Memoize submit handler to prevent child re-renders
   const handleCreateSubmit = useCallback(
     async (values: Record<string, unknown>) => {
-      // Transform approved from boolean to number (0 or 1)
-      const transformedValues = {
-        ...values,
-        approved: values.approved ? 1 : 0,
-      };
-      await createUserMutation.mutateAsync(transformedValues as UserFormData);
+      await createUserMutation.mutateAsync(values as UserFormData);
     },
     [createUserMutation]
   );

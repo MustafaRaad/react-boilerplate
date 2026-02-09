@@ -21,6 +21,7 @@
 
 import type { ColumnDef, FilterFn } from "@tanstack/react-table";
 import type { FieldsConfig, FieldConfig } from "@/shared/forms/autoForm";
+import { formatDateLocal } from "@/lib/formatters";
 import { dateFilterFn } from "./filters";
 
 export interface AutoColumnsOptions<T> {
@@ -87,7 +88,7 @@ export function createAutoColumns<T extends Record<string, unknown>>(
         columnDef.cell = ({ row }) => {
           const date = row.getValue(fieldName);
           if (!date) return "-";
-          return new Date(date as string).toLocaleDateString();
+          return formatDateLocal(new Date(date as string));
         };
         columnDef.filterFn = dateFilterFn;
         columnDef.meta = {

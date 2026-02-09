@@ -18,7 +18,10 @@ import { useUsersColumns } from "./UsersTable.columns.tsx";
 import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
 import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
-import { transformUserToApi, getUserDisplayName } from "../utils/userTransformers";
+import {
+  transformUserFromApi,
+  getUserDisplayName,
+} from "../utils/userTransformers";
 import type { User, UserUpdateData } from "@/features/users/types";
 import { getErrorMessage } from "@/shared/utils/errorHandling";
 
@@ -82,8 +85,7 @@ export const UsersTable = memo(function UsersTable() {
    */
   const handleUpdateSubmit = useCallback(
     async (values: Record<string, unknown>) => {
-      const transformedValues = transformUserToApi(values as UserUpdateData);
-      await updateUserMutation.mutateAsync(transformedValues as UserUpdateData);
+      await updateUserMutation.mutateAsync(values as UserUpdateData);
     },
     [updateUserMutation]
   );
@@ -104,10 +106,9 @@ export const UsersTable = memo(function UsersTable() {
           fields={USER_FIELDS}
           namespace="users"
           mode="edit"
-          initialValues={{
-            ...editDialog.data,
-            approved: editDialog.data.approved === 1, // Convert number to boolean for checkbox
-          }}
+          initialValues={transformUserFromApi(
+            editDialog.data as unknown as Record<string, unknown>
+          )}
           open={editDialog.isOpen}
           onOpenChange={editDialog.setOpen}
           onSubmit={handleUpdateSubmit}

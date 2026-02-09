@@ -10,36 +10,44 @@ export function useCurrencyFmt(
   currency: string = "IQD",
   options?: Intl.NumberFormatOptions
 ) {
-  return (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      ...options,
-    }).format(value);
-  };
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    ...options,
+  });
+
+  return (value: number) => formatter.format(value);
 }
 
 export function useNumberFmt(options?: Intl.NumberFormatOptions) {
-  return (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      ...options,
-    }).format(value);
-  };
+  const formatter = new Intl.NumberFormat("en-US", {
+    ...options,
+  });
+
+  return (value: number) => formatter.format(value);
 }
 
 export function useDateFmt(options?: Intl.DateTimeFormatOptions) {
-  return (value: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      ...options,
-    }).format(value);
-  };
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    ...options,
+  });
+
+  return (value: Date) => formatter.format(value);
 }
 
 export function usePercentFmt(options?: Intl.NumberFormatOptions) {
-  return (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "percent",
-      ...options,
-    }).format(value);
-  };
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "percent",
+    ...options,
+  });
+
+  return (value: number) => formatter.format(value);
+}
+
+export function formatDateLocal(date: Date, locale?: string): string {
+  return date.toLocaleDateString(locale);
+}
+
+export function formatDateTimeLocal(date: Date, locale?: string): string {
+  return date.toLocaleString(locale);
 }

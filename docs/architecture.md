@@ -24,6 +24,7 @@ This document captures the conventions that keep the codebase consistent and DRY
 **Utilities**
 - Shared utilities belong in `src/shared/utils` or `src/lib`.
 - Extend existing helpers before adding new ones to avoid duplicates.
+- Use `formatDateLocal` / `formatDateTimeLocal` from `src/lib/formatters.ts` for shared date/time formatting.
 
 **Styling**
 - Tailwind CSS is the single styling system.

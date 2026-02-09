@@ -7,6 +7,7 @@
 import { refreshAccessToken } from "@/features/auth/hooks/useRefreshToken";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/shared/components/ui/button";
+import { formatDateTimeLocal } from "@/lib/formatters";
 
 /**
  * Debug component to test refresh token functionality
@@ -70,7 +71,7 @@ export const RefreshTokenDebugger = () => {
         <div>
           Expires:{" "}
           {tokens
-            ? new Date(tokens.accessTokenExpiresAt).toLocaleString()
+            ? formatDateTimeLocal(new Date(tokens.accessTokenExpiresAt))
             : "N/A"}
         </div>
         <div>Backend: {tokens?.backend}</div>
