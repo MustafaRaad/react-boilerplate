@@ -1,5 +1,6 @@
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { ThemeToggle } from "@/features/auth/components/ThemeToggle";
+import { LanguageToggle } from "@/features/auth/components/LanguageToggle";
 import { OptimizedImage } from "@/shared/components/ui/optimized-image";
 import { useTranslation } from "react-i18next";
 import Grainient from "@/shared/components/Grainient";
@@ -12,8 +13,8 @@ export function LoginPage() {
       <div className="pointer-events-none absolute inset-0 z-0">
         <Grainient
           color1="#00b4d9"
-          color2="#372699"
-          color3="#00b4d9"
+          color2="#4f0da0"
+          color3="#994ee4"
           timeSpeed={0.25}
           colorBalance={0.13}
           warpStrength={0}
@@ -59,7 +60,10 @@ export function LoginPage() {
           </div>
         </div>
 
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* Second Row: LoginForm */}
