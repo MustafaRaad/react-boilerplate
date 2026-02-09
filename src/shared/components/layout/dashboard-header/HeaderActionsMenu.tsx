@@ -89,7 +89,6 @@ export default memo(function SettingsMenu() {
     <DropdownMenu dir={dir} open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          className="transition-transform duration-300 hover:-translate-y-0.5 focus-visible:ring-2 bg-sidebar"
           size="sm"
           variant="outline"
         >
@@ -101,7 +100,6 @@ export default memo(function SettingsMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-44 rounded-lg"
         side="bottom"
         align="end"
         sideOffset={4}
@@ -118,7 +116,6 @@ export default memo(function SettingsMenu() {
             <DropdownMenuItem
               key={item.label}
               onClick={handleNavigate(item.href)}
-              className="gap-2"
             >
               {item.icon}
               {t(item.label)}
@@ -126,7 +123,7 @@ export default memo(function SettingsMenu() {
           ))}
         </DropdownMenuGroup>
 
-        <DropdownMenuItem onClick={toggleTheme} className="gap-2">
+        <DropdownMenuItem onClick={toggleTheme}>
           {theme === "dark" ? (
             <RiSunLine className="h-4 w-4" />
           ) : (
@@ -158,7 +155,7 @@ export default memo(function SettingsMenu() {
         </DropdownMenuSub>
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="gap-2">
+        <DropdownMenuItem onClick={handleSignOut}>
           <RiLogoutBoxLine className="h-4 w-4" />
           {t("auth.logout")}
         </DropdownMenuItem>

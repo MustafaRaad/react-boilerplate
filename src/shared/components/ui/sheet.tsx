@@ -2,7 +2,6 @@ import * as React from "react"
 import { Dialog as SheetPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/shared/components/ui/button"
 import { RiCloseLine } from "@remixicon/react"
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -61,12 +60,12 @@ function SheetContent({
       >
         {children}
         {showCloseButton && (
-          <SheetPrimitive.Close data-slot="sheet-close" asChild>
-            <Button variant="ghost" className="absolute top-4 end-4" size="icon-sm">
-              <RiCloseLine
-              />
-              <span className="sr-only">Close</span>
-            </Button>
+          <SheetPrimitive.Close
+            data-slot="sheet-close"
+            className="ring-offset-background absolute top-4 end-4 z-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 p-1.5 opacity-70 transition-all duration-200 hover:opacity-100 hover:bg-background/90 hover:scale-110 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+          >
+            <RiCloseLine className="rtl:-scale-x-100" />
+            <span className="sr-only">Close</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content>
@@ -78,7 +77,13 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("gap-1.5 p-4 flex flex-col", className)}
+      className={cn(
+        "gap-2 p-4 flex flex-col text-lg",
+        "bg-linear-to-br from-primary/25 via-primary/10 to-transparent",
+        "backdrop-blur-sm",
+        "border-b border-border/50",
+        className
+      )}
       {...props}
     />
   )

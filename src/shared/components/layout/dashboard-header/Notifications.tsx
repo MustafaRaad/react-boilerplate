@@ -97,7 +97,6 @@ export default function Notifications() {
         <Button
           variant="outline"
           size="sm"
-          className="relative text-sm transition-transform duration-300 hover:-translate-y-0.5 focus-visible:ring-2 bg-sidebar"
           aria-label={t("notifications.button.open")}
         >
           <div className="relative">
@@ -123,12 +122,9 @@ export default function Notifications() {
         </Button>
       </SheetTrigger>
 
-      <SheetContent
-        side="right"
-        className="flex w-full sm:max-w-md flex-col gap-0 p-0"
-      >
-        <SheetHeader className="border-b border-border/50 px-6 py-4">
-          <SheetTitle className="text-start">
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>
             {t("notifications.title")}
           </SheetTitle>
         </SheetHeader>
@@ -153,9 +149,8 @@ export default function Notifications() {
           </div>
         </div>
 
-        <SheetFooter className="border-t border-border/50 px-6 py-4 mt-auto">
+        <SheetFooter>
           <Button
-            className="w-full justify-center gap-2"
             aria-label={t("notifications.actions.markAllRead")}
             disabled={unreadCount === 0}
           >
