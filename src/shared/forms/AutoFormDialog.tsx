@@ -289,12 +289,12 @@ export function AutoFormDialog<T extends FieldsConfig>({
 
       <DialogContent className="md:min-w-2xl lg:min-w-4xl">
         <DialogHeader>
-          <div className="flex items-center gap-3 pb-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary/60 border border-secondary/40 ">
+          <div className="flex flex-col md:flex-row items-start gap-3 pb-2">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-md bg-secondary/20 text-secondary/60 border border-secondary/40 ">
               {mode === "create" ? (
-                <RiAddLine className="h-5 w-5" />
+                <RiAddLine className="size-7" />
               ) : (
-                <RiPencilLine className="h-5 w-5" />
+                <RiPencilLine className="size-7" />
               )}
             </div>
             <div>
