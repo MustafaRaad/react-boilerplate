@@ -19,6 +19,7 @@ export {
   DataTableActions,
   type DataTableAction,
 } from "./DataTableActions";
+export { DataTableFilters } from "./DataTableFilters";
 export { DataTablePagination } from "./DataTablePagination";
 export { DataTableSkeleton } from "./DataTableSkeleton";
 export { exportToCsv } from "./export-csv";

@@ -10,15 +10,21 @@ import { z } from "zod";
  * User schema from backend API
  */
 export const userSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  email: z.string().email(),
-  email_verified_at: z.string().nullable(),
-  phone_no: z.string(),
-  approved: z.number().int().min(0).max(1), // 0 or 1 (boolean as integer)
-  created_at: z.string(), // ISO date string
-  updated_at: z.string(), // ISO date string
-  role: z.string(),
+  id: z.string().uuid(),
+  isDeleted: z.boolean(),
+  username: z.string(),
+  phoneNumber: z.string(),
+  firstName: z.string(),
+  secondName: z.string().optional(),
+  lastName: z.string(),
+  surname: z.string().optional(),
+  fullName: z.string(),
+  photo: z.string().optional(),
+  status: z.number().int(),
+  role: z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+  }),
 });
 
 /**

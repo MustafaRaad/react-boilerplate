@@ -23,8 +23,25 @@ export type EndpointDef<TRequest, TResponse> = {
   __types?: { request: TRequest; response: TResponse };
 };
 
+type Role = {
+  id: string;
+  isDeleted: boolean;
+  name: string;
+  type: number;
+};
+
 export const endpoints = {
   auth: authEndpoints,
+  roles: {
+    list: {
+      path: "/Role",
+      method: "GET",
+      requiresAuth: true,
+    } as EndpointDef<
+      Record<string, unknown> | undefined,
+      AspNetEnvelope<AspNetPagedResult<Role>> | AspNetPagedResult<Role> | Role[] | LaravelDataTableResponse<Role>
+    >,
+  },
   users: {
     list: {
       path: "/User",

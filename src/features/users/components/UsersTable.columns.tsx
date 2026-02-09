@@ -3,46 +3,135 @@
  * @license MIT
  * @contact mustf.raad@gmail.com
  *
- * Users Table Columns - Automated from Field Configuration
- * =========================================================
+ * Users Table Columns - Based on API Response Structure
+ * =====================================================
  *
- * Uses automated column generation from users.config.ts
- * Just define your options - columns are auto-generated!
+ * Columns are defined to match the API response structure
  */
 
 import type { ColumnDef } from "@tanstack/react-table";
 import type { User } from "@/features/users/types";
-import { createAutoColumns } from "@/shared/components/data-table/autoColumns";
-import { USER_FIELDS } from "../config/users.config";
-import { useDateFmt } from "@/lib/formatters";
-import { dateFilterFn } from "@/shared/components/data-table/filters";
+import { endpoints } from "@/core/api/endpoints";
 
 type TFn = (key: string) => string;
 
 /**
  * Create columns definition for users table
- * Automatically generated from field configuration
+ * Based on the API response structure
  */
 export const useUsersColumns = (t: TFn): ColumnDef<User, unknown>[] => {
-  const formatDate = useDateFmt();
-
-  const autoColumns = createAutoColumns<User>(USER_FIELDS, t, {
-    // exclude: ["approved"], // Hide these fields from table
-  });
-  // Add created_at column manually since it's not in USER_FIELDS (not a form field)
-  const createdAtColumn: ColumnDef<User, unknown> = {
-    accessorKey: "created_at",
-    header: t("list.columns.created_at"),
-    cell: ({ row }) => {
-      const date = row.getValue("created_at");
-      if (!date) return "-";
-      return formatDate(new Date(date as string));
+  return [
+    {
+      accessorKey: "id",
+      header: t("list.columns.id"),
+      enableColumnFilter: true,
     },
-    filterFn: dateFilterFn,
-    meta: {
-      filterVariant: "date",
+    {
+      accessorKey: "username",
+      header: t("list.columns.username"),
+      enableColumnFilter: true,
     },
-  };
-
-  return [...autoColumns, createdAtColumn];
+    {
+      accessorKey: "phoneNumber",
+      header: t("list.columns.phoneNumber"),
+      enableColumnFilter: true,
+    },
+    {
+      accessorKey: "firstName",
+      header: t("list.columns.firstName"),
+      enableColumnFilter: true,
+    },
+    {
+      accessorKey: "secondName",
+      header: t("list.columns.secondName"),
+      enableColumnFilter: true,
+    },
+    {
+      accessorKey: "lastName",
+      header: t("list.columns.lastName"),
+      enableColumnFilter: true,
+    },
+    {
+      accessorKey: "surname",
+      header: t("list.columns.surname"),
+      enableColumnFilter: true,
+    },
+    {
+      accessorKey: "fullName",
+      header: t("list.columns.fullName"),
+      enableColumnFilter: true,
+    },
+    {
+      accessorKey: "photo",
+      header: t("list.columns.photo"),
+      enableColumnFilter: false,
+      cell: ({ row }) => {
+        const photo = row.getValue("photo") as string;
+        if (!photo) return "-";
+        return (
+          <img
+            src={photo}
+            alt="User photo"
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: t("list.columns.status"),
+      enableColumnFilter: true,
+      cell: ({ row }) => {
+        const status = row.getValue("status") as number;
+        return status ?? "-";
+      },
+      meta: {
+        filterVariant: "select",
+        filterOptions: [
+          { id: "0", name: t("options.status.0") },
+          { id: "1", name: t("options.status.1") },
+        ],
+      },
+    },
+    {
+      accessorKey: "role",
+      header: t("list.columns.role"),
+      enableColumnFilter: true,
+      cell: ({ row }) => {
+        const role = row.getValue("role") as { id: string; name: string } | undefined;
+        return role?.name ?? "-";
+      },
+      meta: {
+        filterVariant: "combobox",
+        filterEndpoint: endpoints.roles.list,
+        filterTransformItem: <TData = unknown>(item: TData) => {
+          const role = item as { id: string; name: string };
+          return {
+            value: role.id,
+            label: role.name,
+          };
+        },
+      },
+    },
+    {
+      accessorKey: "isDeleted",
+      header: t("list.columns.isDeleted"),
+      enableColumnFilter: true,
+      cell: ({ row }) => {
+        const isDeleted = row.getValue("isDeleted") as boolean;
+        const label = isDeleted
+          ? t("options.isDeleted.yes")
+          : t("options.isDeleted.no");
+        const icon = isDeleted ? "✓" : "✗";
+        return `${icon} ${label}`;
+      },
+      meta: {
+        filterVariant: "select",
+        filterOptions: [
+          { id: "true", name: t("options.isDeleted.yes") },
+          { id: "false", name: t("options.isDeleted.no") },
+        ],
+      },
+    },
+  ];
 };

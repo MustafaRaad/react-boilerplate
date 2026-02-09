@@ -32,20 +32,11 @@ import {
   RiLoader4Line,
   RiRefreshLine,
   RiFilterLine,
-  RiArrowDownSLine,
-  RiArrowUpSLine,
 } from "@remixicon/react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { backendKind } from "@/core/config/env";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
 import {
   Table,
   TableBody,
@@ -54,27 +45,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
-import { DateRangePicker } from "@/shared/components/ui/date-picker";
 import { DataTablePagination } from "@/shared/components/data-table/DataTablePagination";
+import { DataTableFilters } from "@/shared/components/data-table/DataTableFilters";
 import { exportToCsv } from "@/shared/components/data-table/export-csv";
+import { DebouncedInput } from "@/shared/components/data-table/DebouncedInput";
 import {
   DataTableActions,
   type DataTableAction,
 } from "@/shared/components/data-table/DataTableActions";
-import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { DataTableSkeleton } from "@/shared/components/data-table/DataTableSkeleton";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { DynamicComboboxFilter } from "@/shared/components/DynamicComboboxFilter";
-import type { EndpointDef } from "@/core/api/endpoints";
-
-// Type for combobox options (used by DynamicComboboxFilter)
-type ComboboxOption = {
-  value: string;
-  label: string;
-  description?: string;
-};
 
 // Constants
 const INPUT_DEBOUNCE_MS = 500;
@@ -171,104 +153,6 @@ type DataTableUnionProps<TData> =
   | DataTableProps<TData>
   | DataTablePropsWithQuery<TData>;
 
-// Debounced input component for column filters
-function DebouncedInput({
-  column,
-  t,
-  placeholder,
-  inputType = "text",
-}: {
-  column: {
-    getFilterValue: () => unknown;
-    setFilterValue: (value: unknown) => void;
-  };
-  t: (key: string) => string;
-  placeholder?: string;
-  inputType?: "text" | "number" | "email" | "tel" | "url" | "search";
-}) {
-  const filterValue = column.getFilterValue();
-  const [inputValue, setInputValue] = useState(
-    inputType === "number"
-      ? (filterValue !== undefined && filterValue !== null && filterValue !== ""
-        ? String(filterValue)
-        : "")
-      : ((filterValue as string) ?? "")
-  );
-  const debouncedValue = useDebounce(inputValue, INPUT_DEBOUNCE_MS);
-  const previousFilterValueRef = useRef(filterValue);
-  const isInternalUpdateRef = useRef(false);
-
-  // Update filter when debounced value changes
-  useEffect(() => {
-    // Don't restore filter if it was cleared (undefined) and debouncedValue is empty
-    // This prevents the filter from being restored when Clear Filters is clicked
-    if (debouncedValue !== filterValue) {
-      // If filterValue is undefined/null/empty and debouncedValue is also empty, skip
-      // This means the filter was cleared externally
-      if (filterValue === undefined && (debouncedValue === "" || debouncedValue === undefined)) {
-        return;
-      }
-      isInternalUpdateRef.current = true;
-      // For number inputs, convert to number or undefined
-      if (inputType === "number") {
-        const numValue = debouncedValue === "" ? undefined : Number(debouncedValue);
-        column.setFilterValue(isNaN(numValue as number) ? undefined : numValue);
-      } else {
-        column.setFilterValue(debouncedValue || undefined);
-      }
-    }
-  }, [debouncedValue, column, filterValue, inputType]);
-
-  // Sync input value when filter is cleared externally (e.g., Clear Filters button)
-  useEffect(() => {
-    // Check if filterValue changed
-    const filterValueChanged = previousFilterValueRef.current !== filterValue;
-
-    // If filterValue changed, sync the input value
-    // When clearing (filterValue is undefined), always sync regardless of internal flag
-    const shouldSync = filterValueChanged && (!isInternalUpdateRef.current || filterValue === undefined);
-
-    if (shouldSync) {
-      const newValue =
-        filterValue === undefined || filterValue === null || filterValue === ""
-          ? ""
-          : String(filterValue);
-      // Always update if the value is different, especially when clearing (empty string)
-      if (inputValue !== newValue) {
-        // Use startTransition for all updates (including clearing)
-        // The update will be fast enough that users won't notice the slight delay
-        startTransition(() => {
-          setInputValue(newValue);
-        });
-      }
-    }
-
-    // Always update the ref to track changes
-    if (filterValueChanged) {
-      previousFilterValueRef.current = filterValue;
-    }
-
-    // Reset internal flag after processing
-    isInternalUpdateRef.current = false;
-  }, [filterValue, inputValue]);
-
-  const hasValue = inputValue !== "";
-
-  return (
-    <div className="relative">
-      <Input
-        type={inputType}
-        placeholder={placeholder || t("table.filter")}
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        className={cn(
-          "w-full transition-all",
-          hasValue && "border-primary/50"
-        )}
-      />
-    </div>
-  );
-}
 
 // Memoized TableRow for performance
 import type { Row } from "@tanstack/react-table";
@@ -855,160 +739,6 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   const canPrevious = table.getCanPreviousPage();
   const canNext = table.getCanNextPage();
 
-  // Get column header label for placeholder
-  function getColumnHeaderLabel(column: ReturnType<typeof table.getAllColumns>[0]): string {
-    const columnDef = column.columnDef as ColumnDefWithFilter;
-    const header = columnDef.header;
-
-    if (typeof header === "string") {
-      return header;
-    } else if (typeof header === "function") {
-      try {
-        const rendered = header({ column, header: column, table } as never);
-        if (typeof rendered === "string") {
-          return rendered;
-        }
-      } catch {
-        // Fallback to column id if header function fails
-      }
-    }
-    return column.id;
-  }
-
-  // Render filter component based on column configuration
-  function renderColumnFilter(
-    column: ReturnType<typeof table.getAllColumns>[0]
-  ) {
-    const columnDef = column.columnDef as ColumnDefWithFilter;
-    const shouldShowFilter = columnDef.enableColumnFilter !== false;
-    const filterVariant = columnDef.meta?.filterVariant;
-    const filterInputType = columnDef.meta?.filterInputType ?? "text";
-    const filterOptionsConfig = columnDef.meta?.filterOptions;
-    const isFilterDisabled = columnDef.meta?.isFilterDisabled;
-
-    if (!shouldShowFilter || !column.getCanFilter()) return null;
-
-    const filterValue = column.getFilterValue();
-    const isDisabled = isFilterDisabled ? isFilterDisabled(table) : false;
-    const placeholder = getColumnHeaderLabel(column);
-
-    // Resolve dynamic filter options
-    const filterOptions =
-      typeof filterOptionsConfig === "function"
-        ? filterOptionsConfig(table)
-        : filterOptionsConfig;
-
-    if (filterVariant === "combobox") {
-      // Check if using endpoint-based combobox
-      if (columnDef.meta?.filterEndpoint) {
-        const endpoint = columnDef.meta.filterEndpoint;
-        const transformItem = columnDef.meta.filterTransformItem;
-        const searchQueryParam = columnDef.meta.filterSearchQueryParam ?? "text";
-        const serverSideSearch = columnDef.meta.filterServerSideSearch ?? true;
-
-        return (
-          <div className="relative">
-            <DynamicComboboxFilter
-              endpoint={endpoint}
-              value={(filterValue as string) ?? null}
-              onChange={(value) =>
-                column.setFilterValue(value === null ? undefined : value)
-              }
-              transformItem={transformItem}
-              searchQueryParam={searchQueryParam}
-              serverSideSearch={serverSideSearch}
-              placeholder={placeholder}
-              searchPlaceholder={t("table.search")}
-              emptyMessage={t("table.empty")}
-              disabled={isDisabled}
-            />
-          </div>
-        );
-      }
-
-      // Static combobox with options array - would need Combobox component
-      // For now, fall back to select if combobox not available
-      if (Array.isArray(filterOptions)) {
-        return (
-          <Select
-            value={(filterValue as string) ?? "all"}
-            onValueChange={(value) =>
-              column.setFilterValue(value === "all" ? undefined : value)
-            }
-            disabled={isDisabled}
-          >
-            <SelectTrigger
-              value={(filterValue as string) ?? "all"}
-              className={cn(
-                "w-full transition-all",
-                hasFilterValue(filterValue) && filterValue !== "all" && "border-primary/50"
-              )}
-            >
-              <SelectValue placeholder={placeholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("table.all")}</SelectItem>
-              {filterOptions.map((option) => (
-                <SelectItem key={option.id} value={String(option.id)}>
-                  {option.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      }
-    }
-
-    if (filterVariant === "select" && Array.isArray(filterOptions)) {
-      const hasValue = hasFilterValue(filterValue) && filterValue !== "all";
-      return (
-        <Select
-          value={(filterValue as string) ?? "all"}
-          onValueChange={(value) =>
-            column.setFilterValue(value === "all" ? undefined : value)
-          }
-          disabled={isDisabled}
-        >
-          <SelectTrigger
-            value={(filterValue as string) ?? "all"}
-            className={cn(
-              "w-full transition-all",
-              hasValue && "border-primary/50"
-            )}
-          >
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("table.all")}</SelectItem>
-            {filterOptions.map((option) => (
-              <SelectItem key={option.id} value={String(option.id)}>
-                {option.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
-    }
-
-    if (filterVariant === "date") {
-      const dateRange = filterValue as DateRange | undefined;
-      const datePlaceholder = `${placeholder} - ${t("table.dateRangePlaceholder")}`;
-
-      return (
-        <div className="relative">
-          <DateRangePicker
-            dateRange={dateRange}
-            onDateRangeChange={(range) => column.setFilterValue(range)}
-            placeholder={datePlaceholder}
-          />
-        </div>
-      );
-    }
-
-    // Use debounced input for text/number filters
-    return <DebouncedInput column={column} t={t} placeholder={placeholder} inputType={filterInputType} />;
-  }
-
   // CSV Export handler
   const handleExport = () => {
     // In server mode, use raw data (all data from server)
@@ -1065,68 +795,6 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
   // Computed values for repeated conditions
   const hasFilters = enableColumnFilters && filterableColumns.length > 0;
   const shouldShowFiltersWrapper = hasFilters || !!toolbarActions || enableGeneralSearch;
-
-  // State for filters section
-  const [showAllFilters, setShowAllFilters] = useState(false);
-  const filtersContainerRef = useRef<HTMLDivElement>(null);
-  const [hasWrappedFilters, setHasWrappedFilters] = useState(false);
-
-  // Check if filters have wrapped to multiple lines
-  useEffect(() => {
-    if (!enableColumnFilters || !filtersContainerRef.current) return;
-
-    const checkWrapping = () => {
-      const container = filtersContainerRef.current;
-      if (!container) return;
-
-      const children = Array.from(container.children) as HTMLElement[];
-      if (children.length === 0) {
-        setHasWrappedFilters(false);
-        return;
-      }
-
-      // Get the first child's position as baseline
-      const firstChild = children[0];
-      if (!firstChild) {
-        setHasWrappedFilters(false);
-        return;
-      }
-      const firstChildTop = firstChild.offsetTop;
-      const firstChildHeight = firstChild.offsetHeight;
-      const firstRowBottom = firstChildTop + firstChildHeight;
-
-      // Check if any child is positioned below the first row
-      // Using a threshold to account for rounding and gaps
-      const hasWrapping = children.some(
-        (child) => {
-          const childTop = child.offsetTop;
-          // If child is more than half its height below the first row, it's wrapped
-          return childTop > firstRowBottom + (firstChildHeight / 2);
-        }
-      );
-
-      setHasWrappedFilters(hasWrapping);
-    };
-
-    // Use requestAnimationFrame to ensure DOM is updated
-    const rafId = requestAnimationFrame(() => {
-      checkWrapping();
-    });
-
-    // Use ResizeObserver to detect layout changes
-    const resizeObserver = new ResizeObserver(() => {
-      requestAnimationFrame(checkWrapping);
-    });
-
-    if (filtersContainerRef.current) {
-      resizeObserver.observe(filtersContainerRef.current);
-    }
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      resizeObserver.disconnect();
-    };
-  }, [enableColumnFilters, filterableColumns.length, columnFilters, showAllFilters]);
 
   // Get rows for rendering (server mode - no client-side filtering/sorting)
   // Always use getRowModel() - the expanded state is managed separately
@@ -1218,88 +886,14 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
 
 
                 {/* Filters Container */}
-                {(hasFilters || enableGeneralSearch) && (
-                  <div className="relative">
-                    <div
-                      ref={filtersContainerRef}
-                      className={cn(
-                        "flex flex-wrap gap-3 transition-all duration-300",
-                        !showAllFilters && hasWrappedFilters && "max-h-16 overflow-hidden"
-                      )}
-                    >
-                      {/* General Search Filter */}
-                      {enableGeneralSearch && (
-                        <div className={cn(
-                          "relative transition-all duration-200",
-                          "min-w-[140px] max-w-[200px] shrink-0"
-                        )}>
-                          <div
-                            className={cn(
-                              "relative",
-                              generalSearch && "ring-2 ring-primary/20 rounded-md"
-                            )}
-                          >
-                            <Input
-                              placeholder={t("table.generalSearch")}
-                              value={generalSearch}
-                              onChange={(e) => setGeneralSearch(e.target.value)}
-                              className={cn(
-                                "w-full transition-all",
-                                generalSearch && "border-primary/50"
-                              )}
-                            />
-                          </div>
-                        </div>
-                      )}
-                      {filterableColumns.map((column) => {
-                        const filterValue = column.getFilterValue();
-                        const hasValue = hasFilterValue(filterValue);
-
-                        return (
-                          <div
-                            key={column.id}
-                            className={cn(
-                              "relative transition-all duration-200",
-                              "min-w-[140px] max-w-[200px] shrink-0"
-                            )}
-                          >
-                            <div
-                              className={cn(
-                                "relative",
-                                hasValue && "ring-2 ring-primary/20 rounded-md"
-                              )}
-                            >
-                              {renderColumnFilter(column)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Show More/Less Button */}
-                    {hasWrappedFilters && (
-                      <div className="flex justify-center mt-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowAllFilters(!showAllFilters)}
-                        >
-                          {showAllFilters ? (
-                            <>
-                              <RiArrowUpSLine className="h-4 w-4" />
-                              <span>{t("table.showLess")}</span>
-                            </>
-                          ) : (
-                            <>
-                              <RiArrowDownSLine className="h-4 w-4" />
-                              <span>{t("table.showMore")}</span>
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <DataTableFilters
+                  table={table}
+                  enableColumnFilters={enableColumnFilters}
+                  enableGeneralSearch={enableGeneralSearch}
+                  generalSearch={generalSearch}
+                  onGeneralSearchChange={setGeneralSearch}
+                  columnFilters={columnFilters}
+                />
               </div>
             )}
             {/* Left side: Refetching indicator */}
