@@ -168,7 +168,6 @@ export function DataTableFilters<TData>({
             <SelectTrigger
               value={(filterValue as string) ?? "all"}
               className={cn(
-                "w-full transition-all",
                 hasFilterValue(filterValue) &&
                 filterValue !== "all" &&
                 "border-primary/50"
