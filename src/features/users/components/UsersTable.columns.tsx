@@ -12,6 +12,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { User } from "@/features/users/types";
 import { endpoints } from "@/core/api/endpoints";
+import { Badge } from "@/shared/components/ui/badge";
+import { RiCheckLine, RiCloseLine } from "@remixicon/react";
 
 type TFn = (key: string) => string;
 
@@ -122,8 +124,20 @@ export const useUsersColumns = (t: TFn): ColumnDef<User, unknown>[] => {
         const label = isDeleted
           ? t("options.isDeleted.yes")
           : t("options.isDeleted.no");
-        const icon = isDeleted ? "✓" : "✗";
-        return `${icon} ${label}`;
+
+        return (
+          <Badge
+            variant={isDeleted ? "destructive" : "secondary"}
+            className="gap-1.5"
+          >
+            {isDeleted ? (
+              <RiCloseLine className="size-3" />
+            ) : (
+              <RiCheckLine className="size-3" />
+            )}
+            {label}
+          </Badge>
+        );
       },
       meta: {
         filterVariant: "select",

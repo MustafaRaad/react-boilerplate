@@ -31,8 +31,8 @@ interface ColumnDefWithFilter {
     filterVariant?: "select" | "input" | "date" | "combobox";
     filterInputType?: "text" | "number" | "email" | "tel" | "url" | "search";
     filterOptions?:
-      | Array<{ id: string | number; name: string }>
-      | ((table: unknown) => Array<{ id: string | number; name: string }>);
+    | Array<{ id: string | number; name: string }>
+    | ((table: unknown) => Array<{ id: string | number; name: string }>);
     filterEndpoint?: unknown;
     filterTransformItem?: <TData = unknown>(item: TData) => {
       value: string;
@@ -170,16 +170,19 @@ export function DataTableFilters<TData>({
               className={cn(
                 "w-full transition-all",
                 hasFilterValue(filterValue) &&
-                  filterValue !== "all" &&
-                  "border-primary/50"
+                filterValue !== "all" &&
+                "border-primary/50"
               )}
             >
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("table.all")}</SelectItem>
-              {filterOptions.map((option) => (
-                <SelectItem key={option.id} value={String(option.id)}>
+              {filterOptions.map((option, index) => (
+                <SelectItem
+                  key={`${column.id}-${String(option.id ?? index)}`}
+                  value={String(option.id)}
+                >
                   {option.name}
                 </SelectItem>
               ))}
@@ -210,8 +213,11 @@ export function DataTableFilters<TData>({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("table.all")}</SelectItem>
-            {filterOptions.map((option) => (
-              <SelectItem key={option.id} value={String(option.id)}>
+            {filterOptions.map((option, index) => (
+              <SelectItem
+                key={`${column.id}-${String(option.id ?? index)}`}
+                value={String(option.id)}
+              >
                 {option.name}
               </SelectItem>
             ))}
