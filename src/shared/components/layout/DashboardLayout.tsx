@@ -5,6 +5,7 @@ import { DashboardHeader } from "@/shared/components/layout/dashboard-header";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { ErrorBoundary } from "@/shared/mcp/ErrorBoundary";
 import { RiLoader4Line } from "@remixicon/react";
+import ClickSpark from "../ClickSpark";
 
 const LoadingFallback = () => (
   <div className="flex h-[50vh] items-center justify-center">
@@ -17,17 +18,21 @@ export const DashboardLayout = () => {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <DashboardHeader />
-        <main
-          id="main-content"
-          className="@container/main flex flex-1 flex-col gap-2 p-2 md:p-6"
+        <ClickSpark
+          sparkColor='#c9c9c9'
         >
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <Outlet />
-            </Suspense>
-          </ErrorBoundary>
-        </main>
+          <DashboardHeader />
+          <main
+            id="main-content"
+            className="@container/main flex flex-1 flex-col gap-2 p-2 md:p-6"
+          >
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingFallback />}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
+          </main>
+        </ClickSpark>
       </SidebarInset>
     </SidebarProvider>
   );
