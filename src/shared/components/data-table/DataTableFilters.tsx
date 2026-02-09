@@ -13,6 +13,7 @@ import { Input } from "@/shared/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -168,6 +169,7 @@ export function DataTableFilters<TData>({
             <SelectTrigger
               value={(filterValue as string) ?? "all"}
               className={cn(
+                "w-full",
                 hasFilterValue(filterValue) &&
                 filterValue !== "all" &&
                 "border-primary/50"
@@ -176,15 +178,17 @@ export function DataTableFilters<TData>({
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("table.all")}</SelectItem>
-              {filterOptions.map((option, index) => (
-                <SelectItem
-                  key={`${column.id}-${String(option.id ?? index)}`}
-                  value={String(option.id)}
-                >
-                  {option.name}
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                <SelectItem value="all">{t("table.all")}</SelectItem>
+                {filterOptions.map((option, index) => (
+                  <SelectItem
+                    key={`${column.id}-${String(option.id ?? index)}`}
+                    value={String(option.id)}
+                  >
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         );
@@ -211,15 +215,17 @@ export function DataTableFilters<TData>({
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t("table.all")}</SelectItem>
-            {filterOptions.map((option, index) => (
-              <SelectItem
-                key={`${column.id}-${String(option.id ?? index)}`}
-                value={String(option.id)}
-              >
-                {option.name}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectItem value="all">{t("table.all")}</SelectItem>
+              {filterOptions.map((option, index) => (
+                <SelectItem
+                  key={`${column.id}-${String(option.id ?? index)}`}
+                  value={String(option.id)}
+                >
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       );

@@ -59,6 +59,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -311,7 +312,7 @@ export function AutoFormDialog<T extends FieldsConfig>({
           }}
           className="space-y-4"
         >
-          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {visibleFields.map(([fieldName, fieldConfig]) => (
               <form.Field
                 key={fieldName}
@@ -379,18 +380,20 @@ export function AutoFormDialog<T extends FieldsConfig>({
                           }
                           disabled={isSubmitting || fieldConfig.disabled}
                         >
-                          <SelectTrigger id={fieldApi.name}>
+                          <SelectTrigger id={fieldApi.name} className="w-full">
                             <SelectValue placeholder={placeholder} />
                           </SelectTrigger>
                           <SelectContent>
-                            {options.map((option) => (
-                              <SelectItem
-                                key={option.value}
-                                value={option.value}
-                              >
-                                {option.label}
-                              </SelectItem>
-                            ))}
+                            <SelectGroup>
+                              {options.map((option) => (
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
                           </SelectContent>
                         </Select>
                         {/* {fieldDescription && <FieldDescription>{fieldDescription}</FieldDescription>} */}
