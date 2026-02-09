@@ -1,9 +1,19 @@
 # Feature Creation Flow
 
-**Last Updated:** December 7, 2025  
+**Last Updated:** January 2025  
 **Purpose:** Practical, end-to-end checklist for adding a new feature while maintaining boilerplate patterns  
 **Target:** AI agents, developers adding features, code generators  
 **Expected Time:** 30-60 minutes for a complete CRUD feature
+
+## 🎯 What's New
+
+This guide has been updated with:
+- ✅ **MCP Pattern** (Model-Component-Protocol) for better architecture
+- ✅ **Optimistic Updates** for instant UI feedback
+- ✅ **Error Boundaries** for graceful error handling
+- ✅ **Data Transformers** for clean data conversion
+- ✅ **Single Source of Truth** for data tables
+- ✅ **Type-Safe Utilities** for better developer experience
 
 ## Prerequisites
 
@@ -25,16 +35,20 @@
 ```
 src/features/products/
 ├── api/
-│   └── useProducts.ts
+│   └── useProducts.ts          # MCP Model & Protocol
 ├── components/
-│   ├── ProductsTable.tsx
-│   └── ProductsTable.columns.tsx
+│   ├── ProductsTable.tsx        # Main table component
+│   └── ProductsTable.columns.tsx # Column definitions
+├── config/
+│   └── products.config.ts      # Field configurations (optional)
 ├── pages/
-│   └── ProductsPage.tsx
+│   └── ProductsPage.tsx        # Route-level component
 ├── schemas/
-│   └── product.schema.ts
-└── types/
-    └── index.ts
+│   └── product.schema.ts       # Zod schemas
+├── types/
+│   └── index.ts                # TypeScript types
+└── utils/                      # ✨ NEW: Feature utilities
+    └── productTransformers.ts  # Data transformation logic
 ```
 
 ### Step 2: Define Schema & Types ✅
@@ -140,72 +154,199 @@ export const endpoints = {
 - `VITE_API_BASE_URL` MUST end with `/`: `https://api.example.com/api/` ✅
 - Type parameters match backend format (see Backend Switching Guide for details)
 
-### Step 4: Create Data Hooks ✅
+### Step 4: Create Data Transformers (Optional but Recommended) ✅
+
+**File:** `src/features/products/utils/productTransformers.ts`
+
+```typescript
+/**
+ * Product Data Transformers
+ * Centralized transformation logic between UI and API formats
+ */
+
+import type { ProductFormData, ProductUpdateData } from "../types";
+
+/**
+ * Transform form data to API format
+ */
+export function transformProductToApi(
+  data: ProductFormData | ProductUpdateData
+): Record<string, unknown> {
+  return {
+    ...data,
+    // Add any transformations here (e.g., date formatting, enum conversion)
+  };
+}
+
+/**
+ * Transform API data to form format
+ */
+export function transformProductFromApi(
+  data: Record<string, unknown>
+): Record<string, unknown> {
+  return {
+    ...data,
+    // Add any transformations here (e.g., date parsing, enum conversion)
+  };
+}
+
+/**
+ * Get product display name for UI
+ */
+export function getProductDisplayName(product: {
+  name?: string;
+  id: number | string;
+}): string {
+  return product.name ?? `#${product.id}`;
+}
+```
+
+### Step 5: Create Data Hooks (MCP Pattern) ✅
 
 **File:** `src/features/products/api/useProducts.ts`
 
 ```typescript
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/core/api/client";
-import { endpoints } from "@/core/api/endpoints";
+import { useMemo } from "react";
 import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
-import {
-  type Product,
-  type ProductCreate,
-  type ProductUpdate,
+import { endpoints } from "@/core/api/endpoints";
+import { createCRUDProtocol } from "@/shared/mcp/createProtocol";
+import { transformProductToApi } from "../utils/productTransformers";
+import type {
+  Product,
+  ProductFormData,
+  ProductUpdateData,
 } from "@/features/products/types";
 
-// ✅ List hook (uses factory pattern)
-export const useProducts = createDataTableHook<Product>(
-  "products",
-  endpoints.products.list
-);
+/**
+ * Product Model Hook (MCP Pattern)
+ * Handles data fetching with automatic caching and refetching
+ */
+export const useProducts = () => {
+  const query = createDataTableHook<Product>("products", endpoints.products.list)();
 
-// ✅ Create mutation
-export const useCreateProduct = () => {
-  const queryClient = useQueryClient();
+  // Memoized sorted data - performance optimization
+  const sortedData = useMemo(() => {
+    if (!query.data?.items) return query.data;
 
-  return useMutation({
-    mutationFn: async (data: ProductCreate) => {
-      return await apiFetch(endpoints.products.create, { body: data });
-    },
-    onSuccess: () => {
-      // ⚠️ IMPORTANT: Invalidate with same queryKey as list hook
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-    },
-  });
+    // Sort by created_at descending (newest first)
+    const sortedItems = [...query.data.items].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+
+    return {
+      ...query.data,
+      items: sortedItems,
+    };
+  }, [query.data]);
+
+  return {
+    ...query,
+    data: sortedData,
+  };
 };
 
-// ✅ Update mutation
-export const useUpdateProduct = () => {
-  const queryClient = useQueryClient();
+/**
+ * Optimistic update helper for product operations
+ * Updates the cache immediately for better UX
+ */
+function optimisticProductUpdater(
+  old: unknown,
+  variables: ProductFormData | ProductUpdateData | number
+): unknown {
+  if (!old || typeof old !== "object" || !("items" in old)) {
+    return old;
+  }
 
-  return useMutation({
-    mutationFn: async (data: ProductUpdate) => {
-      return await apiFetch(endpoints.products.update, { body: data });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-    },
-  });
+  const pagedResult = old as { items: Product[]; rowCount?: number };
+
+  // Delete operation - remove item from list
+  if (typeof variables === "number") {
+    return {
+      ...pagedResult,
+      items: pagedResult.items.filter((item) => item.id !== variables),
+      rowCount: (pagedResult.rowCount ?? pagedResult.items.length) - 1,
+    };
+  }
+
+  // Update operation - update item in list (must have id)
+  if (typeof variables === "object" && "id" in variables) {
+    const updateData = variables as ProductUpdateData;
+    return {
+      ...pagedResult,
+      items: pagedResult.items.map((item) =>
+        item.id === updateData.id ? { ...item, ...updateData } : item
+      ),
+    };
+  }
+
+  return old;
+}
+
+/**
+ * Product Protocol Factory (MCP Pattern)
+ * Creates CRUD protocol with automatic cache invalidation and optimistic updates
+ */
+const productProtocolFactory = createCRUDProtocol<
+  ProductFormData,
+  ProductUpdateData,
+  number
+>({
+  queryKey: ["products"],
+  endpoints: {
+    create: endpoints.products.create,
+    update: endpoints.products.update,
+    delete: endpoints.products.delete,
+  },
+  transforms: {
+    create: transformProductToApi,
+    update: transformProductToApi,
+    delete: (id) => ({ id }),
+  },
+  invalidateQueries: [["products"]],
+  // ✨ Optimistic updates for instant UI feedback
+  optimisticUpdate: {
+    queryKey: ["products"],
+    updater: optimisticProductUpdater,
+  },
+});
+
+/**
+ * Product Protocol Hook (MCP Pattern)
+ * Provides CRUD operations with automatic cache invalidation
+ */
+export const useProductProtocol = () => {
+  return productProtocolFactory();
 };
 
-// ✅ Delete mutation
-export const useDeleteProduct = () => {
-  const queryClient = useQueryClient();
+// Legacy exports for backward compatibility
+export const useCreateProduct = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}) => {
+  const protocol = useProductProtocol();
+  return protocol.create(options);
+};
 
-  return useMutation({
-    mutationFn: async (id: number) => {
-      return await apiFetch(endpoints.products.delete, { query: { id } });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-    },
-  });
+export const useUpdateProduct = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}) => {
+  const protocol = useProductProtocol();
+  return protocol.update(options);
+};
+
+export const useDeleteProduct = (options?: {
+  onSuccess?: () => void;
+  onError?: (error: unknown) => void;
+}) => {
+  const protocol = useProductProtocol();
+  return protocol.delete(options);
 };
 ```
 
-### Step 5: Create Table Columns ✅
+### Step 6: Create Table Columns ✅
 
 **File:** `src/features/products/components/ProductsTable.columns.tsx`
 
@@ -250,74 +391,129 @@ export const createProductsColumns = (t: TFunction): ColumnDef<Product>[] => [
 ];
 ```
 
-### Step 6: Create Table Component ✅
+### Step 7: Create Table Component ✅
 
 **File:** `src/features/products/components/ProductsTable.tsx`
 
 ```typescript
-import { memo, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import { DataTable, type DataTableAction } from "@/shared/components/data-table/DataTable";
-import {
-  useProducts,
-  useDeleteProduct,
-} from "@/features/products/api/useProducts";
-import { createProductsColumns } from "./ProductsTable.columns";
-import { type Product } from "@/features/products/types";
+import { RiEyeLine as Eye, RiPencilLine as Pencil, RiDeleteBinLine as Trash2 } from "@remixicon/react";
+import { DataTable, type DataTableAction } from "@/shared/components/data-table";
+import { ErrorBoundary } from "@/shared/mcp/ErrorBoundary";
+import { useProducts, useUpdateProduct, useDeleteProduct } from "@/features/products/api/useProducts";
+import { useProductsColumns } from "./ProductsTable.columns.tsx";
+import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
+import { PRODUCT_FIELDS } from "@/features/products/config/products.config";
+import { useDialogState } from "@/shared/hooks/useDialogState";
+import { transformProductToApi, getProductDisplayName } from "../utils/productTransformers";
+import type { Product, ProductUpdateData } from "@/features/products/types";
 
+/**
+ * Products Table Component
+ * Single source of truth for product data tables - uses MCP patterns
+ */
 export const ProductsTable = memo(function ProductsTable() {
   const { t } = useTranslation("products");
   const { t: tCommon } = useTranslation("common");
-  const productsQuery = useProducts();
-  const columns = useMemo(() => createProductsColumns(t), [t]);
+  const productsModel = useProducts(); // MCP Model
+  const columns = useProductsColumns(t);
+  const editDialog = useDialogState<Product>();
 
-  const deleteMutation = useDeleteProduct();
+  // MCP Protocol hooks
+  const updateProductMutation = useUpdateProduct({
+    onSuccess: () => {
+      toast.success(t("dialogs.edit.success"));
+      editDialog.close();
+    },
+    onError: () => toast.error(tCommon("toasts.error")),
+  });
 
-  const actions: DataTableAction<Product>[] = useMemo(
+  const deleteProductMutation = useDeleteProduct({
+    onSuccess: () => toast.success(t("messages.deleteSuccess")),
+    onError: () => toast.error(t("messages.deleteError")),
+  });
+
+  // Actions following MCP pattern
+  const actions = useMemo<DataTableAction<Product>[]>(
     () => [
       {
         icon: Eye,
         label: tCommon("actions.view"),
-        onClick: (product) => console.log("View:", product),
+        onClick: (product) => console.log("View product:", product),
       },
       {
         icon: Pencil,
         label: tCommon("actions.edit"),
-        onClick: (product) => {
-          console.log("Edit:", product);
-        },
+        onClick: (product) => editDialog.open(product),
       },
       {
         icon: Trash2,
         label: tCommon("actions.delete"),
-        onClick: (product) => {
-          if (confirm(t("dialogs.delete.confirmation"))) {
-            deleteMutation.mutate(product.id, {
-              onSuccess: () => toast.success(t("messages.deleteSuccess")),
-              onError: () => toast.error(t("messages.deleteError")),
-            });
-          }
+        onConfirm: async (product) => {
+          await deleteProductMutation.mutateAsync(product.id);
         },
+        confirmDescription: (product) =>
+          t("dialogs.delete.description", {
+            name: getProductDisplayName(product),
+            defaultValue: `This will permanently delete ${getProductDisplayName(product)}.`,
+          }),
         variant: "destructive",
       },
     ],
-    [t, tCommon, deleteMutation]
+    [tCommon, editDialog, deleteProductMutation, t]
+  );
+
+  /**
+   * Handle form submission with proper data transformation
+   */
+  const handleUpdateSubmit = useCallback(
+    async (values: Record<string, unknown>) => {
+      const transformedValues = transformProductToApi(values as ProductUpdateData);
+      await updateProductMutation.mutateAsync(transformedValues as ProductUpdateData);
+    },
+    [updateProductMutation]
   );
 
   return (
-    <DataTable
-      columns={columns}
-      queryResult={productsQuery}
-      enableColumnFilters
-      actions={actions}
-    />
+    <ErrorBoundary>
+      <DataTable
+        queryResult={productsModel}
+        columns={columns}
+        enableColumnFilters
+        showExport
+        actions={actions}
+        initialState={{ sorting: [{ id: "created_at", desc: true }] }}
+      />
+
+      {editDialog.data && (
+        <AutoFormDialog
+          fields={PRODUCT_FIELDS}
+          namespace="products"
+          mode="edit"
+          initialValues={editDialog.data}
+          open={editDialog.isOpen}
+          onOpenChange={editDialog.setOpen}
+          onSubmit={handleUpdateSubmit}
+          onSuccess={() => {
+            toast.success(t("dialogs.edit.success"));
+            editDialog.close();
+          }}
+          onError={(error: unknown) => {
+            const errorMessage = error instanceof Error
+              ? error.message
+              : tCommon("toasts.error");
+            toast.error(errorMessage);
+          }}
+        />
+      )}
+    </ErrorBoundary>
   );
 });
 ```
 
-### Step 7: Create Page Component ✅
+### Step 8: Create Page Component ✅
 
 **File:** `src/features/products/pages/ProductsPage.tsx`
 
@@ -358,7 +554,7 @@ export const ProductsPage = memo(function ProductsPage() {
 });
 ```
 
-### Step 8: Add Route ✅
+### Step 9: Add Route ✅
 
 **File:** `src/app/router/routeTree.ts` (or create `routes/products.tsx` if using file-based routing)
 
@@ -371,7 +567,7 @@ export const productsRoute = createFileRoute("/dashboard/products")({
 });
 ```
 
-### Step 9: Add Navigation Link ✅
+### Step 10: Add Navigation Link ✅
 
 **File:** `src/shared/config/navigation.ts`
 
@@ -394,7 +590,7 @@ export const mainNavItems = [
 ];
 ```
 
-### Step 10: Add Translations ✅
+### Step 11: Add Translations ✅
 
 **File:** `src/locales/en/products.json`
 
@@ -495,11 +691,14 @@ Before marking the feature as complete, verify:
 - [ ] Paths don't have leading `/`
 - [ ] Response types handle both backends (ASP.NET envelope + Laravel direct)
 
-### Hooks & Data
-- [ ] List hook uses `createDataTableHook` factory
-- [ ] Mutations use `useQueryClient` and `invalidateQueries`
+### Hooks & Data (MCP Pattern)
+- [ ] Model hook uses `createDataTableHook` factory
+- [ ] Protocol uses `createCRUDProtocol` for CRUD operations
+- [ ] Optimistic updates implemented for better UX
+- [ ] Data transformers created in `utils/` folder
 - [ ] Query keys are consistent across hooks
 - [ ] Mutations have proper error handling
+- [ ] Error boundaries wrap table components
 
 ### Routing & Navigation
 - [ ] Route created in router/route tree
@@ -518,9 +717,13 @@ Before marking the feature as complete, verify:
 - [ ] Run `pnpm build` — TypeScript compiles successfully
 - [ ] Test list page loads
 - [ ] Test create/edit/delete operations
+- [ ] Test optimistic updates (instant UI feedback)
+- [ ] Test error boundaries (graceful error handling)
+- [ ] Test data transformations (UI ↔ API format)
 - [ ] Test with both backends (Laravel & ASP.NET)
 - [ ] Test RTL layout in Arabic
 - [ ] Check DevTools for console errors
+- [ ] Verify cache invalidation works correctly
 
 ### Testing Procedure
 
@@ -560,8 +763,35 @@ pnpm build
 
 ---
 
-## References & Documentation
+## 🎯 MCP Pattern Benefits
+
+Using the MCP (Model-Component-Protocol) pattern provides:
+
+1. **Better Performance**
+   - Automatic caching with TanStack Query
+   - Optimistic updates for instant feedback
+   - Memoized data transformations
+
+2. **Better UX**
+   - Instant UI updates (optimistic)
+   - Automatic error rollback
+   - Loading states handled automatically
+
+3. **Better Maintainability**
+   - Separation of concerns (Model/Protocol/Component)
+   - Reusable utilities (transformers, error handling)
+   - Type-safe operations throughout
+
+4. **Better Error Handling**
+   - Error boundaries for graceful failures
+   - Centralized error utilities
+   - Consistent error messages
+
+## 📚 References & Documentation
 
 - **Full patterns & examples**: [AI_AGENT_IMPLEMENTATION_GUIDE.md](./AI_AGENT_IMPLEMENTATION_GUIDE.md)
 - **Backend contracts & debugging**: [BACKEND_SWITCHING_GUIDE.md](./BACKEND_SWITCHING_GUIDE.md)
+- **MCP Pattern Guide**: [MCP_MIGRATION_GUIDE.md](./MCP_MIGRATION_GUIDE.md)
+- **MCP Utilities**: `src/shared/mcp/README.md`
+- **Data Table Guide**: `src/shared/components/data-table/README.md`
 - **Quick start guide**: [README.md](../README.md)

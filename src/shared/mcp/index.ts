@@ -14,3 +14,4 @@ export {
   type ProtocolMutationConfig,
 } from "./createProtocol";
 export { ErrorBoundary } from "./ErrorBoundary";
+export type { ModelResult, ProtocolMutationResult, CRUDProtocol } from "./types";

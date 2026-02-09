@@ -169,8 +169,8 @@ Helper functions for testing:
 
 ## 📋 Quick Checklist
 
-- [ ] Add ErrorBoundary to UsersTable
-- [ ] Add optimistic updates to user protocol
+- [x] Add ErrorBoundary to UsersTable
+- [x] Add optimistic updates to user protocol
 - [ ] Test all CRUD operations
 - [ ] Add real-time updates if needed
 - [ ] Update feature creation documentation

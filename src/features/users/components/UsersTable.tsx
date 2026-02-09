@@ -13,12 +13,12 @@ import { toast } from "sonner";
 import { RiEyeLine as Eye, RiPencilLine as Pencil, RiDeleteBinLine as Trash2 } from "@remixicon/react";
 import { DataTable, type DataTableAction } from "@/shared/components/data-table";
 import { ErrorBoundary } from "@/shared/mcp/ErrorBoundary";
-import { useUsers } from "@/features/users/api/useUsers";
-import { useUpdateUser, useDeleteUser } from "@/features/users/api/useUsers";
+import { useUsers, useUpdateUser, useDeleteUser } from "@/features/users/api/useUsers";
 import { useUsersColumns } from "./UsersTable.columns.tsx";
 import { AutoFormDialog } from "@/shared/forms/AutoFormDialog";
 import { USER_FIELDS } from "@/features/users/config/users.config";
 import { useDialogState } from "@/shared/hooks/useDialogState";
+import { transformUserToApi, getUserDisplayName } from "../utils/userTransformers";
 import type { User, UserUpdateData } from "@/features/users/types";
 
 /**
@@ -67,9 +67,8 @@ export const UsersTable = memo(function UsersTable() {
         },
         confirmDescription: (user) =>
           t("dialogs.delete.description", {
-            name: user.name ?? user.email ?? `#${user.id}`,
-            defaultValue: `This will permanently delete ${user.name ?? user.email ?? "this user"
-              }.`,
+            name: getUserDisplayName(user),
+            defaultValue: `This will permanently delete ${getUserDisplayName(user)}.`,
           }),
         variant: "destructive",
       },
@@ -77,14 +76,12 @@ export const UsersTable = memo(function UsersTable() {
     [tCommon, editDialog, deleteUserMutation, t]
   );
 
-  // Memoize submit handler to prevent child re-renders
+  /**
+   * Handle form submission with proper data transformation
+   */
   const handleUpdateSubmit = useCallback(
     async (values: Record<string, unknown>) => {
-      // Transform approved from boolean to number (0 or 1)
-      const transformedValues = {
-        ...values,
-        approved: values.approved ? 1 : 0,
-      };
+      const transformedValues = transformUserToApi(values as UserUpdateData);
       await updateUserMutation.mutateAsync(transformedValues as UserUpdateData);
     },
     [updateUserMutation]
@@ -118,9 +115,10 @@ export const UsersTable = memo(function UsersTable() {
             editDialog.close();
           }}
           onError={(error: unknown) => {
-            toast.error(
-              error instanceof Error ? error.message : tCommon("toasts.error")
-            );
+            const errorMessage = error instanceof Error
+              ? error.message
+              : tCommon("toasts.error");
+            toast.error(errorMessage);
           }}
         />
       )}

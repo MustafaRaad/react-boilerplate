@@ -11,6 +11,7 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from "@tanstack/react-query";
 import type { EndpointDef } from "@/core/api/endpoints";
 import { apiFetch } from "@/core/api/client";
+import type { CRUDProtocol } from "./types";
 
 /**
  * Protocol mutation configuration
@@ -104,7 +105,20 @@ export function createProtocol<TVariables, TData = unknown>(
 /**
  * Creates a protocol with CRUD operations
  */
-export function createCRUDProtocol<TCreate, TUpdate, TDelete = number>(config: {
+/**
+ * Creates a CRUD protocol with type-safe operations
+ * 
+ * @template TCreate - Type for create operations
+ * @template TUpdate - Type for update operations
+ * @template TDelete - Type for delete operations (defaults to number | string)
+ * 
+ * @returns A hook that returns a CRUD protocol with create, update, and delete methods
+ */
+export function createCRUDProtocol<
+  TCreate,
+  TUpdate,
+  TDelete = number | string
+>(config: {
   queryKey: readonly unknown[];
   endpoints: {
     create: EndpointDef<unknown, unknown>;
@@ -117,13 +131,24 @@ export function createCRUDProtocol<TCreate, TUpdate, TDelete = number>(config: {
     delete?: (id: TDelete) => unknown;
   };
   invalidateQueries?: readonly unknown[][];
-}) {
+  optimisticUpdate?: {
+    queryKey: readonly unknown[];
+    updater: (old: unknown, variables: TCreate | TUpdate | TDelete) => unknown;
+  };
+}): () => CRUDProtocol<TCreate, TUpdate, TDelete> {
   return () => {
     const create = createProtocol<TCreate>({
       queryKey: config.queryKey,
       endpoint: config.endpoints.create,
       transform: config.transforms?.create,
       invalidateQueries: config.invalidateQueries,
+      optimisticUpdate: config.optimisticUpdate
+        ? {
+            queryKey: config.optimisticUpdate.queryKey,
+            updater: (old, variables) =>
+              config.optimisticUpdate!.updater(old, variables as TCreate),
+          }
+        : undefined,
     });
 
     const update = createProtocol<TUpdate>({
@@ -131,6 +156,13 @@ export function createCRUDProtocol<TCreate, TUpdate, TDelete = number>(config: {
       endpoint: config.endpoints.update,
       transform: config.transforms?.update,
       invalidateQueries: config.invalidateQueries,
+      optimisticUpdate: config.optimisticUpdate
+        ? {
+            queryKey: config.optimisticUpdate.queryKey,
+            updater: (old, variables) =>
+              config.optimisticUpdate!.updater(old, variables as TUpdate),
+          }
+        : undefined,
     });
 
     const deleteMutation = createProtocol<TDelete>({
@@ -138,6 +170,13 @@ export function createCRUDProtocol<TCreate, TUpdate, TDelete = number>(config: {
       endpoint: config.endpoints.delete,
       transform: config.transforms?.delete,
       invalidateQueries: config.invalidateQueries,
+      optimisticUpdate: config.optimisticUpdate
+        ? {
+            queryKey: config.optimisticUpdate.queryKey,
+            updater: (old, variables) =>
+              config.optimisticUpdate!.updater(old, variables as TDelete),
+          }
+        : undefined,
     });
 
     return {

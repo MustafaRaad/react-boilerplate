@@ -1,8 +1,16 @@
 # AI Agent Implementation Guide
 
-**Last Updated:** December 7, 2025  
+**Last Updated:** January 2025  
 **Target Audience:** AI Assistants, Developers, Code Generators  
-**Purpose:** Exact, step-by-step instructions for implementing features in this multi-backend React boilerplate
+**Purpose:** Complete guide for creating and implementing features in this multi-backend React boilerplate
+
+## 🎯 This Guide Covers
+
+- ✅ **Feature Creation** - Step-by-step feature implementation
+- ✅ **MCP Patterns** - Model-Component-Protocol architecture
+- ✅ **i18n Setup** - Complete internationalization configuration
+- ✅ **Best Practices** - Professional coding standards
+- ✅ **Code Examples** - Real-world implementations
 
 ---
 
@@ -13,12 +21,13 @@
 3. [Folder Structure](#folder-structure)
 4. [Core Principles](#core-principles)
 5. [How to Add a New Feature](#how-to-add-a-new-feature)
-6. [How to Add a List Page](#how-to-add-a-list-page)
-7. [How to Add Create/Edit Forms](#how-to-add-createedit-forms)
-8. [How to Use i18n and Direction](#how-to-use-i18n-and-direction)
-9. [How to Use Auth & Permissions](#how-to-use-auth--permissions)
-10. [Best Practices](#best-practices)
-11. [Common Patterns Reference](#common-patterns-reference)
+6. [i18n Initialization and Setup](#i18n-initialization-and-setup) ✨ NEW
+7. [How to Add a List Page](#how-to-add-a-list-page)
+8. [How to Add Create/Edit Forms](#how-to-add-createedit-forms)
+9. [How to Use i18n and Direction](#how-to-use-i18n-and-direction)
+10. [How to Use Auth & Permissions](#how-to-use-auth--permissions)
+11. [Best Practices](#best-practices)
+12. [Common Patterns Reference](#common-patterns-reference)
 
 ---
 
@@ -171,49 +180,10 @@ This is a **multi-backend React boilerplate** that supports both **Laravel** and
 
 ### i18n
 
-- **react-i18next 16.3** - Translation library (React bindings for i18next)
+- **react-i18next 16.5** - Translation library (React bindings for i18next)
 - **i18next-browser-languagedetector** - Auto-detect user language
-- **Intlayer 7.3** - AI-powered translation management
+- **Intlayer 8.0** - AI-powered translation management
 - **@intlayer/sync-json-plugin** - Syncs translations to JSON files
-
-**Setup Location**: `src/core/i18n/i18n.ts`
-
-**Configuration**:
-
-```typescript
-import i18n from "i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
-import { initReactI18next } from "react-i18next";
-
-i18n
-  .use(initReactI18next)
-  .use(LanguageDetector)
-  .init({
-    resources: { en: {...}, ar: {...} },
-    defaultNS: "common",
-    fallbackLng: "ar", // Default to Arabic
-    lng: "ar",
-    supportedLngs: ["en", "ar"],
-    interpolation: { escapeValue: false },
-    detection: {
-      order: ["localStorage", "cookie", "navigator"],
-      caches: ["localStorage"],
-    },
-  });
-```
-
-**Translation Files**: `src/locales/{en|ar}/{namespace}.json`
-
-- `common.json`: Shared translations (actions, validation, errors)
-- `users.json`: Users feature translations
-- `statistics.json`: Statistics feature translations
-- Add new namespaces as needed per feature
-
-**Intlayer Commands**:
-
-- `pnpm intlayer:fill`: AI-fill missing translations (requires `OPENAI_API_KEY`)
-- `pnpm intlayer:build`: Build Intlayer dictionaries
-- `pnpm intlayer:push`: Push translations to remote (if configured)
 
 ### Backend Support
 
@@ -624,26 +594,171 @@ EndpointDef<TRequest, TResponse>;
 }
 ```
 
-### Step 5: Create API Hooks (`api/useProducts.ts`)
+### Step 5: Create Data Transformers (Recommended) ✨
+
+**File:** `src/features/products/utils/productTransformers.ts`
 
 ```typescript
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "@/core/api/client";
-import { endpoints } from "@/core/api/endpoints";
+/**
+ * Product Data Transformers
+ * Centralized transformation logic between UI and API formats
+ */
+
+import type { ProductFormData, ProductUpdateData } from "../types";
+
+/**
+ * Transform form data to API format
+ */
+export function transformProductToApi(
+  data: ProductFormData | ProductUpdateData
+): Record<string, unknown> {
+  return {
+    ...data,
+    // Add any transformations here (e.g., date formatting, enum conversion)
+  };
+}
+
+/**
+ * Transform API data to form format
+ */
+export function transformProductFromApi(
+  data: Record<string, unknown>
+): Record<string, unknown> {
+  return {
+    ...data,
+    // Add any transformations here (e.g., date parsing, enum conversion)
+  };
+}
+
+/**
+ * Get product display name for UI
+ */
+export function getProductDisplayName(product: {
+  name?: string;
+  id: number | string;
+}): string {
+  return product.name ?? `#${product.id}`;
+}
+```
+
+### Step 6: Create API Hooks (MCP Pattern) ✅
+
+**File:** `src/features/products/api/useProducts.ts`
+
+```typescript
+import { useMemo } from "react";
 import { createDataTableHook } from "@/shared/hooks/createDataTableHook";
-import {
-  type Product,
-  type ProductCreate,
-  type ProductUpdate,
+import { endpoints } from "@/core/api/endpoints";
+import { createCRUDProtocol } from "@/shared/mcp/createProtocol";
+import { transformProductToApi } from "../utils/productTransformers";
+import type {
+  Product,
+  ProductFormData,
+  ProductUpdateData,
 } from "@/features/products/types";
 
-// ✅ List hook using factory
-export const useProducts = createDataTableHook<Product>(
-  "products",
-  endpoints.products.list
-);
+/**
+ * Product Model Hook (MCP Pattern)
+ * Handles data fetching with automatic caching and refetching
+ */
+export const useProducts = () => {
+  const query = createDataTableHook<Product>("products", endpoints.products.list)();
 
-// ✅ Create mutation
+  // Memoized sorted data - performance optimization
+  const sortedData = useMemo(() => {
+    if (!query.data?.items) return query.data;
+
+    // Sort by created_at descending (newest first)
+    const sortedItems = [...query.data.items].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
+    });
+
+    return {
+      ...query.data,
+      items: sortedItems,
+    };
+  }, [query.data]);
+
+  return {
+    ...query,
+    data: sortedData,
+  };
+};
+
+/**
+ * Optimistic update helper for product operations
+ */
+function optimisticProductUpdater(
+  old: unknown,
+  variables: ProductFormData | ProductUpdateData | number
+): unknown {
+  if (!old || typeof old !== "object" || !("items" in old)) {
+    return old;
+  }
+
+  const pagedResult = old as { items: Product[]; rowCount?: number };
+
+  // Delete operation
+  if (typeof variables === "number") {
+    return {
+      ...pagedResult,
+      items: pagedResult.items.filter((item) => item.id !== variables),
+      rowCount: (pagedResult.rowCount ?? pagedResult.items.length) - 1,
+    };
+  }
+
+  // Update operation
+  if (typeof variables === "object" && "id" in variables) {
+    const updateData = variables as ProductUpdateData;
+    return {
+      ...pagedResult,
+      items: pagedResult.items.map((item) =>
+        item.id === updateData.id ? { ...item, ...updateData } : item
+      ),
+    };
+  }
+
+  return old;
+}
+
+/**
+ * Product Protocol Factory (MCP Pattern)
+ * Creates CRUD protocol with automatic cache invalidation and optimistic updates
+ */
+const productProtocolFactory = createCRUDProtocol<
+  ProductFormData,
+  ProductUpdateData,
+  number
+>({
+  queryKey: ["products"],
+  endpoints: {
+    create: endpoints.products.create,
+    update: endpoints.products.update,
+    delete: endpoints.products.delete,
+  },
+  transforms: {
+    create: transformProductToApi,
+    update: transformProductToApi,
+    delete: (id) => ({ id }),
+  },
+  invalidateQueries: [["products"]],
+  // ✨ Optimistic updates for instant UI feedback
+  optimisticUpdate: {
+    queryKey: ["products"],
+    updater: optimisticProductUpdater,
+  },
+});
+
+/**
+ * Product Protocol Hook (MCP Pattern)
+ */
+export const useProductProtocol = () => {
+  return productProtocolFactory();
+};
+
+// Legacy exports for backward compatibility
 export const useCreateProduct = (options?: {
   onSuccess?: () => void;
   onError?: (error: unknown) => void;
