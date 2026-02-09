@@ -27,12 +27,12 @@ export interface PageHeaderAction {
   icon?: ComponentType<{ className?: string }>;
   onClick: () => void;
   variant?:
-    | "default"
-    | "outline"
-    | "destructive"
-    | "secondary"
-    | "ghost"
-    | "link";
+  | "default"
+  | "outline"
+  | "destructive"
+  | "secondary"
+  | "ghost"
+  | "link";
   size?: "default" | "sm" | "lg" | "icon" | "xs" | "icon-xs" | "icon-sm" | "icon-lg";
   permission?: string;
   tooltip?: string;
@@ -85,7 +85,7 @@ export const PageHeader = React.memo(function PageHeader({
   const isDetail = variant === "detail";
   const titleSize = isDetail ? "text-3xl" : "text-4xl";
   const gapSize = isDetail ? "gap-6" : "gap-8";
-  
+
   // Use appropriate arrow icon based on RTL direction
   const BackIcon = isRtl ? RiArrowRightLine : RiArrowLeftLine;
 
