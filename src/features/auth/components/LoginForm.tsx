@@ -221,7 +221,7 @@ export function LoginForm({
                 <p className="text-muted-foreground text-xs leading-relaxed text-balance max-w-md mt-1">
                   {t("auth.loginInstructions", "Select your preferred authentication method and enter the corresponding credentials below")}
                 </p>
-                <TabsList className="grid w-full grid-cols-3  mb-4">
+                <TabsList className="grid w-full grid-cols-3 ">
                   {loginFieldConfigs.map((config) => {
                     const Icon = config.icon;
                     const tabLabelKey = `auth.loginVia${config.type.charAt(0).toUpperCase() + config.type.slice(1)}` as const;
@@ -393,14 +393,14 @@ export function LoginForm({
         </CardContent>
       </Card>
 
-      <div className="mt-2 px-6 text-center text-xs leading-relaxed text-muted-foreground space-y-1">
+      <div className="mt-2 px-6 text-center text-xs leading-relaxed text-white space-y-1">
         <p>
           {t("auth.tosPrefix", "By proceeding with the authentication process, you hereby acknowledge, understand, and expressly agree to be bound by our")}{" "}
           <TermsDialog
             trigger={
               <button
                 type="button"
-                className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+                className="font-semibold text-secondary underline-offset-4 transition-colors hover:underline"
               >
                 {t("auth.terms", "Terms of Service")}
               </button>
@@ -411,7 +411,7 @@ export function LoginForm({
             trigger={
               <button
                 type="button"
-                className="font-semibold text-primary underline-offset-4 transition-colors hover:underline"
+                className="font-semibold text-secondary underline-offset-4 transition-colors hover:underline"
               >
                 {t("auth.privacy", "Privacy Policy")}
               </button>

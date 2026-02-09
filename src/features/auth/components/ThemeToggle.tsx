@@ -27,16 +27,16 @@ export function ThemeToggle({
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className={cn("h-9 w-9", className)}
+      className={cn("size-10", className)}
       aria-label={
         theme === "dark" ? t("theme.light") : t("theme.dark")
       }
       {...props}
     >
       {theme === "dark" ? (
-        <RiSunLine className="h-5 w-5" />
+        <RiSunLine className="size-5" />
       ) : (
-        <RiMoonLine className="h-5 w-5" />
+        <RiMoonLine className="size-5" />
       )}
     </Button>
   );
