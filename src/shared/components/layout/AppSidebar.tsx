@@ -48,15 +48,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent className="flex flex-col gap-2 group-data-[collapsible=icon]:mt-4">
             <SidebarMenu>
               {mainNavItems.map((item) => {
-                const isActive =
-                  item.href === "/dashboard"
-                    ? location.pathname === "/dashboard"
-                    : location.pathname.startsWith(item.href);
+                const isRootDashboard = item.href === "/dashboard";
+                const isExactMatch = location.pathname === item.href;
+
+                // Check if current path starts with this item's href followed by /
+                // But exclude if there's a more specific sibling item that matches
+                const isNestedMatch = location.pathname.startsWith(
+                  `${item.href}/`
+                ) && !mainNavItems.some(
+                  // Find more specific items (longer href) that also match
+                  (sibling) =>
+                    sibling.href !== item.href &&
+                    sibling.href.startsWith(item.href) &&
+                    location.pathname.startsWith(`${sibling.href}`)
+                );
+
+                const isActive = isRootDashboard
+                  ? isExactMatch
+                  : isExactMatch || isNestedMatch;
 
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
+                      size="md"
                       tooltip={t(item.label)}
                       isActive={isActive}
                     >

@@ -690,8 +690,8 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
       mode === "server" && total && pagination.pageSize
         ? Math.ceil(total / pagination.pageSize)
         : mode === "client" && memoizedData.length && pagination.pageSize
-        ? Math.ceil(memoizedData.length / pagination.pageSize)
-        : undefined,
+          ? Math.ceil(memoizedData.length / pagination.pageSize)
+          : undefined,
     manualPagination: mode === "server",
     manualFiltering: true,
     manualSorting: true,
@@ -725,13 +725,13 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
     // Row selection configuration
     ...(enableRowSelection
       ? {
-          enableRowSelection:
-            typeof enableRowSelection === "function"
-              ? (row) => enableRowSelection(row.original)
-              : enableRowSelection,
-          onRowSelectionChange: handleRowSelectionChange,
-          getRowId: resolvedGetRowId,
-        }
+        enableRowSelection:
+          typeof enableRowSelection === "function"
+            ? (row) => enableRowSelection(row.original)
+            : enableRowSelection,
+        onRowSelectionChange: handleRowSelectionChange,
+        getRowId: resolvedGetRowId,
+      }
       : {}),
   });
 
@@ -832,7 +832,7 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
             {shouldShowFiltersWrapper && (
               <div className="flex-1 lg:flex-initial space-y-3 bg-muted/50 rounded-lg p-4 w-full">
                 {/* Filters Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   {hasFilters && (
                     <div className={FLEX_CENTER_GAP}>
                       <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
@@ -845,11 +845,12 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                       </div>
                     </div>
                   )}
-                  <div className={FLEX_CENTER_GAP}>
+                  <div className={cn(FLEX_CENTER_GAP, "flex-wrap gap-2")}>
                     {hasActiveFilters && (
                       <Button
                         variant="outline"
                         onClick={handleClearFilters}
+                        size="sm"
                         className="text-destructive hover:text-destructive"
                       >
                         <RiFilterOffLine className="h-4 w-4" />
@@ -862,9 +863,10 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                       <Button
                         variant="outline"
                         onClick={handleExport}
+                        size="sm"
                       >
                         <RiDownloadLine className="h-4 w-4" />
-                        <span>{t("table.exportCsv")}</span>
+                        <span className="hidden sm:inline">{t("table.exportCsv")}</span>
                       </Button>
                     )}
                     {(refetch || onRefresh) && (
@@ -872,11 +874,12 @@ const DataTableInner = <TData,>(props: DataTableUnionProps<TData>) => {
                         variant="outline"
                         onClick={handleRefresh}
                         disabled={isFetching}
+                        size="sm"
                       >
                         <RiRefreshLine
                           className={cn("h-4 w-4", isFetching && "animate-spin")}
                         />
-                        <span>{t("table.refresh")}</span>
+                        <span className="hidden sm:inline">{t("table.refresh")}</span>
                       </Button>
                     )}
                     {toolbarActions}

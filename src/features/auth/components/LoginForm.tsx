@@ -187,20 +187,20 @@ export function LoginForm({
   }, [loginType, form]);
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-4 sm:gap-6", className)} {...props}>
       <Card className="mx-auto w-full border-border/50 bg-card/80 backdrop-blur-sm shadow-lg dark:bg-card/90">
-        <CardHeader className="flex flex-col items-center gap-3">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+        <CardHeader className="flex flex-col items-center gap-2 sm:gap-3 px-4 sm:px-6 pt-4 sm:pt-6">
+          <div className="flex flex-col items-center gap-1.5 sm:gap-2 text-center">
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
               {t("auth.welcomeTitle", "Welcome Back")}
             </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed text-balance max-w-md">
+            <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed text-balance max-w-md px-2">
               {t("auth.welcomeSubtitle", "Please provide your authentication credentials to securely access your account and continue to your dashboard")}
             </p>
           </div>
         </CardHeader>
 
-        <CardContent className="pt-2">
+        <CardContent className="pt-2 px-4 sm:px-6 pb-4 sm:pb-6">
           <form
             onSubmit={async (event) => {
               event.preventDefault();
@@ -218,10 +218,10 @@ export function LoginForm({
                 }}
                 className="w-full"
               >
-                <p className="text-muted-foreground text-xs leading-relaxed text-balance max-w-md mt-1">
+                <p className="text-muted-foreground text-[10px] sm:text-xs leading-relaxed text-balance max-w-md mt-1 px-1">
                   {t("auth.loginInstructions", "Select your preferred authentication method and enter the corresponding credentials below")}
                 </p>
-                <TabsList className="grid w-full grid-cols-3 ">
+                <TabsList className="grid w-full grid-cols-3 gap-1 sm:gap-2">
                   {loginFieldConfigs.map((config) => {
                     const Icon = config.icon;
                     const tabLabelKey = `auth.loginVia${config.type.charAt(0).toUpperCase() + config.type.slice(1)}` as const;
@@ -229,9 +229,9 @@ export function LoginForm({
                       <TabsTrigger
                         key={config.type}
                         value={config.type}
-                        className="flex items-center gap-2"
+                        className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3"
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">
                           {t(tabLabelKey, config.type.charAt(0).toUpperCase() + config.type.slice(1))}
                         </span>
@@ -373,7 +373,7 @@ export function LoginForm({
                 <Button
                   type="submit"
                   disabled={loginMutation.isPending}
-                  className="w-full h-10 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
+                  className="w-full h-10 sm:h-11 text-sm sm:text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
                 >
                   {loginMutation.isPending ? (
                     <>
@@ -393,14 +393,14 @@ export function LoginForm({
         </CardContent>
       </Card>
 
-      <div className="mt-2 px-6 text-center text-xs leading-relaxed text-white space-y-1">
-        <p>
+      <div className="mt-2 px-3 sm:px-6 text-center text-[10px] sm:text-xs leading-relaxed text-white space-y-1">
+        <p className="px-1">
           {t("auth.tosPrefix", "By proceeding with the authentication process, you hereby acknowledge, understand, and expressly agree to be bound by our")}{" "}
           <TermsDialog
             trigger={
               <button
                 type="button"
-                className="font-semibold text-secondary underline-offset-4 transition-colors hover:underline"
+                className="font-semibold text-secondary underline-offset-4 transition-colors hover:underline break-words"
               >
                 {t("auth.terms", "Terms of Service")}
               </button>
@@ -411,7 +411,7 @@ export function LoginForm({
             trigger={
               <button
                 type="button"
-                className="font-semibold text-secondary underline-offset-4 transition-colors hover:underline"
+                className="font-semibold text-secondary underline-offset-4 transition-colors hover:underline break-words"
               >
                 {t("auth.privacy", "Privacy Policy")}
               </button>
@@ -419,7 +419,7 @@ export function LoginForm({
           />
           .
         </p>
-        <p className="text-[10px] opacity-75">
+        <p className="text-[9px] sm:text-[10px] opacity-75 px-1">
           {t("auth.tosSuffix", "Please review these documents carefully before continuing")}
         </p>
       </div>

@@ -327,8 +327,8 @@ export function DataTableFilters<TData>({
       <div
         ref={filtersContainerRef}
         className={cn(
-          "flex flex-wrap gap-3 transition-all duration-300",
-          !showAllFilters && hasWrappedFilters && "max-h-16 overflow-hidden"
+          "flex flex-col sm:flex-row flex-wrap gap-3 transition-all duration-300",
+          !showAllFilters && hasWrappedFilters && "sm:max-h-16 sm:overflow-hidden"
         )}
       >
         {/* General Search Filter */}
@@ -336,7 +336,7 @@ export function DataTableFilters<TData>({
           <div
             className={cn(
               "relative transition-all duration-200",
-              "min-w-[140px] max-w-[200px] shrink-0"
+              "w-full sm:min-w-[140px] sm:max-w-[200px] sm:shrink-0"
             )}
           >
             <div
@@ -368,7 +368,7 @@ export function DataTableFilters<TData>({
               key={column.id}
               className={cn(
                 "relative transition-all duration-200",
-                "min-w-[140px] max-w-[200px] shrink-0"
+                "w-full sm:min-w-[140px] sm:max-w-[200px] sm:shrink-0"
               )}
             >
               <div
@@ -384,9 +384,9 @@ export function DataTableFilters<TData>({
         })}
       </div>
 
-      {/* Show More/Less Button */}
+      {/* Show More/Less Button - Only show on desktop */}
       {hasWrappedFilters && (
-        <div className="flex justify-center mt-3">
+        <div className="hidden sm:flex justify-center mt-3">
           <Button
             variant="ghost"
             size="sm"
@@ -395,12 +395,12 @@ export function DataTableFilters<TData>({
             {showAllFilters ? (
               <>
                 <RiArrowUpSLine className="h-4 w-4" />
-                <span>{t("table.showLess")}</span>
+                <span className="hidden sm:inline">{t("table.showLess")}</span>
               </>
             ) : (
               <>
                 <RiArrowDownSLine className="h-4 w-4" />
-                <span>{t("table.showMore")}</span>
+                <span className="hidden sm:inline">{t("table.showMore")}</span>
               </>
             )}
           </Button>

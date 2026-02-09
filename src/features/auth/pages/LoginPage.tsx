@@ -38,10 +38,10 @@ export function LoginPage() {
       </div>
 
       {/* First Row: Logo and ThemeToggle */}
-      <div className="relative z-10 flex w-full items-start justify-between p-4">
+      <div className="relative z-10 flex w-full items-start justify-between p-3 sm:p-4">
         {/* Logo and Company Title */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex h-22 w-22 items-center justify-center rounded-2xl bg-primary/10 p-3 ring-2 ring-primary/20 dark:bg-primary/20 dark:ring-primary/30 shadow-sm">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="relative flex h-16 w-16 sm:h-22 sm:w-22 items-center justify-center rounded-xl sm:rounded-2xl bg-primary/10 p-2 sm:p-3 ring-2 ring-primary/20 dark:bg-primary/20 dark:ring-primary/30 shadow-sm">
             <OptimizedImage
               src="/logo.svg"
               width={56}
@@ -51,23 +51,23 @@ export function LoginPage() {
             />
           </div>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold tracking-tight text-white leading-tight">
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">
               {t("app.title")}
             </h1>
-            <p className="text-xs text-white/80 leading-tight mt-0.5">
+            <p className="text-[10px] sm:text-xs text-white/80 leading-tight mt-0.5">
               {t("app.description")}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <LanguageToggle />
           <ThemeToggle />
         </div>
       </div>
 
       {/* Second Row: LoginForm */}
-      <div className="relative z-10 flex flex-1 items-center justify-center">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-3 sm:px-4 pb-4">
         <LoginForm className="w-full max-w-md" />
       </div>
     </div>
